@@ -1,1 +1,741 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="utf-8"> <title>Recast — Executive Click-Through (On-Brand + ROI Enhancements)</title> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="color-scheme" content="dark"> <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin> <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet"> <script src="https://cdn.tailwindcss.com"></script> <link rel="preconnect" href="https://unpkg.com" crossorigin> <script src="https://unpkg.com/lucide@latest"></script> </head> <body class="min-h-screen bg-[#2c3a45] text-white" style="font-family:'Work Sans', Helvetica, Arial, 'Open Sans', sans-serif;"> <div class="pointer-events-none absolute inset-0 -z-10 opacity-20"> <svg aria-hidden="true" class="h-full w-full" xmlns="http://www.w3.org/2000/svg"> <defs> <pattern id="hex" width="36" height="31.2" patternUnits="userSpaceOnUse"> <g stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" fill="none"> <path d="M9 0l9 5.2v10.4l-9 5.2L0 15.6V5.2L9 0zM27 0l9 5.2v10.4l-9 5.2-9-5.2V5.2L27 0zM18 15.6l9 5.2v10.4l-9 5.2-9-5.2V20.8l9-5.2z" /> </g> </pattern> </defs> <rect width="100%" height="100%" fill="url(#hex)"/> </svg> </div> <div id="app" class="min-h-screen"></div> <script> const BRAND = { bg: '#2c3a45', accent: '#00aaff', text: '#ffffff', muted: '#ccd', icon: '#444', pink: '#ff5bbd' }; const STATE = { activeTab: 'problems', // Context toggles ctx: { device: 'Windows', network: 'Corporate', compliant: true }, packHrs: 8, configHrs: 2, currentHrs: 24, // ROI: Quick calculator inputs (defaults from notes) roi: { appsInScope: 120, avgUpdatesPerAppPerMonth: 2, currentHrsPerPackage: 2.5, recastHrsPerCuratedUpdate: 0.25, loadedHourlyRate: 85, criticalCVEsPerYear: 6, currentDaysToPatchCritical: 9, withRingsDaysToPatch: 3, auditHoursPerQuarter: 8, withRecastAuditHoursPerQuarter: 0.75, recastAnnualCost: 120000 }, copied: false }; const TABS = [ { id: 'problems', label: 'Current Problems', icon: 'alert-triangle' }, { id: 'solution', label: 'How We Solve It', icon: 'workflow' }, { id: 'roi', label: 'Impact & ROI', icon: 'bar-chart-3' } ]; function track(event, payload = {}) { window.__recastAnalytics = window.__recastAnalytics || []; window.__recastAnalytics.push({ ts: Date.now(), event, payload }); try { console.log('[analytics]', event, payload); } catch {} } function cx(...a){ return a.filter(Boolean).join(' '); } function round(n, d=2){ const m = Math.pow(10,d); return Math.round(n * m) / m; } function num(n){ return new Intl.NumberFormat().format(Math.round(n)); } function routeRecommendation(ctx){ if(!ctx.compliant) return 'Web'; if(ctx.device === 'Windows' && ctx.network !== 'Home') return 'Local'; return 'VDI'; } function clampNonNeg(n){ return Math.max(0, Number(n) || 0); } function focusRing(extra=''){ return cx( 'focus-visible:outline-none', 'focus-visible:ring-2', 'focus-visible:ring-offset-2', `focus-visible:ring-[${BRAND.accent}]`, `focus-visible:ring-offset-[${BRAND.bg}]`, extra ); } function render() { const root = document.getElementById('app'); root.innerHTML = ` <header class="relative overflow-hidden"> <div class="relative mx-auto max-w-7xl px-4 pt-14 pb-10"> <div class="opacity-0 translate-y-2 animate-[fadeInUp_.35s_ease_forwards]"> <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs tracking-wide text-[${BRAND.muted}]"> Executive overview </div> <h1 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl"> <span class="text-white">We unify application access in one workspace—secure, current, and simple.</span> </h1> <p class="mt-2 max-w-3xl text-[${BRAND.muted}]">We move from fragmented delivery to consistent outcomes your teams can rely on.</p> </div> </div> </header> <main class="mx-auto max-w-7xl px-4 pb-24"> ${renderTabs()} <section class="mt-10">${renderActivePanel()}</section> </main> `; if (window.lucide && window.lucide.createIcons) { try { window.lucide.createIcons(); } catch {} } attachGlobalEvents(); } function renderTabs() { return ` <nav role="tablist" aria-label="Demo sections" class="flex w-full flex-wrap gap-2 rounded-full bg-white/5 p-1 ring-1 ring-white/10"> ${TABS.map(t => ` <button type="button" class="${ cx( 'group relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm sm:text-base transition', focusRing(), STATE.activeTab === t.id ? 'bg-[${BRAND.accent}] text-white' : 'text-[${BRAND.muted}] hover:bg-white/10' ) }" role="tab" id="tab-${t.id}" aria-selected="${STATE.activeTab === t.id}" aria-controls="panel-${t.id}" data-action="switch-tab" data-tab="${t.id}" > <span class="relative inline-flex items-center justify-center"> <span class="absolute -inset-2 rounded-full bg-[${BRAND.pink}] opacity-0 blur transition duration-200 group-hover:opacity-40 group-focus-visible:opacity-60 ${STATE.activeTab === t.id ? 'opacity-40' : ''}" aria-hidden="true"></span> <i data-lucide="${t.icon}" class="relative w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> </span> <span>${t.label}</span> </button> `).join('')} </nav> `; } function renderActivePanel(){ if (STATE.activeTab === 'problems') return renderProblems(); if (STATE.activeTab === 'solution') return renderSolution(); if (STATE.activeTab === 'roi') return renderROI(); return ''; } function renderProblems(){ const problems = [ { key: 'frag', title: 'Fragmented delivery', sub: 'Windows / Mac / VDI / Web — users guess the right way.', icon: 'layers' }, { key: 'package', title: 'Packaging backlog', sub: 'Rebuild per version; updates stall.', icon: 'boxes' }, { key: 'zeroday', title: 'Zero-day exposure', sub: 'Patching takes days, not minutes.', icon: 'shield-check' }, { key: 'migration', title: 'Slow upgrades', sub: 'Stuck to old images; change is slow.', icon: 'building-2' } ]; return ` <section role="tabpanel" id="panel-problems" aria-labelledby="tab-problems"> <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"> ${problems.map(p => ` <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 transition will-change-transform hover:-translate-y-0.5"> <div class="flex items-center gap-2"> <i data-lucide="${p.icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i> <h3 class="text-lg font-semibold text-white">${p.title}</h3> </div> <p class="text-sm text-[${BRAND.muted}]">${p.sub}</p> <div class="mt-auto h-1 rounded bg-[${BRAND.accent}] opacity-0 transition-opacity group-hover:opacity-100"></div> </div> `).join('')} </div> <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5"> <h3 class="text-base font-semibold">What our platform includes</h3> <ol class="mt-3 list-decimal pl-5 text-sm text-[${BRAND.muted}] space-y-1"> <li>Catalog & packaging: size, cadence, languages, provenance, secure defaults.</li> <li>Lifecycle delivery: staged rollouts, rollback, ring status, collision avoidance with images.</li> <li>Cross-platform reach: Windows/macOS; physical + VDI/DAAS; one definition across Intune/ConfigMgr + Citrix/AVD/W365.</li> <li>Governance & evidence: full audit history, version provenance, CVE mapping, ring reporting.</li> <li>Access & UX: identity targeting, SSO, approvals, Teams entry point.</li> <li>Integrations: APIs/PowerShell; reuse of deployment infra (no agent sprawl).</li> <li>Scale & reliability: catalog additions, update velocity, service health transparency.</li> </ol> <div class="mt-4 grid grid-cols-1 gap-2 text-sm text-[${BRAND.muted}] sm:grid-cols-2"> <div> <h4 class="font-semibold text-white">Architecture, security & platform</h4> <ul class="mt-1 list-disc pl-5 space-y-1"> <li>Identity-driven targeting & launch (user/group, device trust/compliance, session context).</li> <li>macOS: pkg/dmg/script; notarization-aware; Apple silicon tested; profiles/PPPC via MDM.</li> <li>VDI/DAAS: Smart Icons choose install vs. stream; avoids golden-image rebuilds.</li> </ul> </div> <div> <h4 class="font-semibold text-white">Operations</h4> <ul class="mt-1 list-disc pl-5 space-y-1"> <li>RBAC & audit: role-scoped actions, immutable logs, CSV/JSON export.</li> <li>Deployment: cloud or on-prem; reuse Intune/ConfigMgr; minimal/no extra agents.</li> </ul> </div> </div> </div> <div class="mt-6 flex justify-end"> <button type="button" data-action="advance" data-next="solution" class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}" > How We Solve It </button> </div> </section> `; } function renderSolution(){ const saved = clampNonNeg(STATE.packHrs - STATE.configHrs); const target = 1.5; const reduced = clampNonNeg(STATE.currentHrs - target); const route = routeRecommendation(STATE.ctx); return ` <section role="tabpanel" id="panel-solution" aria-labelledby="tab-solution" class="space-y-5"> <p class="text-sm text-[${BRAND.muted}]">Here’s how we address the problems and convert them into measurable results.</p> <div class="grid grid-cols-1 gap-5 md:grid-cols-3"> <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5"> <div class="flex items-center gap-2"> <i data-lucide="mouse-pointer-click" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i> <h3 class="text-lg font-semibold text-white">One click. Right app.</h3> </div> <p class="text-sm text-[${BRAND.muted}]">One icon for all apps. Users click once; we route to the right experience (Windows, Mac, VPN, or Web).</p> <div class="mt-2 grid grid-cols-3 gap-2 text-sm"> ${['Windows','Mac'].map(d=>pill(d, STATE.ctx.device===d, 'set-device', d)).join('')} ${['Corporate','VPN'].map(n=>pill(n, STATE.ctx.network===n, 'set-network', n)).join('')} ${pill(STATE.ctx.compliant?'Compliant':'Non-compliant', STATE.ctx.compliant, 'toggle-compliance', '')} </div> <div class="text-sm text-[${BRAND.muted}]">Recommended route:</div> <div class="inline-flex w-fit items-center gap-2 rounded-full bg-[${BRAND.accent}] px-3 py-1"> <i data-lucide="check-circle-2" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> <span class="text-white text-sm font-semibold">${route}</span> </div> </div> <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5"> <div class="flex items-center gap-2"> <i data-lucide="wand-2" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i> <h3 class="text-lg font-semibold text-white">Update once. Done.</h3> </div> <p class="text-sm text-[${BRAND.muted}]">Configure once; updates flow across tenants and environments—cloud, on-prem, hybrid.</p> <div class="rounded-xl border border-white/10 bg-black/20 p-4 text-sm"> <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="sparkles" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> Roll out critical updates</div> <label class="mt-2 flex flex-col gap-1"> <span class="text-xs text-[${BRAND.muted}]">Hours per package → configure</span> <div class="flex items-center gap-2"> <input aria-label="Hours per package" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.packHrs}" data-action="set-pack-hrs"> <span>→</span> <input aria-label="Hours to configure" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.configHrs}" data-action="set-config-hrs"> </div> </label> <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.packHrs} → ${STATE.configHrs} hrs</span><strong class="text-white">${saved} hrs saved</strong></div> </div> </div> <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5"> <div class="flex items-center gap-2"> <i data-lucide="shield-check" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i> <h3 class="text-lg font-semibold text-white">Close zero-day windows.</h3> </div> <p class="text-sm text-[${BRAND.muted}]">Security patches roll out in hours, reducing exposure windows.</p> <div class="rounded-xl border border-white/10 bg-black/20 p-4 text-sm"> <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="alarm-clock" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> Zero-day rollout</div> <label class="mt-2 flex flex-col gap-1"> <span class="text-xs text-[${BRAND.muted}]">Current time-to-deploy (hrs)</span> <input class="rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" aria-label="Current time to deploy (hours)" inputmode="decimal" value="${STATE.currentHrs}" data-action="set-current-hrs"> </label> <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.currentHrs} → 1.5 hrs</span><strong class="text-white">${round(reduced)} hrs reduced</strong></div> </div> </div> </div> <div class="mt-3 rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"> <div class="text-sm text-white">Manage once. Deploy anywhere — each step contributes to measurable ROI.</div> <button type="button" data-action="advance" data-next="roi" class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}"> See Impact & ROI </button> </div> </section> `; } function renderROI(){ const r = STATE.roi; // Core calculations from the provided formulas const packagingHoursSavedPerMonth = clampNonNeg(r.appsInScope * r.avgUpdatesPerAppPerMonth * (r.currentHrsPerPackage - r.recastHrsPerCuratedUpdate)); const packagingLaborSavedPerMonthDollars = packagingHoursSavedPerMonth * clampNonNeg(r.loadedHourlyRate); const riskWindowReductionDaysPerYear = clampNonNeg(r.criticalCVEsPerYear * (r.currentDaysToPatchCritical - r.withRingsDaysToPatch)); const auditHoursSavedPerYear = clampNonNeg((r.auditHoursPerQuarter - r.withRecastAuditHoursPerQuarter) * 4); const auditEffortAvoidedPerYearDollars = auditHoursSavedPerYear * clampNonNeg(r.loadedHourlyRate); const totalSavingsPerYear = (packagingLaborSavedPerMonthDollars * 12) + auditEffortAvoidedPerYearDollars; const netBenefitYear = totalSavingsPerYear - clampNonNeg(r.recastAnnualCost); const roiPct = r.recastAnnualCost ? (netBenefitYear / r.recastAnnualCost) * 100 : 0; return ` <section role="tabpanel" id="panel-roi" aria-labelledby="tab-roi" class="space-y-8"> <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"> ${kpi('hammer','$ packaging labor saved / yr', `$${num(packagingLaborSavedPerMonthDollars * 12)}`, 'Apps × updates × (current − Recast) × rate')} ${kpi('timer','Packaging hours / mo saved', round(packagingHoursSavedPerMonth), 'Operational capacity')} ${kpi('shield','Risk window reduction / yr', `${round(riskWindowReductionDaysPerYear,1)} days`, 'Critical CVEs × (current − with rings)')} ${kpi('file-text','$ audit effort avoided / yr', `$${num(auditEffortAvoidedPerYearDollars)}`, `${num(auditHoursSavedPerYear)} hrs saved @ rate`)} </div> <div class="grid grid-cols-1 gap-6 lg:grid-cols-3"> <section class="rounded-2xl border border-white/10 bg-white/5 p-6 lg:col-span-2"> <h3 class="text-lg font-semibold text-white">Quick ROI calculator (edit)</h3> <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2"> <div class="space-y-3"> <h4 class="text-sm font-semibold text-white">Packaging & updates</h4> ${numInput('Apps in scope','appsInScope', r.appsInScope)} ${numInput('Avg updates / app / month','avgUpdatesPerAppPerMonth', r.avgUpdatesPerAppPerMonth)} ${numInput('Current hrs per package/update (default 2.5)','currentHrsPerPackage', r.currentHrsPerPackage)} ${numInput('Recast hrs per curated update (default 0.25)','recastHrsPerCuratedUpdate', r.recastHrsPerCuratedUpdate)} </div> <div class="space-y-3"> <h4 class="text-sm font-semibold text-white">Risk & audit</h4> ${numInput('Critical CVEs / year','criticalCVEsPerYear', r.criticalCVEsPerYear)} ${numInput('Current days to patch critical (default 9)','currentDaysToPatchCritical', r.currentDaysToPatchCritical)} ${numInput('With rings: days to patch (default 3)','withRingsDaysToPatch', r.withRingsDaysToPatch)} ${numInput('Audit hours / quarter compiling evidence (default 8)','auditHoursPerQuarter', r.auditHoursPerQuarter)} ${numInput('With Recast: audit hours / quarter (default 0.75)','withRecastAuditHoursPerQuarter', r.withRecastAuditHoursPerQuarter)} </div> </div> <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2"> <div class="space-y-3"> <h4 class="text-sm font-semibold text-white">Cost model</h4> ${numInput('Loaded hourly rate ($/hr) (default 85)','loadedHourlyRate', r.loadedHourlyRate)} ${numInput('Recast annual cost ($)','recastAnnualCost', r.recastAnnualCost)} </div> <div class="space-y-2 text-sm"> <div class="rounded-lg bg-black/30 px-3 py-2 flex items-center justify-between"> <span class="text-[${BRAND.muted}]">Total savings / year</span> <strong class="text-white">$${num(totalSavingsPerYear)}</strong> </div> <div class="rounded-lg bg-black/30 px-3 py-2 flex items-center justify-between"> <span class="text-[${BRAND.muted}]">Net benefit / year</span> <strong class="text-white">$${num(netBenefitYear)}</strong> </div> <div class="rounded-lg bg-black/30 px-3 py-2 flex items-center justify-between"> <span class="text-[${BRAND.muted}]">ROI</span> <strong class="text-white">${round(roiPct)}%</strong> </div> </div> </div> <p class="mt-4 text-xs text-[${BRAND.muted}]">Assumptions reflect common enterprise environments and can be edited inline.</p> </section> <aside class="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3"> <h3 class="text-lg font-semibold text-white">Scope included in the model</h3> <ul class="list-disc pl-5 text-sm text-[${BRAND.muted}] space-y-1"> <li>Catalog & packaging, lifecycle delivery with rings, and cross-platform reach (Windows/macOS, VDI/DAAS).</li> <li>Governance & evidence with CVE mapping and ring reporting.</li> <li>Identity targeting, SSO, approvals, and Teams entry point.</li> <li>Integrations via APIs/PowerShell; reuse of Intune/ConfigMgr.</li> <li>Scale & reliability signals (catalog velocity, service health).</li> </ul> <div class="pt-2 border-t border-white/10"> <h4 class="text-sm font-semibold text-white">Copy summary</h4> <button type="button" data-action="copy-onepager" class="mt-2 inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}"> <i data-lucide="clipboard" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> ${STATE.copied ? 'Copied!' : 'Copy executive one-pager'} </button> <button type="button" data-action="reset-calculator" class="mt-2 inline-flex items-center gap-2 rounded-lg border border-[${BRAND.accent}] bg-transparent px-4 py-2 text-sm font-semibold text-[${BRAND.accent}] hover:bg-[${BRAND.accent}] hover:text-white transition ${focusRing()}"> Reset calculator </button> </div> </aside> </div> <p class="text-xs text-[${BRAND.muted}]">Transparency: Recast AW complements device management (e.g., Intune). Windows/macOS focus. Metrics are illustrative; actuals vary.</p> </section> `; } function kpi(icon,label,value,hint){ return ` <div class="rounded-2xl border border-white/10 bg-white/5 p-5"> <div class="flex items-center justify-between"> <div> <div class="text-xs text-[${BRAND.muted}]">${label}</div> <div class="text-xl font-semibold text-white">${value}</div> </div> <i data-lucide="${icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i> </div> ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''} </div> `; } function numInput(label, key, value){ return ` <label class="flex flex-col gap-1"> <span class="text-xs text-[${BRAND.muted}]">${label}</span> <input class="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${value}" data-action="set-roi" data-key="${key}"> </label> `; } function pill(label, active, action, value){ return ` <button type="button" class="${ cx( 'rounded-full px-3 py-1 border text-sm transition', active ? `bg-[${BRAND.accent}] text-white border-transparent` : 'bg-black/30 text-white/90 hover:bg-white/10 border-white/15', focusRing() ) }" data-action="${action}" data-value="${String(value)}" > ${label} </button> `; } function attachGlobalEvents(){ const root = document.getElementById('app'); root.querySelectorAll('[data-action="switch-tab"]').forEach(btn=>{ btn.addEventListener('click', (e)=>{ const next = e.currentTarget.getAttribute('data-tab'); STATE.activeTab = next; track('scene_viewed', { scene: next }); render(); }); }); root.querySelectorAll('[data-action="advance"]').forEach(btn=>{ btn.addEventListener('click', (e)=>{ const next = e.currentTarget.getAttribute('data-next'); STATE.activeTab = next; track('toggle_changed', { control: 'tab', value: next }); track('scene_viewed', { scene: next }); render(); }); }); root.querySelectorAll('[data-action="set-device"]').forEach(btn=>{ btn.addEventListener('click', e=>{ STATE.ctx.device = e.currentTarget.getAttribute('data-value'); track('toggle_changed', { control: 'device', value: STATE.ctx.device }); render(); }); }); root.querySelectorAll('[data-action="set-network"]').forEach(btn=>{ btn.addEventListener('click', e=>{ STATE.ctx.network = e.currentTarget.getAttribute('data-value'); track('toggle_changed', { control: 'network', value: STATE.ctx.network }); render(); }); }); root.querySelectorAll('[data-action="toggle-compliance"]').forEach(btn=>{ btn.addEventListener('click', ()=>{ STATE.ctx.compliant = !STATE.ctx.compliant; track('toggle_changed', { control: 'compliant', value: STATE.ctx.compliant }); render(); }); }); root.querySelectorAll('[data-action="set-roi"]').forEach(inp=>{ inp.addEventListener('input', (e)=>{ const key = e.currentTarget.getAttribute('data-key'); const v = Number(String(e.currentTarget.value).replace(/[^0-9.\-]/g,'')); STATE.roi[key] = isFinite(v) ? v : 0; }); }); const resetBtn = root.querySelector('[data-action="reset-calculator"]'); if (resetBtn) resetBtn.addEventListener('click', ()=>{ STATE.roi = { appsInScope: 120, avgUpdatesPerAppPerMonth: 2, currentHrsPerPackage: 2.5, recastHrsPerCuratedUpdate: 0.25, loadedHourlyRate: 85, criticalCVEsPerYear: 6, currentDaysToPatchCritical: 9, withRingsDaysToPatch: 3, auditHoursPerQuarter: 8, withRecastAuditHoursPerQuarter: 0.75, recastAnnualCost: 120000 }; track('cta_clicked', { cta: 'reset_calculator' }); render(); }); const copyBtn = root.querySelector('[data-action="copy-onepager"]'); if (copyBtn) copyBtn.addEventListener('click', async ()=>{ const r = STATE.roi; const packagingHoursSavedPerMonth = clampNonNeg(r.appsInScope * r.avgUpdatesPerAppPerMonth * (r.currentHrsPerPackage - r.recastHrsPerCuratedUpdate)); const packagingLaborSavedPerMonthDollars = packagingHoursSavedPerMonth * clampNonNeg(r.loadedHourlyRate); const riskWindowReductionDaysPerYear = clampNonNeg(r.criticalCVEsPerYear * (r.currentDaysToPatchCritical - r.withRingsDaysToPatch)); const auditHoursSavedPerYear = clampNonNeg((r.auditHoursPerQuarter - r.withRecastAuditHoursPerQuarter) * 4); const auditEffortAvoidedPerYearDollars = auditHoursSavedPerYear * clampNonNeg(r.loadedHourlyRate); const totalSavingsPerYear = (packagingLaborSavedPerMonthDollars * 12) + auditEffortAvoidedPerYearDollars; const netBenefitYear = totalSavingsPerYear - clampNonNeg(r.recastAnnualCost); const roiPct = r.recastAnnualCost ? (netBenefitYear / r.recastAnnualCost) * 100 : 0; const body = `Recast Application Workspace — Executive One-Pager Quick ROI calculator (editable inputs) - Apps in scope: ${r.appsInScope} - Avg updates per app / month: ${r.avgUpdatesPerAppPerMonth} - Current hrs per package/update: ${r.currentHrsPerPackage} - Recast hrs per curated update: ${r.recastHrsPerCuratedUpdate} - Loaded hourly rate: $${r.loadedHourlyRate}/hr - Critical CVEs / year: ${r.criticalCVEsPerYear} - Current days to patch critical: ${r.currentDaysToPatchCritical} - With rings: days to patch: ${r.withRingsDaysToPatch} - Audit hours / quarter: ${r.auditHoursPerQuarter} - With Recast audit hours / quarter: ${r.withRecastAuditHoursPerQuarter} - Recast annual cost: $${r.recastAnnualCost} Outputs - Packaging hours saved / month: ${round(packagingHoursSavedPerMonth)} - $ packaging labor saved / year: $${num(packagingLaborSavedPerMonthDollars * 12)} - Risk window reduction / year: ${round(riskWindowReductionDaysPerYear,1)} days - Audit hours avoided / year: ${round(auditHoursSavedPerYear)} - $ audit effort avoided / year: $${num(auditEffortAvoidedPerYearDollars)} - Total savings / year: $${num(totalSavingsPerYear)} - Net benefit / year: $${num(netBenefitYear)} - ROI: ${round(roiPct)}% Scope included: catalog & packaging, lifecycle rings, cross-platform reach, governance & evidence, identity & SSO, integrations, and scale signals.`; try { await navigator.clipboard.writeText(body); } catch { const ta = document.createElement('textarea'); ta.value = body; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } STATE.copied = true; track('cta_clicked', { cta: 'copy_onepager' }); render(); setTimeout(()=>{ STATE.copied = false; render(); }, 1200); }); } (function injectAnimations(){ const style = document.createElement('style'); style.textContent = ` @keyframes fadeInUp { from { opacity:.0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } } `; document.head.appendChild(style); })(); document.addEventListener('DOMContentLoaded', ()=>{ track('scene_viewed', { scene: STATE.activeTab }); render(); }); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Recast — Executive Click-Through (On-Brand + ROI Enhancements)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root{
+      --bg:#2c3a45; --accent:#00aaff; --text:#fff; --muted:#ccd; --icon:#444; --pink:#ff5bbd;
+    }
+    @keyframes fadeInUp { from { opacity:.0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="min-h-screen bg-[#2c3a45] text-white" style="font-family:'Work Sans', Helvetica, Arial, 'Open Sans', sans-serif;">
+  <div class="pointer-events-none absolute inset-0 -z-10 opacity-20">
+    <svg aria-hidden="true" class="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="hex" width="36" height="31.2" patternUnits="userSpaceOnUse">
+          <g stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" fill="none">
+            <path d="M9 0l9 5.2v10.4l-9 5.2L0 15.6V5.2L9 0zM27 0l9 5.2v10.4l-9 5.2-9-5.2V5.2L27 0zM18 15.6l9 5.2v10.4l-9 5.2-9-5.2V20.8l9-5.2z" />
+          </g>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#hex)"/>
+    </svg>
+  </div>
+
+  <div id="app" class="min-h-screen"></div>
+
+  <script>
+    const BRAND = {
+      bg: '#2c3a45',
+      accent: '#00aaff',
+      text: '#ffffff',
+      muted: '#ccd',
+      icon: '#444',
+      pink: '#ff5bbd'
+    };
+
+    const CATALOG = { countLabel: "7,000+ curated titles", asOf: "Apr 2025" };
+
+    const SESSION_ID = Math.random().toString(36).slice(2);
+
+    const STATE = {
+      activeTab: 'problems',
+      // Context toggles
+      ctx: { device: 'Windows', network: 'Corporate', compliant: true },
+      packHrs: 8,
+      configHrs: 2,
+      currentHrs: 24,
+      // ROI: Quick calculator inputs (defaults + credibility knobs)
+      roi: {
+        appsInScope: 120,
+        avgUpdatesPerAppPerMonth: 2,
+        currentHrsPerPackage: 2.5,
+        recastHrsPerCuratedUpdate: 0.25,
+        loadedHourlyRate: 85,
+        criticalCVEsPerYear: 6,
+        currentDaysToPatchCritical: 9,
+        withRingsDaysToPatch: 3,
+        auditHoursPerQuarter: 8,
+        withRecastAuditHoursPerQuarter: 0.75,
+        recastAnnualCost: 120000,
+        realizationPct: 85,
+        monthsToValue: 12
+      },
+      copied: false,
+      evidenceCopied: false
+    };
+
+    const TABS = [
+      { id: 'problems', label: 'Current Problems', icon: 'alert-triangle' },
+      { id: 'solution', label: 'How We Solve It', icon: 'workflow' },
+      { id: 'roi', label: 'Impact & ROI', icon: 'bar-chart-3' }
+    ];
+
+    function track(event, payload = {}) {
+      window.__recastAnalytics = window.__recastAnalytics || [];
+      window.__recastAnalytics.push({ ts: Date.now(), sid: SESSION_ID, event, payload });
+      try { console.log('[analytics]', event, payload); } catch {}
+    }
+
+    function cx(...a){ return a.filter(Boolean).join(' '); }
+    function round(n, d=2){ const m = Math.pow(10,d); return Math.round((Number(n)||0) * m) / m; }
+    function num(n){ return new Intl.NumberFormat().format(Math.round(Number(n)||0)); }
+    function num2(n, d=2){ return Number(n||0).toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d}); }
+    function routeRecommendation(ctx){
+      if(!ctx.compliant) return 'Web';
+      if(ctx.device === 'Windows' && ctx.network !== 'Home') return 'Local';
+      return 'VDI';
+    }
+    function routeWhy(ctx){
+      const reasons = [];
+      reasons.push(`User/Group: Azure AD targeting`);
+      reasons.push(`Device trust: ${ctx.compliant ? "Compliant" : "Non-compliant"}`);
+      reasons.push(`Session/Broker: ${ctx.network!=="Home" ? "Broker available" : "Home network"}`);
+      return `Decision factors → ${reasons.join(" • ")}`;
+    }
+    function clampNonNeg(n){ return Math.max(0, Number(n) || 0); }
+
+    function focusRing(extra=''){
+      return cx(
+        'focus-visible:outline-none',
+        'focus-visible:ring-2',
+        'focus-visible:ring-offset-2',
+        `focus-visible:ring-[${BRAND.accent}]`,
+        `focus-visible:ring-offset-[${BRAND.bg}]`,
+        extra
+      );
+    }
+
+    function render() {
+      const root = document.getElementById('app');
+      root.innerHTML = `
+        <header class="relative overflow-hidden">
+          <div class="relative mx-auto max-w-7xl px-4 pt-14 pb-10">
+            <div class="opacity-0 translate-y-2 animate-[fadeInUp_.35s_ease_forwards]">
+              <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs tracking-wide text-[${BRAND.muted}]">
+                Executive overview
+              </div>
+              <h1 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                <span class="text-white">Define apps once. Deliver everywhere—with evidence.</span>
+              </h1>
+              <div class="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[${BRAND.muted}]">
+                <i data-lucide="library" class="w-3.5 h-3.5 text-[${BRAND.icon}]"></i>
+                <span id="catalog-chip">${CATALOG.countLabel}</span>
+                <span class="opacity-70">(as of ${CATALOG.asOf})</span>
+              </div>
+              <p class="mt-2 max-w-3xl text-[${BRAND.muted}]">We move from fragmented delivery to consistent outcomes your teams can rely on.</p>
+            </div>
+          </div>
+        </header>
+
+        <main class="mx-auto max-w-7xl px-4 pb-24">
+          ${renderTabs()}
+          <section class="mt-10">${renderActivePanel()}</section>
+        </main>
+      `;
+      if (window.lucide && window.lucide.createIcons) {
+        try { window.lucide.createIcons(); } catch {}
+      }
+      attachGlobalEvents();
+    }
+
+    function renderTabs() {
+      return `
+        <nav role="tablist" aria-label="Demo sections" class="flex w-full flex-wrap gap-2 rounded-full bg-white/5 p-1 ring-1 ring-white/10">
+          ${TABS.map(t => `
+            <button
+              type="button"
+              class="${
+                cx(
+                  'group relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm sm:text-base transition',
+                  focusRing(),
+                  STATE.activeTab === t.id
+                    ? 'bg-[${BRAND.accent}] text-white'
+                    : 'text-[${BRAND.muted}] hover:bg-white/10'
+                )
+              }"
+              role="tab"
+              id="tab-${t.id}"
+              aria-selected="${STATE.activeTab === t.id}"
+              aria-controls="panel-${t.id}"
+              data-action="switch-tab"
+              data-tab="${t.id}"
+            >
+              <span class="relative inline-flex items-center justify-center">
+                <span class="absolute -inset-2 rounded-full bg-[${BRAND.pink}] opacity-0 blur transition duration-200
+                  group-hover:opacity-40 group-focus-visible:opacity-60 ${STATE.activeTab === t.id ? 'opacity-40' : ''}" aria-hidden="true"></span>
+                <i data-lucide="${t.icon}" class="relative w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
+              </span>
+              <span>${t.label}</span>
+            </button>
+          `).join('')}
+        </nav>
+      `;
+    }
+
+    function renderActivePanel(){
+      if (STATE.activeTab === 'problems') return renderProblems();
+      if (STATE.activeTab === 'solution') return renderSolution();
+      if (STATE.activeTab === 'roi') return renderROI();
+      return '';
+    }
+
+    function renderProblems(){
+      const problems = [
+        { key: 'frag', title: 'Fragmented delivery', sub: 'Windows / Mac / VDI / Web — users guess the right way.', icon: 'layers' },
+        { key: 'package', title: 'Packaging backlog', sub: 'Rebuild per version; updates stall.', icon: 'boxes' },
+        { key: 'zeroday', title: 'Zero-day exposure', sub: 'Patching takes days, not minutes.', icon: 'shield-check' },
+        { key: 'migration', title: 'Slow upgrades', sub: 'Stuck to old images; change is slow.', icon: 'building-2' }
+      ];
+      return `
+        <section role="tabpanel" id="panel-problems" aria-labelledby="tab-problems">
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            ${problems.map(p => `
+              <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 transition will-change-transform hover:-translate-y-0.5">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="${p.icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+                  <h3 class="text-lg font-semibold text-white">${p.title}</h3>
+                </div>
+                <p class="text-sm text-[${BRAND.muted}]">${p.sub}</p>
+                <div class="mt-auto h-1 rounded bg-[${BRAND.accent}] opacity-0 transition-opacity group-hover:opacity-100"></div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="text-base font-semibold">What our platform includes</h3>
+            <ol class="mt-3 list-decimal pl-5 text-sm text-[${BRAND.muted}] space-y-1">
+              <li>Catalog & packaging: size, cadence, languages, provenance, secure defaults.</li>
+              <li>Lifecycle delivery: staged rollouts, rollback, ring status, collision avoidance with images.</li>
+              <li>Cross-platform reach: Windows/macOS; physical + VDI/DAAS; one definition across Intune/ConfigMgr + Citrix/AVD/W365.</li>
+              <li>Governance & evidence: full audit history, version provenance, CVE mapping, ring reporting.</li>
+              <li>Access & UX: identity targeting, SSO, approvals, Teams entry point.</li>
+              <li>Integrations: APIs/PowerShell; reuse of deployment infra (no agent sprawl).</li>
+              <li>Scale & reliability: catalog additions, update velocity, service health transparency.</li>
+            </ol>
+            <div class="mt-4 grid grid-cols-1 gap-2 text-sm text-[${BRAND.muted}] sm:grid-cols-2">
+              <div>
+                <h4 class="font-semibold text-white">Architecture, security & platform</h4>
+                <ul class="mt-1 list-disc pl-5 space-y-1">
+                  <li>Identity-driven targeting & launch (user/group, device trust/compliance, session context).</li>
+                  <li>macOS: pkg/dmg/script; notarization-aware; Apple silicon tested; profiles/PPPC via MDM.</li>
+                  <li>VDI/DAAS: Smart Icons choose install vs. stream; avoids golden-image rebuilds.</li>
+                </ul>
+              </div>
+              <div>
+                <h4 class="font-semibold text-white">Operations</h4>
+                <ul class="mt-1 list-disc pl-5 space-y-1">
+                  <li>RBAC & audit: role-scoped actions, immutable logs, CSV/JSON export.</li>
+                  <li>Deployment: cloud or on-prem; reuse Intune/ConfigMgr; minimal/no extra agents.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button
+              type="button"
+              data-action="advance"
+              data-next="solution"
+              class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}"
+            >
+              How We Solve It
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderSolution(){
+      const saved = clampNonNeg(STATE.packHrs - STATE.configHrs);
+      const target = 1.5;
+      const reduced = clampNonNeg(STATE.currentHrs - target);
+      const route = routeRecommendation(STATE.ctx);
+
+      const ribbon = `
+        <ol class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          ${[
+            {icon:"file-plus-2",label:"Define app"},
+            {icon:"git-merge",label:"Choose rings"},
+            {icon:"send",label:"Publish to Intune + ConfigMgr + Citrix/AVD"}
+          ].map(s=>`
+            <li class="group flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
+              <i data-lucide="${s.icon}" class="w-4 h-4 text-[${BRAND.icon}]"></i>
+              <span class="text-sm text-white">${s.label}</span>
+              <span class="ml-auto h-1 w-8 rounded bg-[${BRAND.accent}] opacity-0 group-hover:opacity-100"></span>
+            </li>`).join("")}
+        </ol>
+      `;
+
+      return `
+        <section role="tabpanel" id="panel-solution" aria-labelledby="tab-solution" class="space-y-5">
+          <p class="text-sm text-[${BRAND.muted}]">Here’s how we address the problems and convert them into measurable results.</p>
+          ${ribbon}
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div class="flex items-center gap-2">
+                <i data-lucide="mouse-pointer-click" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+                <h3 class="text-lg font-semibold text-white">One click. Right app.</h3>
+              </div>
+              <p class="text-sm text-[${BRAND.muted}]">One icon for all apps. Users click once; we route to the right experience (Windows, Mac, VPN, or Web).</p>
+              <div class="mt-2 grid grid-cols-3 gap-2 text-sm">
+                ${['Windows','Mac'].map(d=>pill(d, STATE.ctx.device===d, 'set-device', d)).join('')}
+                ${['Corporate','VPN'].map(n=>pill(n, STATE.ctx.network===n, 'set-network', n)).join('')}
+                ${pill(STATE.ctx.compliant?'Compliant':'Non-compliant', STATE.ctx.compliant, 'toggle-compliance', '')}
+              </div>
+              <div class="text-sm text-[${BRAND.muted}]">Recommended route:</div>
+              <div class="inline-flex w-fit items-center gap-2 rounded-full bg-[${BRAND.accent}] px-3 py-1">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
+                <span class="text-white text-sm font-semibold">${route}</span>
+              </div>
+              <button type="button"
+                class="mt-2 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/30 px-2 py-1 text-xs text-[${BRAND.muted}] ${focusRing()}"
+                aria-expanded="false" aria-controls="why-route" data-action="toggle-why">
+                <i data-lucide="help-circle" class="w-3.5 h-3.5 text-[${BRAND.icon}]"></i> Why this route?
+              </button>
+              <div id="why-route" class="mt-2 hidden rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-[${BRAND.muted}]">
+                ${routeWhy(STATE.ctx)}
+              </div>
+            </div>
+
+            <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div class="flex items-center gap-2">
+                <i data-lucide="wand-2" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+                <h3 class="text-lg font-semibold text-white">Update once. Done.</h3>
+              </div>
+              <p class="text-sm text-[${BRAND.muted}]">Configure once; updates flow across tenants and environments—cloud, on-prem, hybrid.</p>
+              <div class="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
+                <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="sparkles" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> Roll out critical updates</div>
+                <label class="mt-2 flex flex-col gap-1">
+                  <span class="text-xs text-[${BRAND.muted}]">Hours per package → configure</span>
+                  <div class="flex items-center gap-2">
+                    <input aria-label="Hours per package" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.packHrs}" data-action="set-pack-hrs">
+                    <span>→</span>
+                    <input aria-label="Hours to configure" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.configHrs}" data-action="set-config-hrs">
+                  </div>
+                </label>
+                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.packHrs} → ${STATE.configHrs} hrs</span><strong class="text-white">${saved} hrs saved</strong></div>
+              </div>
+            </div>
+
+            <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div class="flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+                <h3 class="text-lg font-semibold text-white">Close zero-day windows.</h3>
+              </div>
+              <p class="text-sm text-[${BRAND.muted}]">Security patches roll out in hours, reducing exposure windows.</p>
+              <div class="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
+                <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="alarm-clock" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> Zero-day rollout</div>
+                <label class="mt-2 flex flex-col gap-1">
+                  <span class="text-xs text-[${BRAND.muted}]">Current time-to-deploy (hrs)</span>
+                  <input class="rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" aria-label="Current time to deploy (hours)" inputmode="decimal" value="${STATE.currentHrs}" data-action="set-current-hrs">
+                </label>
+                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.currentHrs} → 1.5 hrs</span><strong class="text-white">${round(reduced)} hrs reduced</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-white">Evidence (audit export preview)</h3>
+              <button type="button" data-action="copy-audit"
+                class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-3 py-1.5 text-sm font-bold text-white ${focusRing()}">
+                <i data-lucide="clipboard" class="w-4 h-4 text-[${BRAND.icon}]"></i>
+                <span id="copy-audit-label">${STATE.evidenceCopied ? "Copied!" : "Copy CSV to clipboard"}</span>
+              </button>
+            </div>
+            <pre class="mt-3 overflow-auto rounded-lg bg-black/30 p-3 text-xs text-[${BRAND.muted}]">${
+              [
+                "app,version,ring,who,when,backend",
+                `Chrome,126.0,Pilot,Group-EUC,2025-04-03,Intune`,
+                `Chrome,126.0,Gradual,Region-NA,2025-04-04,ConfigMgr`,
+                `Chrome,126.0,Prod,All-Employees,2025-04-05,Citrix`
+              ].join("\n")
+            }</pre>
+            <p class="mt-2 text-xs text-[${BRAND.muted}]">Tip: paste into Excel, Power BI, or your GRC tool.</p>
+          </div>
+
+          <div class="mt-3 rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-sm text-white">Manage once. Deploy anywhere — each step contributes to measurable ROI.</div>
+            <button type="button" data-action="advance" data-next="roi" class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}">
+              See Impact & ROI
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderROI(){
+      const r = STATE.roi;
+
+      const packagingHoursSavedPerMonth = clampNonNeg(r.appsInScope * r.avgUpdatesPerAppPerMonth * (r.currentHrsPerPackage - r.recastHrsPerCuratedUpdate));
+      const packagingLaborSavedPerMonthDollars = packagingHoursSavedPerMonth * clampNonNeg(r.loadedHourlyRate);
+
+      const riskWindowReductionDaysPerYear = clampNonNeg(r.criticalCVEsPerYear * (r.currentDaysToPatchCritical - r.withRingsDaysToPatch));
+
+      const auditHoursSavedPerYear = clampNonNeg((r.auditHoursPerQuarter - r.withRecastAuditHoursPerQuarter) * 4);
+      const auditEffortAvoidedPerYearDollars = auditHoursSavedPerYear * clampNonNeg(r.loadedHourlyRate);
+
+      const totalSavingsPerYear = (packagingLaborSavedPerMonthDollars * 12) + auditEffortAvoidedPerYearDollars;
+
+      const prob = clampNonNeg(r.realizationPct ?? 100) / 100;
+      const prorate = Math.min(12, Math.max(0, r.monthsToValue ?? 12)) / 12;
+      const adjTotalSavingsPerYear = totalSavingsPerYear * prob * prorate;
+
+      const netBenefitYear = adjTotalSavingsPerYear - clampNonNeg(r.recastAnnualCost);
+      const roiPct = r.recastAnnualCost ? (netBenefitYear / r.recastAnnualCost) * 100 : 0;
+
+      return `
+        <section role="tabpanel" id="panel-roi" aria-labelledby="tab-roi" class="space-y-8">
+          <div aria-live="polite">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              ${kpi('hammer','$ packaging labor saved / yr', `$${num(packagingLaborSavedPerMonthDollars * 12)}`, 'Apps × updates × (current − Recast) × rate')}
+              ${kpi('timer','Packaging hours / mo saved', round(packagingHoursSavedPerMonth), 'Operational capacity')}
+              ${kpi('shield','Risk window reduction / yr', `${round(riskWindowReductionDaysPerYear,1)} days`, 'Critical CVEs × (current − with rings)')}
+              ${kpi('file-text','$ audit effort avoided / yr', `$${num(auditEffortAvoidedPerYearDollars)}`, `${num(auditHoursSavedPerYear)} hrs saved @ rate`)}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <section class="rounded-2xl border border-white/10 bg-white/5 p-6 lg:col-span-2">
+              <h3 class="text-lg font-semibold text-white">Your numbers here (edit)</h3>
+
+              <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="space-y-3">
+                  <h4 class="text-sm font-semibold text-white">Packaging & updates</h4>
+                  ${numInput('Apps in scope','appsInScope', r.appsInScope)}
+                  ${numInput('Avg updates / app / month','avgUpdatesPerAppPerMonth', r.avgUpdatesPerAppPerMonth)}
+                  ${numInput('Current hrs per package/update (default 2.5)','currentHrsPerPackage', r.currentHrsPerPackage)}
+                  ${numInput('Recast hrs per curated update (default 0.25)','recastHrsPerCuratedUpdate', r.recastHrsPerCuratedUpdate)}
+                </div>
+
+                <div class="space-y-3">
+                  <h4 class="text-sm font-semibold text-white">Risk & audit</h4>
+                  ${numInput('Critical CVEs / year','criticalCVEsPerYear', r.criticalCVEsPerYear)}
+                  ${numInput('Current days to patch critical (default 9)','currentDaysToPatchCritical', r.currentDaysToPatchCritical)}
+                  ${numInput('With rings: days to patch (default 3)','withRingsDaysToPatch', r.withRingsDaysToPatch)}
+                  ${numInput('Audit hours / quarter compiling evidence (default 8)','auditHoursPerQuarter', r.auditHoursPerQuarter)}
+                  ${numInput('With Recast: audit hours / quarter (default 0.75)','withRecastAuditHoursPerQuarter', r.withRecastAuditHoursPerQuarter)}
+                </div>
+              </div>
+
+              <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="space-y-3">
+                  <h4 class="text-sm font-semibold text-white">Cost model</h4>
+                  ${numInput('Loaded hourly rate ($/hr) (default 85)','loadedHourlyRate', r.loadedHourlyRate)}
+                  ${numInput('Recast annual cost ($)','recastAnnualCost', r.recastAnnualCost)}
+                  ${numInput('Probability to realize (%)','realizationPct', r.realizationPct)}
+                  ${numInput('Time-to-value (months, yr-1)','monthsToValue', r.monthsToValue)}
+                </div>
+
+                <div class="space-y-2 text-sm">
+                  <div class="rounded-lg bg-black/30 px-3 py-2 flex items-center justify-between">
+                    <span class="text-[${BRAND.muted}]">Total savings / year (adjusted)</span>
+                    <strong class="text-white">$${num2(adjTotalSavingsPerYear,2)}</strong>
+                  </div>
+                  <div class="rounded-lg bg-black/30 px-3 py-2 flex items-center justify-between">
+                    <span class="text-[${BRAND.muted}]">Net benefit / year</span>
+                    <strong class="text-white">$${num2(netBenefitYear,2)}</strong>
+                  </div>
+                  <div class="rounded-lg bg-black/30 px-3 py-2 flex items-center justify-between">
+                    <span class="text-[${BRAND.muted}]">ROI (adjusted)</span>
+                    <strong class="text-white">${round(roiPct,1)}%</strong>
+                  </div>
+                </div>
+              </div>
+
+              <p class="mt-4 text-xs text-[${BRAND.muted}]">Assumptions reflect common enterprise environments and can be edited inline.</p>
+            </section>
+
+            <aside class="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
+              <h3 class="text-lg font-semibold text-white">Scope included in the model</h3>
+              <ul class="list-disc pl-5 text-sm text-[${BRAND.muted}] space-y-1">
+                <li>Catalog & packaging, lifecycle rings, cross-platform reach (Windows/macOS, VDI/DAAS).</li>
+                <li>Governance & evidence with CVE mapping and ring reporting.</li>
+                <li>Identity targeting, SSO, approvals, and Teams entry point.</li>
+                <li>Integrations via APIs/PowerShell; reuse of Intune/ConfigMgr.</li>
+                <li>Scale & reliability signals (catalog velocity, service health).</li>
+              </ul>
+
+              <div class="pt-2 border-t border-white/10">
+                <h4 class="text-sm font-semibold text-white">Copy summary</h4>
+                <button type="button" data-action="copy-onepager" class="mt-2 inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}">
+                  <i data-lucide="clipboard" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> ${STATE.copied ? 'Copied!' : 'Copy executive one-pager'}
+                </button>
+                <button type="button" data-action="reset-calculator" class="mt-2 inline-flex items-center gap-2 rounded-lg border border-[${BRAND.accent}] bg-transparent px-4 py-2 text-sm font-semibold text-[${BRAND.accent}] hover:bg-[${BRAND.accent}] hover:text-white transition ${focusRing()}">
+                  Reset calculator
+                </button>
+              </div>
+            </aside>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h4 class="text-sm font-semibold text-white">Status-quo (Do Nothing) cost</h4>
+            <p class="mt-1 text-xs text-[${BRAND.muted}]">What you keep spending without Recast.</p>
+            <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              ${kpi('timer','Packaging hours / mo (current)', round(r.appsInScope * r.avgUpdatesPerAppPerMonth * r.currentHrsPerPackage),'')}
+              ${kpi('hammer','$ packaging labor / yr (current)', '$'+num(r.appsInScope * r.avgUpdatesPerAppPerMonth * r.currentHrsPerPackage * r.loadedHourlyRate * 12),'')}
+              ${kpi('shield-alert','Risk window (days / yr, current)', round(r.criticalCVEsPerYear * r.currentDaysToPatchCritical,1),'')}
+            </div>
+          </div>
+
+          <p class="text-xs text-[${BRAND.muted}]">Transparency: Recast AW complements device management (e.g., Intune). Windows/macOS focus. Metrics are illustrative; actuals vary.</p>
+        </section>
+      `;
+    }
+
+    function kpi(icon,label,value,hint){
+      return `
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-[${BRAND.muted}]">${label}</div>
+              <div class="text-xl font-semibold text-white">${value}</div>
+            </div>
+            <i data-lucide="${icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+          </div>
+          ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function numInput(label, key, value){
+      return `
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-[${BRAND.muted}]">${label}</span>
+          <input class="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${value}" data-action="set-roi" data-key="${key}">
+        </label>
+      `;
+    }
+
+    function pill(label, active, action, value){
+      return `
+        <button
+          type="button"
+          class="${
+            cx(
+              'rounded-full px-3 py-1 border text-sm transition',
+              active
+                ? `bg-[${BRAND.accent}] text-white border-transparent`
+                : 'bg-black/30 text-white/90 hover:bg-white/10 border-white/15',
+              focusRing()
+            )
+          }"
+          data-action="${action}"
+          data-value="${String(value)}"
+        >
+          ${label}
+        </button>
+      `;
+    }
+
+    function attachGlobalEvents(){
+      const root = document.getElementById('app');
+
+      // Keyboard left/right to switch tabs
+      const tabButtons = Array.from(root.querySelectorAll('[data-action="switch-tab"]'));
+      if (tabButtons.length){
+        const ids = TABS.map(t=>t.id);
+        root.addEventListener('keydown', (e)=>{
+          if (!['ArrowLeft','ArrowRight'].includes(e.key)) return;
+          const idx = ids.indexOf(STATE.activeTab);
+          const next = e.key==='ArrowRight' ? (idx+1)%ids.length : (idx-1+ids.length)%ids.length;
+          STATE.activeTab = ids[next];
+          track('scene_viewed', { scene: STATE.activeTab });
+          if (STATE.activeTab === 'solution') track('funnel_step', { step: 'view_solution' });
+          if (STATE.activeTab === 'roi') track('funnel_step', { step: 'view_roi' });
+          render();
+        });
+      }
+
+      root.querySelectorAll('[data-action="switch-tab"]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const next = e.currentTarget.getAttribute('data-tab');
+          STATE.activeTab = next;
+          track('scene_viewed', { scene: next });
+          if (next === 'solution') track('funnel_step', { step: 'view_solution' });
+          if (next === 'roi') track('funnel_step', { step: 'view_roi' });
+          render();
+        });
+      });
+
+      root.querySelectorAll('[data-action="advance"]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const next = e.currentTarget.getAttribute('data-next');
+          STATE.activeTab = next;
+          track('toggle_changed', { control: 'tab', value: next });
+          track('scene_viewed', { scene: next });
+          if (next === 'solution') track('funnel_step', { step: 'view_solution' });
+          if (next === 'roi') track('funnel_step', { step: 'view_roi' });
+          render();
+        });
+      });
+
+      root.querySelectorAll('[data-action="set-device"]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          STATE.ctx.device = e.currentTarget.getAttribute('data-value');
+          track('toggle_changed', { control: 'device', value: STATE.ctx.device });
+          render();
+        });
+      });
+
+      root.querySelectorAll('[data-action="set-network"]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          STATE.ctx.network = e.currentTarget.getAttribute('data-value');
+          track('toggle_changed', { control: 'network', value: STATE.ctx.network });
+          render();
+        });
+      });
+
+      root.querySelectorAll('[data-action="toggle-compliance"]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          STATE.ctx.compliant = !STATE.ctx.compliant;
+          track('toggle_changed', { control: 'compliant', value: STATE.ctx.compliant });
+          render();
+        });
+      });
+
+      root.querySelectorAll('[data-action="set-roi"]').forEach(inp=>{
+        inp.addEventListener('input', (e)=>{
+          const key = e.currentTarget.getAttribute('data-key');
+          const v = Number(String(e.currentTarget.value).replace(/[^0-9.\-]/g,''));
+          STATE.roi[key] = isFinite(v) ? v : 0;
+        });
+      });
+
+      const resetBtn = root.querySelector('[data-action="reset-calculator"]');
+      if (resetBtn) resetBtn.addEventListener('click', ()=>{
+        STATE.roi = {
+          appsInScope: 120,
+          avgUpdatesPerAppPerMonth: 2,
+          currentHrsPerPackage: 2.5,
+          recastHrsPerCuratedUpdate: 0.25,
+          loadedHourlyRate: 85,
+          criticalCVEsPerYear: 6,
+          currentDaysToPatchCritical: 9,
+          withRingsDaysToPatch: 3,
+          auditHoursPerQuarter: 8,
+          withRecastAuditHoursPerQuarter: 0.75,
+          recastAnnualCost: 120000,
+          realizationPct: 85,
+          monthsToValue: 12
+        };
+        track('cta_clicked', { cta: 'reset_calculator' });
+        render();
+      });
+
+      const copyBtn = root.querySelector('[data-action="copy-onepager"]');
+      if (copyBtn) copyBtn.addEventListener('click', async ()=>{
+        const r = STATE.roi;
+
+        const packagingHoursSavedPerMonth = clampNonNeg(r.appsInScope * r.avgUpdatesPerAppPerMonth * (r.currentHrsPerPackage - r.recastHrsPerCuratedUpdate));
+        const packagingLaborSavedPerMonthDollars = packagingHoursSavedPerMonth * clampNonNeg(r.loadedHourlyRate);
+        const riskWindowReductionDaysPerYear = clampNonNeg(r.criticalCVEsPerYear * (r.currentDaysToPatchCritical - r.withRingsDaysToPatch));
+        const auditHoursSavedPerYear = clampNonNeg((r.auditHoursPerQuarter - r.withRecastAuditHoursPerQuarter) * 4);
+        const auditEffortAvoidedPerYearDollars = auditHoursSavedPerYear * clampNonNeg(r.loadedHourlyRate);
+        const totalSavingsPerYear = (packagingLaborSavedPerMonthDollars * 12) + auditEffortAvoidedPerYearDollars;
+
+        const prob = clampNonNeg(r.realizationPct ?? 100) / 100;
+        const prorate = Math.min(12, Math.max(0, r.monthsToValue ?? 12)) / 12;
+        const adjTotalSavingsPerYear = totalSavingsPerYear * prob * prorate;
+
+        const netBenefitYear = adjTotalSavingsPerYear - clampNonNeg(r.recastAnnualCost);
+        const roiPct = r.recastAnnualCost ? (netBenefitYear / r.recastAnnualCost) * 100 : 0;
+
+        const body =
+`Recast Application Workspace — Executive One-Pager
+
+Inputs (editable)
+ - Apps in scope: ${r.appsInScope}
+ - Avg updates per app / month: ${r.avgUpdatesPerAppPerMonth}
+ - Current hrs per package/update: ${r.currentHrsPerPackage}
+ - Recast hrs per curated update: ${r.recastHrsPerCuratedUpdate}
+ - Loaded hourly rate: $${r.loadedHourlyRate}/hr
+ - Critical CVEs / year: ${r.criticalCVEsPerYear}
+ - Current days to patch critical: ${r.currentDaysToPatchCritical}
+ - With rings: days to patch: ${r.withRingsDaysToPatch}
+ - Audit hours / quarter: ${r.auditHoursPerQuarter}
+ - With Recast audit hours / quarter: ${r.withRecastAuditHoursPerQuarter}
+ - Recast annual cost: $${r.recastAnnualCost}
+ - Probability to realize: ${r.realizationPct}%
+ - Time-to-value (months, yr-1): ${r.monthsToValue}
+
+Outputs
+ - Packaging hours saved / month: ${round(packagingHoursSavedPerMonth)}
+ - $ packaging labor saved / year: $${num(packagingLaborSavedPerMonthDollars * 12)}
+ - Risk window reduction / year: ${round(riskWindowReductionDaysPerYear,1)} days
+ - Audit hours avoided / year: ${round(auditHoursSavedPerYear)}
+ - $ audit effort avoided / year: $${num(auditEffortAvoidedPerYearDollars)}
+ - Total savings / year (adjusted): $${num2(adjTotalSavingsPerYear,2)}
+ - Net benefit / year: $${num2(netBenefitYear,2)}
+ - ROI (adjusted): ${round(roiPct,1)}%
+
+Scope included: catalog & packaging, lifecycle rings, cross-platform reach, governance & evidence, identity & SSO, integrations, and scale signals.`;
+        try {
+          await navigator.clipboard.writeText(body);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = body;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        STATE.copied = true;
+        track('cta_clicked', { cta: 'copy_onepager' });
+        render();
+        setTimeout(()=>{ STATE.copied = false; render(); }, 1200);
+      });
+
+      const whyBtn = root.querySelector('[data-action="toggle-why"]');
+      if (whyBtn){
+        whyBtn.addEventListener('click', ()=>{
+          const box = root.querySelector('#why-route');
+          if (!box) return;
+          const hidden = box.classList.toggle('hidden');
+          whyBtn.setAttribute('aria-expanded', String(!hidden));
+        });
+      }
+
+      const copyAuditBtn = root.querySelector('[data-action="copy-audit"]');
+      if (copyAuditBtn){
+        copyAuditBtn.addEventListener('click', async ()=>{
+          const text = root.querySelector('pre')?.textContent || '';
+          try { await navigator.clipboard.writeText(text); } 
+          catch {
+            const ta = document.createElement('textarea'); ta.value = text;
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+          }
+          STATE.evidenceCopied = true;
+          track('cta_clicked', { cta: 'copy_audit_csv' });
+          render();
+          setTimeout(()=>{ STATE.evidenceCopied = false; render(); }, 1200);
+        });
+      }
+
+      // Inline controls in Solution cards
+      const packHrs = root.querySelector('[data-action="set-pack-hrs"]');
+      if (packHrs) packHrs.addEventListener('input', e => { STATE.packHrs = clampNonNeg(e.currentTarget.value); });
+      const configHrs = root.querySelector('[data-action="set-config-hrs"]');
+      if (configHrs) configHrs.addEventListener('input', e => { STATE.configHrs = clampNonNeg(e.currentTarget.value); });
+      const curHrs = root.querySelector('[data-action="set-current-hrs"]');
+      if (curHrs) curHrs.addEventListener('input', e => { STATE.currentHrs = clampNonNeg(e.currentTarget.value); });
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      track('scene_viewed', { scene: STATE.activeTab });
+      track('funnel_step', { step: 'view_problems' });
+      render();
+    });
+  </script>
+</body>
+</html>
