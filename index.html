@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Recast — Executive Click-Through (On-Brand + ROI Enhancements)</title>
+  <title>Recast — Executive Click-Through (Simplified Problems + Value Highlights)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -43,18 +43,17 @@
       pink: '#ff5bbd'
     };
 
-    const CATALOG = { countLabel: "Recast Software" };
+    const CATALOG = { countLabel: "7,000+ curated titles", asOf: "Apr 2025" };
+    const VALUE = { minutesSavedPerUser: 9 }; // heuristically from one-click routing
 
     const SESSION_ID = Math.random().toString(36).slice(2);
 
     const STATE = {
       activeTab: 'problems',
-      // Context toggles
       ctx: { device: 'Windows', network: 'Corporate', compliant: true },
       packHrs: 8,
       configHrs: 2,
       currentHrs: 24,
-      // ROI: Quick calculator inputs (defaults + credibility knobs)
       roi: {
         appsInScope: 120,
         avgUpdatesPerAppPerMonth: 2,
@@ -90,6 +89,8 @@
     function round(n, d=2){ const m = Math.pow(10,d); return Math.round((Number(n)||0) * m) / m; }
     function num(n){ return new Intl.NumberFormat().format(Math.round(Number(n)||0)); }
     function num2(n, d=2){ return Number(n||0).toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d}); }
+    function clampNonNeg(n){ return Math.max(0, Number(n) || 0); }
+
     function routeRecommendation(ctx){
       if(!ctx.compliant) return 'Web';
       if(ctx.device === 'Windows' && ctx.network !== 'Home') return 'Local';
@@ -102,7 +103,6 @@
       reasons.push(`Session/Broker: ${ctx.network!=="Home" ? "Broker available" : "Home network"}`);
       return `Decision factors → ${reasons.join(" • ")}`;
     }
-    function clampNonNeg(n){ return Math.max(0, Number(n) || 0); }
 
     function focusRing(extra=''){
       return cx(
@@ -189,69 +189,155 @@
       return '';
     }
 
-    function renderProblems(){
-      const problems = [
-        { key: 'frag', title: 'Fragmented delivery', sub: 'Windows / Mac / VDI / Web — users guess the right way.', icon: 'layers' },
-        { key: 'package', title: 'Packaging backlog', sub: 'Rebuild per version; updates stall.', icon: 'boxes' },
-        { key: 'zeroday', title: 'Zero-day exposure', sub: 'Patching takes days, not minutes.', icon: 'shield-check' },
-        { key: 'migration', title: 'Slow upgrades', sub: 'Stuck to old images; change is slow.', icon: 'building-2' }
-      ];
+    function kpiTile({icon, label, value, hint=''}){
       return `
-        <section role="tabpanel" id="panel-problems" aria-labelledby="tab-problems">
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            ${problems.map(p => `
-              <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 transition will-change-transform hover:-translate-y-0.5">
+        <div class="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-white">${label}</span>
+            <i data-lucide="${icon}" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
+          </div>
+          <div class="mt-3 text-2xl font-semibold text-white">${value}</div>
+          ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderProblems(){
+      // Lightweight KPI estimates to anchor the page (read-only)
+      const r = STATE.roi;
+      const packagingHoursSavedPerMonth = clampNonNeg(r.appsInScope * r.avgUpdatesPerAppPerMonth * (r.currentHrsPerPackage - r.recastHrsPerCuratedUpdate));
+      const zeroDayHoursReducedPerIncident = clampNonNeg((r.currentDaysToPatchCritical - r.withRingsDaysToPatch) * 24);
+
+      const problemCards = [
+        {title:'Fragmented delivery', sub:'Windows / Mac / VDI / Web — users guess the right way.', icon:'layers'},
+        {title:'Packaging backlog', sub:'Rebuild per version; updates stall.', icon:'boxes'},
+        {title:'Zero-day exposure', sub:'Patching takes days, not minutes.', icon:'shield-check'},
+        {title:'Slow upgrades', sub:'Stuck to old images; change is slow.', icon:'building-2'}
+      ];
+
+      const valueCards = [
+        {
+          title:'Audit & compliance',
+          icon:'file-search',
+          bullets:[
+            'Staged rollouts with approvals',
+            'Immutable audit trails & export',
+            'Policy compliance visibility'
+          ]
+        },
+        {
+          title:'Catalog depth (pre-packaged)',
+          icon:'package',
+          bullets:[
+            `${CATALOG.countLabel} (as of ${CATALOG.asOf})`,
+            'Curated, secure defaults',
+            'Less scripting; faster deployment'
+          ]
+        },
+        {
+          title:'Integration ecosystem',
+          icon:'boxes',
+          bullets:[
+            'Bridge across Intune & ConfigMgr',
+            'Works with Citrix, VMware, AVD',
+            'Use existing infra — no agent sprawl'
+          ]
+        },
+        {
+          title:'Day-one productivity',
+          icon:'zap',
+          bullets:[
+            'New users get apps on first login',
+            'SSO + self-service catalog',
+            'Faster onboarding, happier employees'
+          ]
+        }
+      ];
+
+      return `
+        <section role="tabpanel" id="panel-problems" aria-labelledby="tab-problems" class="space-y-6">
+          <h2 class="sr-only">Current Problems</h2>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3" role="region" aria-label="Impact snapshot">
+            ${kpiTile({icon:'clock-3', label:'Minutes saved (per user)', value:num(VALUE.minutesSavedPerUser)})}
+            ${kpiTile({icon:'wrench', label:'Packaging hours avoided (per month)', value:num(round(packagingHoursSavedPerMonth,1))})}
+            ${kpiTile({icon:'alarm-clock', label:'Zero-day window reduced (hrs)', value:num(round(zeroDayHoursReducedPerIncident,0)), hint:'Per critical CVE incident'})}
+          </div>
+
+          <p class="text-sm text-[${BRAND.muted}]">We focus on outcomes: apps work, stay current, and reduce risk without firefighting.</p>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" role="region" aria-label="Pain points">
+            ${problemCards.map(p=>`
+              <article class="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-5">
                 <div class="flex items-center gap-2">
-                  <i data-lucide="${p.icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+                  <i data-lucide="${p.icon}" class="w-5 h-5 text-[${BRAND.icon}]"></i>
                   <h3 class="text-lg font-semibold text-white">${p.title}</h3>
                 </div>
                 <p class="text-sm text-[${BRAND.muted}]">${p.sub}</p>
-                <div class="mt-auto h-1 rounded bg-[${BRAND.accent}] opacity-0 transition-opacity group-hover:opacity-100"></div>
-              </div>
+              </article>
             `).join('')}
           </div>
 
-          <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 class="text-base font-semibold">What our platform includes</h3>
-            <ol class="mt-3 list-decimal pl-5 text-sm text-[${BRAND.muted}] space-y-1">
-              <li>Catalog & packaging: size, cadence, languages, provenance, secure defaults.</li>
-              <li>Lifecycle delivery: staged rollouts, rollback, ring status, collision avoidance with images.</li>
-              <li>Cross-platform reach: Windows/macOS; physical + VDI/DAAS; one definition across Intune/ConfigMgr + Citrix/AVD/W365.</li>
-              <li>Governance & evidence: full audit history, version provenance, CVE mapping, ring reporting.</li>
-              <li>Access & UX: identity targeting, SSO, approvals, Teams entry point.</li>
-              <li>Integrations: APIs/PowerShell; reuse of deployment infra (no agent sprawl).</li>
-              <li>Scale & reliability: catalog additions, update velocity, service health transparency.</li>
-            </ol>
-            <div class="mt-4 grid grid-cols-1 gap-2 text-sm text-[${BRAND.muted}] sm:grid-cols-2">
-              <div>
-                <h4 class="font-semibold text-white">Architecture, security & platform</h4>
-                <ul class="mt-1 list-disc pl-5 space-y-1">
-                  <li>Identity-driven targeting & launch (user/group, device trust/compliance, session context).</li>
-                  <li>macOS: pkg/dmg/script; notarization-aware; Apple silicon tested; profiles/PPPC via MDM.</li>
-                  <li>VDI/DAAS: Smart Icons choose install vs. stream; avoids golden-image rebuilds.</li>
-                </ul>
-              </div>
-              <div>
-                <h4 class="font-semibold text-white">Operations</h4>
-                <ul class="mt-1 list-disc pl-5 space-y-1">
-                  <li>RBAC & audit: role-scoped actions, immutable logs, CSV/JSON export.</li>
-                  <li>Deployment: cloud or on-prem; reuse Intune/ConfigMgr; minimal/no extra agents.</li>
-                </ul>
-              </div>
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h3 class="text-base font-semibold text-white">What good looks like with Application Workspace</h3>
+            <ul class="mt-2 grid grid-cols-1 gap-2 text-sm text-[${BRAND.muted}] sm:grid-cols-2">
+              <li class="list-disc pl-5">Unified access: one workspace, any device.</li>
+              <li class="list-disc pl-5">Configure once, deploy everywhere, patch automatically.</li>
+              <li class="list-disc pl-5">Close zero-day windows in hours.</li>
+              <li class="list-disc pl-5">Scale with curated apps, staged rollouts, and audit trails.</li>
+              <li class="list-disc pl-5">Empower users with SSO and self-service.</li>
+            </ul>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-base font-semibold text-white">Value components (why customers choose Recast)</h3>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              ${valueCards.map(v=>`
+                <article class="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="${v.icon}" class="w-5 h-5 text-[${BRAND.icon}]"></i>
+                    <h4 class="text-base font-semibold text-white">${v.title}</h4>
+                  </div>
+                  <ul class="mt-1 space-y-1 text-sm text-[${BRAND.muted}]">
+                    ${v.bullets.map(b=>`<li class="list-disc pl-5">${b}</li>`).join('')}
+                  </ul>
+                </article>
+              `).join('')}
             </div>
           </div>
 
-          <div class="mt-6 flex justify-end">
+          <div class="flex justify-end">
             <button
               type="button"
               data-action="advance"
               data-next="solution"
               class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}"
             >
-              How We Solve It
+              Show the solution
             </button>
           </div>
         </section>
+      `;
+    }
+
+    function pill(label, active, action, value){
+      return `
+        <button
+          type="button"
+          class="${
+            cx(
+              'rounded-full px-3 py-1 border text-sm transition',
+              active
+                ? `bg-[${BRAND.accent}] text-white border-transparent`
+                : 'bg-black/30 text-white/90 hover:bg-white/10 border-white/15',
+              focusRing()
+            )
+          }"
+          data-action="${action}"
+          data-value="${String(value)}"
+        >
+          ${label}
+        </button>
       `;
     }
 
@@ -323,7 +409,7 @@
                     <input aria-label="Hours to configure" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.configHrs}" data-action="set-config-hrs">
                   </div>
                 </label>
-                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.packHrs} → ${STATE.configHrs} hrs</span><strong class="text-white">${saved} hrs saved</strong></div>
+                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.packHrs} → ${STATE.configHrs} hrs</span><strong class="text-white">${clampNonNeg(STATE.packHrs - STATE.configHrs)} hrs saved</strong></div>
               </div>
             </div>
 
@@ -339,7 +425,7 @@
                   <span class="text-xs text-[${BRAND.muted}]">Current time-to-deploy (hrs)</span>
                   <input class="rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" aria-label="Current time to deploy (hours)" inputmode="decimal" value="${STATE.currentHrs}" data-action="set-current-hrs">
                 </label>
-                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.currentHrs} → 1.5 hrs</span><strong class="text-white">${round(reduced)} hrs reduced</strong></div>
+                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.currentHrs} → 1.5 hrs</span><strong class="text-white">${round(clampNonNeg(STATE.currentHrs - 1.5))} hrs reduced</strong></div>
               </div>
             </div>
           </div>
@@ -371,6 +457,30 @@
             </button>
           </div>
         </section>
+      `;
+    }
+
+    function kpi(icon,label,value,hint){
+      return `
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-[${BRAND.muted}]">${label}</div>
+              <div class="text-xl font-semibold text-white">${value}</div>
+            </div>
+            <i data-lucide="${icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+          </div>
+          ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function numInput(label, key, value){
+      return `
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-[${BRAND.muted}]">${label}</span>
+          <input class="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${value}" data-action="set-roi" data-key="${key}">
+        </label>
       `;
     }
 
@@ -490,51 +600,6 @@
 
           <p class="text-xs text-[${BRAND.muted}]">Transparency: Recast AW complements device management (e.g., Intune). Windows/macOS focus. Metrics are illustrative; actuals vary.</p>
         </section>
-      `;
-    }
-
-    function kpi(icon,label,value,hint){
-      return `
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-xs text-[${BRAND.muted}]">${label}</div>
-              <div class="text-xl font-semibold text-white">${value}</div>
-            </div>
-            <i data-lucide="${icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
-          </div>
-          ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''}
-        </div>
-      `;
-    }
-
-    function numInput(label, key, value){
-      return `
-        <label class="flex flex-col gap-1">
-          <span class="text-xs text-[${BRAND.muted}]">${label}</span>
-          <input class="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${value}" data-action="set-roi" data-key="${key}">
-        </label>
-      `;
-    }
-
-    function pill(label, active, action, value){
-      return `
-        <button
-          type="button"
-          class="${
-            cx(
-              'rounded-full px-3 py-1 border text-sm transition',
-              active
-                ? `bg-[${BRAND.accent}] text-white border-transparent`
-                : 'bg-black/30 text-white/90 hover:bg-white/10 border-white/15',
-              focusRing()
-            )
-          }"
-          data-action="${action}"
-          data-value="${String(value)}"
-        >
-          ${label}
-        </button>
       `;
     }
 
