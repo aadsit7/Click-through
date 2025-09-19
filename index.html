@@ -2,58 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Recast — Executive Click-Through (Simplified Problems + Value Highlights)</title>
+  <title>Recast — Executive Click-Through (Polished UX)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root{
-      --bg:#2c3a45; --accent:#00aaff; --text:#fff; --muted:#ccd; --icon:#444; --pink:#ff5bbd;
+      --bg:#0d141a; --surface:#131c23; --muted:#c7d0d9; --muted2:#98a5b3; --text:#f7fafc; --accent:#3abff8; --icon:#6b7785; --pink:#ff57c9; --success:#22c55e;
     }
+    html,body{background: radial-gradient(1200px 700px at 20% -10%, #14212b 0%, var(--bg) 60%) fixed; color:var(--text);}
     @keyframes fadeInUp { from { opacity:.0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
   </style>
 </head>
-<body class="min-h-screen bg-[#2c3a45] text-white" style="font-family:'Work Sans', Helvetica, Arial, 'Open Sans', sans-serif;">
-  <div class="pointer-events-none absolute inset-0 -z-10 opacity-20">
-    <svg aria-hidden="true" class="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <pattern id="hex" width="36" height="31.2" patternUnits="userSpaceOnUse">
-          <g stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" fill="none">
-            <path d="M9 0l9 5.2v10.4l-9 5.2L0 15.6V5.2L9 0zM27 0l9 5.2v10.4l-9 5.2-9-5.2V5.2L27 0zM18 15.6l9 5.2v10.4l-9 5.2-9-5.2V20.8l9-5.2z" />
-          </g>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#hex)"/>
-    </svg>
-  </div>
-
+<body class="min-h-screen antialiased selection:bg-sky-300/20" style="font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
   <div id="app" class="min-h-screen"></div>
 
   <script>
+    // ---- Brand + constants ---------------------------------------------------
     const BRAND = {
-      bg: '#2c3a45',
-      accent: '#00aaff',
-      text: '#ffffff',
-      muted: '#ccd',
-      icon: '#444',
-      pink: '#ff5bbd'
+      bg: 'var(--bg)',
+      surface: 'var(--surface)',
+      accent: 'var(--accent)',
+      text: 'var(--text)',
+      muted: 'var(--muted)',
+      muted2: 'var(--muted2)',
+      icon: 'var(--icon)',
+      pink: 'var(--pink)',
+      success: 'var(--success)'
     };
-
     const CATALOG = { countLabel: "7,000+ curated titles", asOf: "Apr 2025" };
-    const VALUE = { minutesSavedPerUser: 9 }; // heuristically from one-click routing
-
     const SESSION_ID = Math.random().toString(36).slice(2);
 
+    // ---- App state -----------------------------------------------------------
     const STATE = {
       activeTab: 'problems',
+      // Context toggles for routing demo
       ctx: { device: 'Windows', network: 'Corporate', compliant: true },
       packHrs: 8,
       configHrs: 2,
       currentHrs: 24,
+      // ROI calculator
       roi: {
         appsInScope: 120,
         avgUpdatesPerAppPerMonth: 2,
@@ -69,8 +61,7 @@
         realizationPct: 85,
         monthsToValue: 12
       },
-      copied: false,
-      evidenceCopied: false
+      copied: false
     };
 
     const TABS = [
@@ -79,18 +70,17 @@
       { id: 'roi', label: 'Impact & ROI', icon: 'bar-chart-3' }
     ];
 
+    // ---- Utilities -----------------------------------------------------------
     function track(event, payload = {}) {
       window.__recastAnalytics = window.__recastAnalytics || [];
       window.__recastAnalytics.push({ ts: Date.now(), sid: SESSION_ID, event, payload });
       try { console.log('[analytics]', event, payload); } catch {}
     }
-
     function cx(...a){ return a.filter(Boolean).join(' '); }
     function round(n, d=2){ const m = Math.pow(10,d); return Math.round((Number(n)||0) * m) / m; }
     function num(n){ return new Intl.NumberFormat().format(Math.round(Number(n)||0)); }
     function num2(n, d=2){ return Number(n||0).toLocaleString(undefined,{minimumFractionDigits:d, maximumFractionDigits:d}); }
     function clampNonNeg(n){ return Math.max(0, Number(n) || 0); }
-
     function routeRecommendation(ctx){
       if(!ctx.compliant) return 'Web';
       if(ctx.device === 'Windows' && ctx.network !== 'Home') return 'Local';
@@ -103,7 +93,6 @@
       reasons.push(`Session/Broker: ${ctx.network!=="Home" ? "Broker available" : "Home network"}`);
       return `Decision factors → ${reasons.join(" • ")}`;
     }
-
     function focusRing(extra=''){
       return cx(
         'focus-visible:outline-none',
@@ -115,31 +104,29 @@
       );
     }
 
+    // ---- Render root ---------------------------------------------------------
     function render() {
       const root = document.getElementById('app');
       root.innerHTML = `
-        <header class="relative overflow-hidden">
-          <div class="relative mx-auto max-w-7xl px-4 pt-14 pb-10">
+        <header class="relative">
+          <div class="relative mx-auto max-w-7xl px-5 pt-14 pb-8">
             <div class="opacity-0 translate-y-2 animate-[fadeInUp_.35s_ease_forwards]">
-              <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs tracking-wide text-[${BRAND.muted}]">
-                Executive overview
-              </div>
-              <h1 class="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                <span class="text-white">Define apps once. Deliver everywhere—with evidence.</span>
+              <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">
+                Define apps once. Deliver everywhere—with evidence.
               </h1>
-              <div class="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[${BRAND.muted}]">
+              <div class="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[${BRAND.muted}]">
                 <i data-lucide="library" class="w-3.5 h-3.5 text-[${BRAND.icon}]"></i>
                 <span id="catalog-chip">${CATALOG.countLabel}</span>
                 <span class="opacity-70">(as of ${CATALOG.asOf})</span>
               </div>
-              <p class="mt-2 max-w-3xl text-[${BRAND.muted}]">We move from fragmented delivery to consistent outcomes your teams can rely on.</p>
+              <p class="mt-3 max-w-3xl text-[${BRAND.muted}]">From fragmented delivery to consistent outcomes leaders can trust.</p>
             </div>
           </div>
         </header>
 
-        <main class="mx-auto max-w-7xl px-4 pb-24">
+        <main class="mx-auto max-w-7xl px-5 pb-24">
           ${renderTabs()}
-          <section class="mt-10">${renderActivePanel()}</section>
+          <section class="mt-8">${renderActivePanel()}</section>
         </main>
       `;
       if (window.lucide && window.lucide.createIcons) {
@@ -150,13 +137,13 @@
 
     function renderTabs() {
       return `
-        <nav role="tablist" aria-label="Demo sections" class="flex w-full flex-wrap gap-2 rounded-full bg-white/5 p-1 ring-1 ring-white/10">
+        <nav role="tablist" aria-label="Sections" class="flex w-full flex-wrap gap-2 rounded-2xl bg-white/5 p-1 ring-1 ring-white/10">
           ${TABS.map(t => `
             <button
               type="button"
               class="${
                 cx(
-                  'group relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm sm:text-base transition',
+                  'group relative inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm sm:text-base transition',
                   focusRing(),
                   STATE.activeTab === t.id
                     ? 'bg-[${BRAND.accent}] text-white'
@@ -170,11 +157,7 @@
               data-action="switch-tab"
               data-tab="${t.id}"
             >
-              <span class="relative inline-flex items-center justify-center">
-                <span class="absolute -inset-2 rounded-full bg-[${BRAND.pink}] opacity-0 blur transition duration-200
-                  group-hover:opacity-40 group-focus-visible:opacity-60 ${STATE.activeTab === t.id ? 'opacity-40' : ''}" aria-hidden="true"></span>
-                <i data-lucide="${t.icon}" class="relative w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
-              </span>
+              <i data-lucide="${t.icon}" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
               <span>${t.label}</span>
             </button>
           `).join('')}
@@ -189,30 +172,30 @@
       return '';
     }
 
-    function kpiTile({icon, label, value, hint=''}){
+    // ---- Problems (polished, exec-friendly) ---------------------------------
+    function statCard({icon,label,value,foot=''}) {
       return `
-        <div class="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-white">${label}</span>
-            <i data-lucide="${icon}" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
+            <i data-lucide="${icon}" class="w-4 h-4 text-[${BRAND.icon}]"></i>
           </div>
-          <div class="mt-3 text-2xl font-semibold text-white">${value}</div>
-          ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''}
+          <div class="mt-3 text-3xl font-semibold tracking-tight">${value}</div>
+          ${foot ? `<p class="mt-1 text-xs text-[${BRAND.muted}]">${foot}</p>`:''}
         </div>
       `;
     }
 
     function renderProblems(){
-      // Lightweight KPI estimates to anchor the page (read-only)
       const r = STATE.roi;
       const packagingHoursSavedPerMonth = clampNonNeg(r.appsInScope * r.avgUpdatesPerAppPerMonth * (r.currentHrsPerPackage - r.recastHrsPerCuratedUpdate));
       const zeroDayHoursReducedPerIncident = clampNonNeg((r.currentDaysToPatchCritical - r.withRingsDaysToPatch) * 24);
 
       const problemCards = [
         {title:'Fragmented delivery', sub:'Windows / Mac / VDI / Web — users guess the right way.', icon:'layers'},
-        {title:'Packaging backlog', sub:'Rebuild per version; updates stall.', icon:'boxes'},
-        {title:'Zero-day exposure', sub:'Patching takes days, not minutes.', icon:'shield-check'},
-        {title:'Slow upgrades', sub:'Stuck to old images; change is slow.', icon:'building-2'}
+        {title:'Packaging backlog', sub:'Rebuild per version; updates stall.', icon:'package'},
+        {title:'Zero-day exposure', sub:'Patching takes days, not minutes.', icon:'shield-alert'},
+        {title:'Slow upgrades', sub:'Stuck to old images; change is slow.', icon:'calendar-clock'}
       ];
 
       const valueCards = [
@@ -227,7 +210,7 @@
         },
         {
           title:'Catalog depth (pre-packaged)',
-          icon:'package',
+          icon:'boxes',
           bullets:[
             `${CATALOG.countLabel} (as of ${CATALOG.asOf})`,
             'Curated, secure defaults',
@@ -236,7 +219,7 @@
         },
         {
           title:'Integration ecosystem',
-          icon:'boxes',
+          icon:'workflow',
           bullets:[
             'Bridge across Intune & ConfigMgr',
             'Works with Citrix, VMware, AVD',
@@ -245,7 +228,7 @@
         },
         {
           title:'Day-one productivity',
-          icon:'zap',
+          icon:'rocket',
           bullets:[
             'New users get apps on first login',
             'SSO + self-service catalog',
@@ -255,25 +238,21 @@
       ];
 
       return `
-        <section role="tabpanel" id="panel-problems" aria-labelledby="tab-problems" class="space-y-6">
-          <h2 class="sr-only">Current Problems</h2>
-
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3" role="region" aria-label="Impact snapshot">
-            ${kpiTile({icon:'clock-3', label:'Minutes saved (per user)', value:num(VALUE.minutesSavedPerUser)})}
-            ${kpiTile({icon:'wrench', label:'Packaging hours avoided (per month)', value:num(round(packagingHoursSavedPerMonth,1))})}
-            ${kpiTile({icon:'alarm-clock', label:'Zero-day window reduced (hrs)', value:num(round(zeroDayHoursReducedPerIncident,0)), hint:'Per critical CVE incident'})}
+        <section role="tabpanel" id="panel-problems" aria-labelledby="tab-problems" class="space-y-8">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            ${statCard({icon:'sparkles', label:'Minutes saved (per user)', value:num(9)})}
+            ${statCard({icon:'wrench', label:'Packaging hours avoided (per month)', value:num(round(packagingHoursSavedPerMonth,1))})}
+            ${statCard({icon:'alarm-clock', label:'Zero-day window reduced (hrs)', value:num(round(zeroDayHoursReducedPerIncident,0)), foot:'Per critical CVE incident'})}
           </div>
 
-          <p class="text-sm text-[${BRAND.muted}]">We focus on outcomes: apps work, stay current, and reduce risk without firefighting.</p>
-
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" role="region" aria-label="Pain points">
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             ${problemCards.map(p=>`
-              <article class="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-5">
+              <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <div class="flex items-center gap-2">
                   <i data-lucide="${p.icon}" class="w-5 h-5 text-[${BRAND.icon}]"></i>
-                  <h3 class="text-lg font-semibold text-white">${p.title}</h3>
+                  <h3 class="text-base font-semibold text-white">${p.title}</h3>
                 </div>
-                <p class="text-sm text-[${BRAND.muted}]">${p.sub}</p>
+                <p class="mt-1 text-sm text-[${BRAND.muted}]">${p.sub}</p>
               </article>
             `).join('')}
           </div>
@@ -293,12 +272,12 @@
             <h3 class="text-base font-semibold text-white">Value components (why customers choose Recast)</h3>
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               ${valueCards.map(v=>`
-                <article class="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-5">
+                <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
                   <div class="flex items-center gap-2">
                     <i data-lucide="${v.icon}" class="w-5 h-5 text-[${BRAND.icon}]"></i>
                     <h4 class="text-base font-semibold text-white">${v.title}</h4>
                   </div>
-                  <ul class="mt-1 space-y-1 text-sm text-[${BRAND.muted}]">
+                  <ul class="mt-2 space-y-1 text-sm text-[${BRAND.muted}]">
                     ${v.bullets.map(b=>`<li class="list-disc pl-5">${b}</li>`).join('')}
                   </ul>
                 </article>
@@ -311,22 +290,23 @@
               type="button"
               data-action="advance"
               data-next="solution"
-              class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}"
+              class="inline-flex items-center gap-2 rounded-xl bg-[${BRAND.accent}] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 ${focusRing()}"
             >
-              Show the solution
+              How We Solve It
             </button>
           </div>
         </section>
       `;
     }
 
+    // ---- Solution (cleaned, removed audit preview) ---------------------------
     function pill(label, active, action, value){
       return `
         <button
           type="button"
           class="${
             cx(
-              'rounded-full px-3 py-1 border text-sm transition',
+              'rounded-full px-3 py-1.5 border text-sm transition',
               active
                 ? `bg-[${BRAND.accent}] text-white border-transparent`
                 : 'bg-black/30 text-white/90 hover:bg-white/10 border-white/15',
@@ -363,96 +343,80 @@
       `;
 
       return `
-        <section role="tabpanel" id="panel-solution" aria-labelledby="tab-solution" class="space-y-5">
-          <p class="text-sm text-[${BRAND.muted}]">Here’s how we address the problems and convert them into measurable results.</p>
+        <section role="tabpanel" id="panel-solution" aria-labelledby="tab-solution" class="space-y-6">
+          <p class="text-sm text-[${BRAND.muted}]">Simple operating model executives appreciate — minimal change for IT, maximum consistency for users.</p>
           ${ribbon}
+
           <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-            <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
               <div class="flex items-center gap-2">
-                <i data-lucide="mouse-pointer-click" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
-                <h3 class="text-lg font-semibold text-white">One click. Right app.</h3>
+                <i data-lucide="mouse-pointer-click" class="w-5 h-5 text-[${BRAND.icon}]"></i>
+                <h3 class="text-lg font-semibold">One click. Right app.</h3>
               </div>
-              <p class="text-sm text-[${BRAND.muted}]">One icon for all apps. Users click once; we route to the right experience (Windows, Mac, VPN, or Web).</p>
-              <div class="mt-2 grid grid-cols-3 gap-2 text-sm">
+              <p class="mt-1 text-sm text-[${BRAND.muted}]">One icon for all apps. We route to the right experience (Windows, Mac, VPN, or Web).</p>
+              <div class="mt-3 grid grid-cols-3 gap-2 text-sm">
                 ${['Windows','Mac'].map(d=>pill(d, STATE.ctx.device===d, 'set-device', d)).join('')}
                 ${['Corporate','VPN'].map(n=>pill(n, STATE.ctx.network===n, 'set-network', n)).join('')}
                 ${pill(STATE.ctx.compliant?'Compliant':'Non-compliant', STATE.ctx.compliant, 'toggle-compliance', '')}
               </div>
-              <div class="text-sm text-[${BRAND.muted}]">Recommended route:</div>
-              <div class="inline-flex w-fit items-center gap-2 rounded-full bg-[${BRAND.accent}] px-3 py-1">
-                <i data-lucide="check-circle-2" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i>
-                <span class="text-white text-sm font-semibold">${route}</span>
+              <div class="mt-3 text-sm text-[${BRAND.muted}]">Recommended route</div>
+              <div class="inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5 ring-1 ring-white/10">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[${BRAND.success}]"></i>
+                <strong class="text-white text-sm">${route}</strong>
               </div>
               <button type="button"
-                class="mt-2 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/30 px-2 py-1 text-xs text-[${BRAND.muted}] ${focusRing()}"
+                class="mt-3 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/30 px-2 py-1 text-xs text-[${BRAND.muted}] ${focusRing()}"
                 aria-expanded="false" aria-controls="why-route" data-action="toggle-why">
                 <i data-lucide="help-circle" class="w-3.5 h-3.5 text-[${BRAND.icon}]"></i> Why this route?
               </button>
               <div id="why-route" class="mt-2 hidden rounded-lg border border-white/10 bg-black/30 p-2 text-xs text-[${BRAND.muted}]">
                 ${routeWhy(STATE.ctx)}
               </div>
-            </div>
+            </article>
 
-            <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
               <div class="flex items-center gap-2">
-                <i data-lucide="wand-2" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
-                <h3 class="text-lg font-semibold text-white">Update once. Done.</h3>
+                <i data-lucide="wand-2" class="w-5 h-5 text-[${BRAND.icon}]"></i>
+                <h3 class="text-lg font-semibold">Update once. Done.</h3>
               </div>
-              <p class="text-sm text-[${BRAND.muted}]">Configure once; updates flow across tenants and environments—cloud, on-prem, hybrid.</p>
-              <div class="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
-                <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="sparkles" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> Roll out critical updates</div>
-                <label class="mt-2 flex flex-col gap-1">
-                  <span class="text-xs text-[${BRAND.muted}]">Hours per package → configure</span>
-                  <div class="flex items-center gap-2">
-                    <input aria-label="Hours per package" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.packHrs}" data-action="set-pack-hrs">
-                    <span>→</span>
-                    <input aria-label="Hours to configure" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.configHrs}" data-action="set-config-hrs">
-                  </div>
+              <p class="mt-1 text-sm text-[${BRAND.muted}]">Configure once; updates flow across tenants and environments—cloud, on-prem, hybrid.</p>
+              <div class="mt-3 rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
+                <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="sparkles" class="w-4 h-4 text-[${BRAND.icon}]"></i> Roll out critical updates</div>
+                <label class="mt-2 flex items-center gap-2">
+                  <span class="text-xs text-[${BRAND.muted}] w-44">Hours per package → configure</span>
+                  <input aria-label="Hours per package" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.packHrs}" data-action="set-pack-hrs">
+                  <span aria-hidden="true">→</span>
+                  <input aria-label="Hours to configure" class="w-20 rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" inputmode="decimal" value="${STATE.configHrs}" data-action="set-config-hrs">
                 </label>
-                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.packHrs} → ${STATE.configHrs} hrs</span><strong class="text-white">${clampNonNeg(STATE.packHrs - STATE.configHrs)} hrs saved</strong></div>
+                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2">
+                  <span class="text-[${BRAND.muted}]">${STATE.packHrs} → ${STATE.configHrs} hrs</span>
+                  <strong class="text-white">${saved} hrs saved</strong>
+                </div>
               </div>
-            </div>
+            </article>
 
-            <div class="group flex h-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <article class="rounded-2xl border border-white/10 bg-white/5 p-5">
               <div class="flex items-center gap-2">
-                <i data-lucide="shield-check" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
-                <h3 class="text-lg font-semibold text-white">Close zero-day windows.</h3>
+                <i data-lucide="shield-check" class="w-5 h-5 text-[${BRAND.icon}]"></i>
+                <h3 class="text-lg font-semibold">Close zero-day windows.</h3>
               </div>
-              <p class="text-sm text-[${BRAND.muted}]">Security patches roll out in hours, reducing exposure windows.</p>
-              <div class="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
-                <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="alarm-clock" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> Zero-day rollout</div>
+              <p class="mt-1 text-sm text-[${BRAND.muted}]">Security patches roll out in hours, reducing exposure windows.</p>
+              <div class="mt-3 rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
+                <div class="flex items-center gap-2 font-medium text-white"><i data-lucide="alarm-clock" class="w-4 h-4 text-[${BRAND.icon}]"></i> Zero-day rollout</div>
                 <label class="mt-2 flex flex-col gap-1">
                   <span class="text-xs text-[${BRAND.muted}]">Current time-to-deploy (hrs)</span>
                   <input class="rounded bg-black/40 px-2 py-1 text-white placeholder-white/40 ${focusRing()}" aria-label="Current time to deploy (hours)" inputmode="decimal" value="${STATE.currentHrs}" data-action="set-current-hrs">
                 </label>
-                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2"><span class="text-[${BRAND.muted}]">${STATE.currentHrs} → 1.5 hrs</span><strong class="text-white">${round(clampNonNeg(STATE.currentHrs - 1.5))} hrs reduced</strong></div>
+                <div class="mt-2 flex items-center justify-between rounded bg-black/30 px-3 py-2">
+                  <span class="text-[${BRAND.muted}]">${STATE.currentHrs} → 1.5 hrs</span>
+                  <strong class="text-white">${round(STATE.currentHrs - 1.5)} hrs reduced</strong>
+                </div>
               </div>
-            </div>
+            </article>
           </div>
 
-          <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
-            <div class="flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-white">Evidence (audit export preview)</h3>
-              <button type="button" data-action="copy-audit"
-                class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-3 py-1.5 text-sm font-bold text-white ${focusRing()}">
-                <i data-lucide="clipboard" class="w-4 h-4 text-[${BRAND.icon}]"></i>
-                <span id="copy-audit-label">${STATE.evidenceCopied ? "Copied!" : "Copy CSV to clipboard"}</span>
-              </button>
-            </div>
-            <pre class="mt-3 overflow-auto rounded-lg bg-black/30 p-3 text-xs text-[${BRAND.muted}]">${
-              [
-                "app,version,ring,who,when,backend",
-                `Chrome,126.0,Pilot,Group-EUC,2025-04-03,Intune`,
-                `Chrome,126.0,Gradual,Region-NA,2025-04-04,ConfigMgr`,
-                `Chrome,126.0,Prod,All-Employees,2025-04-05,Citrix`
-              ].join("\n")
-            }</pre>
-            <p class="mt-2 text-xs text-[${BRAND.muted}]">Tip: paste into Excel, Power BI, or your GRC tool.</p>
-          </div>
-
-          <div class="mt-3 rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="text-sm text-white">Manage once. Deploy anywhere — each step contributes to measurable ROI.</div>
-            <button type="button" data-action="advance" data-next="roi" class="inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}">
+          <div class="flex justify-end">
+            <button type="button" data-action="advance" data-next="roi" class="inline-flex items-center gap-2 rounded-xl bg-[${BRAND.accent}] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 ${focusRing()}">
               See Impact & ROI
             </button>
           </div>
@@ -460,15 +424,16 @@
       `;
     }
 
+    // ---- ROI (unchanged logic + polished totals + comparator) ----------------
     function kpi(icon,label,value,hint){
       return `
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
           <div class="flex items-center justify-between">
             <div>
               <div class="text-xs text-[${BRAND.muted}]">${label}</div>
-              <div class="text-xl font-semibold text-white">${value}</div>
+              <div class="text-xl font-semibold">${value}</div>
             </div>
-            <i data-lucide="${icon}" class="w-5 h-5 text-[${BRAND.icon}]" aria-hidden="true"></i>
+            <i data-lucide="${icon}" class="w-5 h-5 text-[${BRAND.icon}]"></i>
           </div>
           ${hint ? `<div class="mt-1 text-xs text-[${BRAND.muted}]">${hint}</div>` : ''}
         </div>
@@ -517,11 +482,11 @@
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <section class="rounded-2xl border border-white/10 bg-white/5 p-6 lg:col-span-2">
-              <h3 class="text-lg font-semibold text-white">Your numbers here (edit)</h3>
+              <h3 class="text-lg font-semibold">Your numbers here (edit)</h3>
 
               <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="space-y-3">
-                  <h4 class="text-sm font-semibold text-white">Packaging & updates</h4>
+                  <h4 class="text-sm font-semibold">Packaging & updates</h4>
                   ${numInput('Apps in scope','appsInScope', r.appsInScope)}
                   ${numInput('Avg updates / app / month','avgUpdatesPerAppPerMonth', r.avgUpdatesPerAppPerMonth)}
                   ${numInput('Current hrs per package/update (default 2.5)','currentHrsPerPackage', r.currentHrsPerPackage)}
@@ -529,7 +494,7 @@
                 </div>
 
                 <div class="space-y-3">
-                  <h4 class="text-sm font-semibold text-white">Risk & audit</h4>
+                  <h4 class="text-sm font-semibold">Risk & audit</h4>
                   ${numInput('Critical CVEs / year','criticalCVEsPerYear', r.criticalCVEsPerYear)}
                   ${numInput('Current days to patch critical (default 9)','currentDaysToPatchCritical', r.currentDaysToPatchCritical)}
                   ${numInput('With rings: days to patch (default 3)','withRingsDaysToPatch', r.withRingsDaysToPatch)}
@@ -540,7 +505,7 @@
 
               <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="space-y-3">
-                  <h4 class="text-sm font-semibold text-white">Cost model</h4>
+                  <h4 class="text-sm font-semibold">Cost model</h4>
                   ${numInput('Loaded hourly rate ($/hr) (default 85)','loadedHourlyRate', r.loadedHourlyRate)}
                   ${numInput('Recast annual cost ($)','recastAnnualCost', r.recastAnnualCost)}
                   ${numInput('Probability to realize (%)','realizationPct', r.realizationPct)}
@@ -567,7 +532,7 @@
             </section>
 
             <aside class="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
-              <h3 class="text-lg font-semibold text-white">Scope included in the model</h3>
+              <h3 class="text-lg font-semibold">Scope included in the model</h3>
               <ul class="list-disc pl-5 text-sm text-[${BRAND.muted}] space-y-1">
                 <li>Catalog & packaging, lifecycle rings, cross-platform reach (Windows/macOS, VDI/DAAS).</li>
                 <li>Governance & evidence with CVE mapping and ring reporting.</li>
@@ -577,11 +542,11 @@
               </ul>
 
               <div class="pt-2 border-t border-white/10">
-                <h4 class="text-sm font-semibold text-white">Copy summary</h4>
-                <button type="button" data-action="copy-onepager" class="mt-2 inline-flex items-center gap-2 rounded-lg bg-[${BRAND.accent}] px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110 ${focusRing()}">
-                  <i data-lucide="clipboard" class="w-4 h-4 text-[${BRAND.icon}]" aria-hidden="true"></i> ${STATE.copied ? 'Copied!' : 'Copy executive one-pager'}
+                <h4 class="text-sm font-semibold">Copy summary</h4>
+                <button type="button" data-action="copy-onepager" class="mt-2 inline-flex items-center gap-2 rounded-xl bg-[${BRAND.accent}] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 ${focusRing()}">
+                  <i data-lucide="clipboard" class="w-4 h-4 text-[${BRAND.icon}]"></i> ${STATE.copied ? 'Copied!' : 'Copy executive one-pager'}
                 </button>
-                <button type="button" data-action="reset-calculator" class="mt-2 inline-flex items-center gap-2 rounded-lg border border-[${BRAND.accent}] bg-transparent px-4 py-2 text-sm font-semibold text-[${BRAND.accent}] hover:bg-[${BRAND.accent}] hover:text-white transition ${focusRing()}">
+                <button type="button" data-action="reset-calculator" class="mt-2 inline-flex items-center gap-2 rounded-xl border border-[${BRAND.accent}] bg-transparent px-4 py-2 text-sm font-semibold text-[${BRAND.accent}] hover:bg-[${BRAND.accent}] hover:text-white transition ${focusRing()}">
                   Reset calculator
                 </button>
               </div>
@@ -589,7 +554,7 @@
           </div>
 
           <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h4 class="text-sm font-semibold text-white">Status-quo (Do Nothing) cost</h4>
+            <h4 class="text-sm font-semibold">Status-quo (Do Nothing) cost</h4>
             <p class="mt-1 text-xs text-[${BRAND.muted}]">What you keep spending without Recast.</p>
             <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
               ${kpi('timer','Packaging hours / mo (current)', round(r.appsInScope * r.avgUpdatesPerAppPerMonth * r.currentHrsPerPackage),'')}
@@ -603,6 +568,7 @@
       `;
     }
 
+    // ---- Events & lifecycle --------------------------------------------------
     function attachGlobalEvents(){
       const root = document.getElementById('app');
 
@@ -652,7 +618,6 @@
           render();
         });
       });
-
       root.querySelectorAll('[data-action="set-network"]').forEach(btn=>{
         btn.addEventListener('click', e=>{
           STATE.ctx.network = e.currentTarget.getAttribute('data-value');
@@ -660,7 +625,6 @@
           render();
         });
       });
-
       root.querySelectorAll('[data-action="toggle-compliance"]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           STATE.ctx.compliant = !STATE.ctx.compliant;
@@ -712,7 +676,6 @@
         const prob = clampNonNeg(r.realizationPct ?? 100) / 100;
         const prorate = Math.min(12, Math.max(0, r.monthsToValue ?? 12)) / 12;
         const adjTotalSavingsPerYear = totalSavingsPerYear * prob * prorate;
-
         const netBenefitYear = adjTotalSavingsPerYear - clampNonNeg(r.recastAnnualCost);
         const roiPct = r.recastAnnualCost ? (netBenefitYear / r.recastAnnualCost) * 100 : 0;
 
@@ -745,15 +708,10 @@ Outputs
  - ROI (adjusted): ${round(roiPct,1)}%
 
 Scope included: catalog & packaging, lifecycle rings, cross-platform reach, governance & evidence, identity & SSO, integrations, and scale signals.`;
-        try {
-          await navigator.clipboard.writeText(body);
-        } catch {
-          const ta = document.createElement('textarea');
-          ta.value = body;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
+        try { await navigator.clipboard.writeText(body); }
+        catch {
+          const ta = document.createElement('textarea'); ta.value = body;
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
         }
         STATE.copied = true;
         track('cta_clicked', { cta: 'copy_onepager' });
@@ -771,22 +729,6 @@ Scope included: catalog & packaging, lifecycle rings, cross-platform reach, gove
         });
       }
 
-      const copyAuditBtn = root.querySelector('[data-action="copy-audit"]');
-      if (copyAuditBtn){
-        copyAuditBtn.addEventListener('click', async ()=>{
-          const text = root.querySelector('pre')?.textContent || '';
-          try { await navigator.clipboard.writeText(text); } 
-          catch {
-            const ta = document.createElement('textarea'); ta.value = text;
-            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-          }
-          STATE.evidenceCopied = true;
-          track('cta_clicked', { cta: 'copy_audit_csv' });
-          render();
-          setTimeout(()=>{ STATE.evidenceCopied = false; render(); }, 1200);
-        });
-      }
-
       // Inline controls in Solution cards
       const packHrs = root.querySelector('[data-action="set-pack-hrs"]');
       if (packHrs) packHrs.addEventListener('input', e => { STATE.packHrs = clampNonNeg(e.currentTarget.value); });
@@ -796,6 +738,7 @@ Scope included: catalog & packaging, lifecycle rings, cross-platform reach, gove
       if (curHrs) curHrs.addEventListener('input', e => { STATE.currentHrs = clampNonNeg(e.currentTarget.value); });
     }
 
+    // ---- Boot ---------------------------------------------------------------
     document.addEventListener('DOMContentLoaded', ()=>{
       track('scene_viewed', { scene: STATE.activeTab });
       track('funnel_step', { step: 'view_problems' });
