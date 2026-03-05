@@ -1372,384 +1372,466 @@
         if (window.lucide && window.lucide.createIcons){ try{ window.lucide.createIcons(); }catch(e){} }
       }
 
-      // ═══════════════════════════════════════════════════
-      // CURRENT STATE — Side-nav + full-panel layout
-      // ═══════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════════════
+      // CURRENT STATE — Clean 5-scene narrative
+      //
+      // Arc: Cost → Week → Patch Event → Compounds → Questions
+      //
+      // Each scene answers ONE question and causes the next.
+      // ═══════════════════════════════════════════════════════════════
 
       const SCENE_NAV = [
-        { id:'s1', num:'01', accent:'#0A1C60', accentLight:'#EFF6FF', accentText:'#1d4ed8', dot:'bg-blue-600',   title:'The Multiplication Wall',        sub:'The moment the math becomes visible'       },
-        { id:'s2', num:'02', accent:'#1e1b4b', accentLight:'#EDE9FE', accentText:'#6d28d9', dot:'bg-violet-600', title:'The Tuesday Morning Scenario',    sub:'The patch that becomes a project'          },
-        { id:'s3', num:'03', accent:'#14532d', accentLight:'#F0FDF4', accentText:'#15803d', dot:'bg-green-700',  title:"The Engineer's Week",             sub:'Where the time actually goes'              },
-        { id:'s4', num:'04', accent:'#7c2d12', accentLight:'#FFF7ED', accentText:'#c2410c', dot:'bg-orange-600', title:'The Platform Growth Trap',        sub:'Why doing nothing means falling behind'    },
-        { id:'s5', num:'05', accent:'#4a044e', accentLight:'#FDF4FF', accentText:'#a21caf', dot:'bg-fuchsia-700',title:'The Talent Math',                 sub:'The risk nobody puts in the risk register' },
-        { id:'sq', num:'↓',  accent:'#0A1C60', accentLight:'#EFF6FF', accentText:'#1d4ed8', dot:'bg-blue-600',   title:'Three Closing Questions',         sub:'Before we show you anything else'          },
+        {
+          id:'s1', num:'01',
+          accent:'#0A1C60', accentLight:'#EFF6FF', accentText:'#1d4ed8',
+          title:'The Hidden Cost',
+          sub:'The number your team has never calculated',
+          hook:'Your team knows this work exists. They live it every day. But nobody has ever put a single number on it — until now.'
+        },
+        {
+          id:'s2', num:'02',
+          accent:'#292524', accentLight:'#F5F5F4', accentText:'#44403c',
+          title:'Where the Hours Go',
+          sub:'This is not a bad week. This is just the week.',
+          hook:'That cost is not abstract. It has a face. This is what your team\'s week actually looks like — and it looks like this every week.'
+        },
+        {
+          id:'s3', num:'03',
+          accent:'#1e1b4b', accentLight:'#F5F3FF', accentText:'#5b21b6',
+          title:'When a CVE Drops',
+          sub:'Every platform is another day on the clock',
+          hook:'The security team does not care how many platforms you manage. The clock starts the moment a vulnerability is disclosed.'
+        },
+        {
+          id:'s4', num:'04',
+          accent:'#7c2d12', accentLight:'#FFF7ED', accentText:'#c2410c',
+          title:'Why It Gets Worse',
+          sub:'This is not steady state. It compounds.',
+          hook:'The week in scene two is already hard. But it does not stay the same. Every new platform multiplies — it does not add.'
+        },
+        {
+          id:'s5', num:'05',
+          accent:'#0A1C60', accentLight:'#EFF6FF', accentText:'#1d4ed8',
+          title:'Three Questions',
+          sub:'Before we show you anything else',
+          hook:'These are not rhetorical. Invite a real answer. The answers will do more to create urgency than anything that follows.'
+        },
       ];
 
       function renderProblems(){
 
-        const active = STATE.activeScene || 's1';
-        const nav    = SCENE_NAV;
+        const active    = STATE.activeScene || 's1';
+        const nav       = SCENE_NAV;
         const activeNav = nav.find(n => n.id === active) || nav[0];
         const activeIdx = nav.findIndex(n => n.id === active);
         const nextScene = activeIdx < nav.length - 1 ? nav[activeIdx + 1] : null;
 
-        // ── Scene body functions (content unchanged) ──
-
+        // ─────────────────────────────────────────────────────────────
+        // SCENE 1 — THE HIDDEN COST
+        // Three inputs → live math → the number lands.
+        // Goal: make the invisible visible. Get them nodding.
+        // ─────────────────────────────────────────────────────────────
         function body1(){
           return `
             <div class="bg-slate-50 border-b border-slate-200 px-6 py-5">
+              <p class="text-sm text-slate-500 mb-4 leading-relaxed">Your team knows this work exists. But nobody has ever added it up. Enter your environment below — the number that appears is what you are spending every year just to stand still.</p>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div class="hc-field">
                   <label class="hc-label">Apps packaged or updated per month</label>
-                  <div class="hc-input-wrap"><input type="number" class="hc-input" value="${STATE.hcInputs.appsPackagedPerMonth}" min="1" data-hc="appsPackagedPerMonth" data-wall="1"></div>
+                  <div class="hc-input-wrap">
+                    <input type="number" class="hc-input" value="${STATE.hcInputs.appsPackagedPerMonth}" min="1" data-hc="appsPackagedPerMonth" data-wall="1">
+                  </div>
                   <span class="hc-hint">New releases + recurring updates</span>
                 </div>
                 <div class="hc-field">
                   <label class="hc-label">Delivery platforms in your environment</label>
-                  <div class="hc-input-wrap"><input type="number" class="hc-input" value="${STATE.hcInputs.deliveryPlatforms}" min="1" max="10" data-hc="deliveryPlatforms" data-wall="1"></div>
+                  <div class="hc-input-wrap">
+                    <input type="number" class="hc-input" value="${STATE.hcInputs.deliveryPlatforms}" min="1" max="10" data-hc="deliveryPlatforms" data-wall="1">
+                  </div>
                   <span class="hc-hint">ConfigMgr, Intune, Citrix, AVD, macOS&hellip;</span>
                 </div>
                 <div class="hc-field">
-                  <label class="hc-label">Hours per packaging job (standard app)</label>
-                  <div class="hc-input-wrap"><input type="number" class="hc-input" value="${STATE.hcInputs.hoursPerPackage}" min="0.5" step="0.5" data-hc="hoursPerPackage" data-wall="1"></div>
+                  <label class="hc-label">Hours per packaging job</label>
+                  <div class="hc-input-wrap">
+                    <input type="number" class="hc-input" value="${STATE.hcInputs.hoursPerPackage}" min="0.5" step="0.5" data-hc="hoursPerPackage" data-wall="1">
+                  </div>
                   <span class="hc-hint">Recast benchmark: 4 hrs standard complexity</span>
                 </div>
               </div>
             </div>
-            <div id="wall-output" class="px-6 pt-5 pb-2">
+
+            <div id="wall-output" class="px-6 pt-5 pb-4">
               ${wallOutputHTML()}
             </div>
-            <div class="px-6 py-5 border-t border-slate-100">
+
+            <div class="px-6 pb-6 border-t border-slate-100 pt-5">
               <div class="rounded-xl bg-slate-800 text-white p-4">
-                <i data-lucide="quote" class="w-4 h-4 text-blue-400 mb-2 opacity-60"></i>
-                <p class="text-[13px] leading-relaxed text-slate-200 italic">"Most IT teams have never added this up. Not because they don&rsquo;t know the work exists &mdash; they live it every day. Because nobody asked them to put a number on it. <strong class='text-white not-italic'>That number is what you are spending to stand still.</strong>"</p>
+                <i data-lucide="quote" class="w-4 h-4 text-blue-400 mb-2 opacity-50"></i>
+                <p class="text-[13px] leading-relaxed text-slate-200 italic">"Most IT teams have never added this up. Not because they don&rsquo;t know the work exists &mdash; they live it every day. Because nobody asked them to put a number on it. <strong class="text-white not-italic">That number is what you are spending to stand still.</strong>"</p>
               </div>
             </div>
           `;
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // SCENE 2 — WHERE THE HOURS GO
+        // Weekly calendar ONLY. One view, one question.
+        // Goal: make the cost personal. Show what the work crowd out.
+        // ─────────────────────────────────────────────────────────────
         function body2(){
           return `
-            <div class="p-6">
-              <div class="relative pl-1">
-                <div class="absolute left-[19px] top-0 bottom-0 w-0.5 bg-slate-200 rounded-full"></div>
-                <div class="space-y-1">
-                  <div class="relative flex gap-4 pb-5">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-red-100 border-2 border-red-400 flex items-center justify-center shadow-sm">
-                      <i data-lucide="zap" class="w-4 h-4 text-red-600"></i>
+            <div class="p-6 space-y-5">
+
+              <p class="text-sm text-slate-500 leading-relaxed">The number from scene one has a face. This is what a typical week looks like for an IT packaging engineer. Not a bad week &mdash; just <em>the</em> week. Every week. Notice what is missing.</p>
+
+              <!-- Five-day calendar -->
+              <div>
+                <div class="grid grid-cols-5 gap-2 mb-2">
+                  ${["MON","TUE","WED","THU","FRI"].map(d => `
+                    <div class="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">${d}</div>
+                  `).join('')}
+                </div>
+                <div class="grid grid-cols-5 gap-2">
+
+                  <div class="rounded-xl p-3 bg-orange-50 border border-orange-200 flex flex-col min-h-[130px]">
+                    <div class="w-2 h-2 rounded-full bg-orange-400 mb-2 flex-shrink-0"></div>
+                    <p class="text-[12px] font-semibold text-orange-800 leading-snug">Packaging backlog</p>
+                    <p class="text-[11px] text-orange-600 mt-1.5">Catching up from last week&rsquo;s update queue.</p>
+                  </div>
+
+                  <div class="rounded-xl p-3 bg-red-50 border border-red-300 flex flex-col min-h-[130px] ring-2 ring-red-200 ring-offset-1">
+                    <div class="flex items-center gap-1.5 mb-2">
+                      <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                      <span class="text-[9px] font-bold uppercase tracking-widest text-red-500">CVE overnight</span>
                     </div>
-                    <div class="flex-1 pt-1">
-                      <div class="flex flex-wrap items-baseline gap-2 mb-0.5">
-                        <span class="text-[11px] font-bold text-red-600 uppercase tracking-wide">Tuesday &middot; 6:00 AM</span>
-                        <span class="text-[11px] text-slate-400">Clock starts. Every unpatched platform is documented exposure.</span>
+                    <p class="text-[12px] font-semibold text-red-800 leading-snug">Emergency patch</p>
+                    <p class="text-[11px] text-red-600 mt-1.5">Platform one done. Testing failed on platform two.</p>
+                  </div>
+
+                  <div class="rounded-xl p-3 bg-slate-100 border border-slate-200 flex flex-col min-h-[130px] gap-2">
+                    <div>
+                      <div class="w-2 h-2 rounded-full bg-slate-500 mb-1.5"></div>
+                      <p class="text-[12px] font-semibold text-slate-700 leading-snug">New hire tickets</p>
+                    </div>
+                    <div class="border-t border-slate-200 pt-2">
+                      <div class="w-2 h-2 rounded-full bg-slate-400 mb-1.5"></div>
+                      <p class="text-[12px] font-semibold text-slate-600 leading-snug">App conflict troubleshooting</p>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl p-3 bg-red-50 border border-red-200 flex flex-col min-h-[130px]">
+                    <div class="w-2 h-2 rounded-full bg-red-400 mb-2 flex-shrink-0"></div>
+                    <p class="text-[12px] font-semibold text-red-800 leading-snug">Tuesday&rsquo;s patch, cont.</p>
+                    <p class="text-[11px] text-red-600 mt-1.5">Platform three. The specialist is out sick.</p>
+                  </div>
+
+                  <div class="rounded-xl p-3 bg-green-50 border border-green-200 flex flex-col min-h-[130px] relative">
+                    <div class="absolute top-2 right-2">
+                      <span class="text-[9px] font-bold uppercase tracking-widest bg-green-200 text-green-800 rounded px-1.5 py-0.5">rare</span>
+                    </div>
+                    <div class="w-2 h-2 rounded-full bg-green-500 mb-2 flex-shrink-0"></div>
+                    <p class="text-[12px] font-semibold text-green-800 leading-snug">Migration kickoff</p>
+                    <p class="text-[11px] text-green-700 mt-1.5">First strategic meeting in six weeks.</p>
+                  </div>
+
+                </div>
+
+                <!-- Legend -->
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-[11px] text-slate-400">
+                  <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>Emergency / reactive</span>
+                  <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-orange-400 inline-block"></span>Backlog maintenance</span>
+                  <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400 inline-block"></span>Support tickets</span>
+                  <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>Strategic work <em>(rare)</em></span>
+                </div>
+              </div>
+
+              <!-- The core question -->
+              <div class="rounded-xl border-2 border-[#0A1C60]/15 bg-blue-50 p-4">
+                <p class="text-base font-semibold text-[#0A1C60] mb-1">When does the work that actually moves your organization forward get done?</p>
+                <p class="text-sm text-slate-500">The migration, the automation project, the security improvements &mdash; they live in the gaps. Which means they mostly do not happen.</p>
+              </div>
+
+            </div>
+          `;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // SCENE 3 — WHEN A CVE DROPS
+        // Patch timeline ONLY. That red Tuesday block, zoomed in.
+        // Goal: make security urgency concrete. Days vs hours.
+        // ─────────────────────────────────────────────────────────────
+        function body3(){
+          const plat = Math.max(1, +STATE.hcInputs.deliveryPlatforms || 3);
+          return `
+            <div class="p-6 space-y-5">
+
+              <p class="text-sm text-slate-500 leading-relaxed">That red block on Tuesday deserves a closer look. A CVE drops. The security team flags it. This is not a hypothetical &mdash; this is what happens next, in practice, across the <strong class="text-slate-800">${plat} platform${plat > 1 ? 's' : ''}</strong> in your environment.</p>
+
+              <!-- Two-column: without vs with AW -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                <!-- Without AW — timeline -->
+                <div class="rounded-2xl border border-red-200 bg-red-50/40 overflow-hidden">
+                  <div class="px-4 py-3 bg-red-600 flex items-center gap-2">
+                    <i data-lucide="clock" class="w-4 h-4 text-white/80 flex-shrink-0"></i>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-white">Without Application Workspace</span>
+                  </div>
+                  <div class="p-4">
+                    <div class="relative pl-1">
+                      <div class="absolute left-[19px] top-0 bottom-0 w-0.5 bg-red-200 rounded-full"></div>
+                      <div class="space-y-0">
+
+                        <div class="relative flex gap-4 pb-4">
+                          <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-red-100 border-2 border-red-500 flex items-center justify-center shadow-sm">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-red-600"></i>
+                          </div>
+                          <div class="flex-1 pt-1.5">
+                            <span class="text-[11px] font-bold text-red-600 uppercase tracking-wide">Day 1 &mdash; 6:00 AM</span>
+                            <p class="text-sm font-semibold text-slate-800 mt-0.5">CVE disclosed. Clock starts.</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Every unpatched environment is documented exposure.</p>
+                          </div>
+                        </div>
+
+                        ${Array.from({length: Math.min(plat, 4)}, (_, i) => `
+                          <div class="relative flex gap-4 pb-4">
+                            <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center">
+                              <span class="text-[9px] font-bold text-slate-500">P${i+1}</span>
+                            </div>
+                            <div class="flex-1 pt-2">
+                              <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Day ${i+1} &mdash; Platform ${i+1}</span>
+                              <p class="text-[12px] text-slate-600 mt-0.5">${['ConfigMgr packaging begins.','Intune build. Testing fails &mdash; troubleshooting restarts the clock.','Citrix. Specialist called back in.','macOS. The engineer who knows this environment is out sick.'][i]}</p>
+                            </div>
+                          </div>
+                        `).join('')}
+
+                        <div class="relative flex gap-4">
+                          <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-red-100 border-2 border-red-600 flex items-center justify-center shadow-sm">
+                            <i data-lucide="flag" class="w-3.5 h-3.5 text-red-600"></i>
+                          </div>
+                          <div class="flex-1 pt-2">
+                            <span class="text-[11px] font-bold text-red-700 uppercase tracking-wide">Day ${Math.max(plat, 3) + 2} &mdash; Fully deployed</span>
+                            <p class="text-sm font-semibold text-slate-800 mt-0.5">${Math.max(plat, 3) + 2} days of known, documented exposure.</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Audited. Unavoidable. Entirely a function of how many platforms you run.</p>
+                          </div>
+                        </div>
+
                       </div>
-                      <p class="text-sm font-semibold text-slate-900">CVE disclosed. Critical patch available.</p>
-                    </div>
-                  </div>
-                  <div class="relative flex gap-4 pb-4">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center">
-                      <span class="text-[10px] font-bold text-slate-500">8A</span>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Day 1 &middot; 8:00 AM</span>
-                      <p class="text-sm text-slate-800 mt-0.5">Engineer picks it up. ConfigMgr packaging begins.</p>
-                    </div>
-                  </div>
-                  <div class="relative flex gap-4 pb-4">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center">
-                      <span class="text-[10px] font-bold text-slate-500">12P</span>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Day 1 &middot; 12:00 PM</span>
-                      <p class="text-sm text-slate-800 mt-0.5">ConfigMgr done. Starting Intune.</p>
-                    </div>
-                  </div>
-                  <div class="relative flex gap-4 pb-4">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-400 flex items-center justify-center shadow-sm">
-                      <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">Day 1 &middot; 4:00 PM</span>
-                      <p class="text-sm text-slate-800 mt-0.5">Intune done. Something broke in testing. Troubleshooting.</p>
-                    </div>
-                  </div>
-                  <div class="relative flex gap-4 pb-4">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center">
-                      <span class="text-[10px] font-bold text-slate-500">D2</span>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Day 2</span>
-                      <p class="text-sm text-slate-800 mt-0.5">Citrix build starts.</p>
-                    </div>
-                  </div>
-                  <div class="relative flex gap-4 pb-4">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center shadow-sm">
-                      <i data-lucide="user-x" class="w-4 h-4 text-amber-700"></i>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">Day 3</span>
-                      <p class="text-sm text-slate-800 mt-0.5">macOS fleet. The engineer who knows this environment is out sick.</p>
-                    </div>
-                  </div>
-                  <div class="relative flex gap-4 pb-6">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-red-100 border-2 border-red-500 flex items-center justify-center shadow-sm">
-                      <i data-lucide="flag" class="w-4 h-4 text-red-600"></i>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-bold text-red-600 uppercase tracking-wide">Day 5 &mdash; Deployment Complete</span>
-                      <p class="text-sm font-semibold text-slate-900 mt-0.5">Five days of known exposure. Documented. Audited. Unavoidable.</p>
-                      <p class="text-[12px] text-slate-500 mt-1">Every platform in your environment was another day on that clock.</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 my-2">
-                    <div class="flex-1 h-px bg-slate-200"></div>
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2">With Application Workspace</span>
-                    <div class="flex-1 h-px bg-slate-200"></div>
-                  </div>
-                  <div class="relative flex gap-4 pt-4">
-                    <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center shadow-sm">
-                      <i data-lucide="check" class="w-5 h-5 text-green-700"></i>
-                    </div>
-                    <div class="flex-1 pt-2">
-                      <span class="text-[11px] font-bold text-green-700 uppercase tracking-wide">Day 1</span>
-                      <p class="text-sm font-semibold text-slate-900 mt-0.5">Patch defined once. Deployed to all environments. Automatically.</p>
-                      <p class="text-[12px] text-green-700 mt-1 font-medium">One definition. Every platform. No per-platform rebuilds. No five-day exposure window.</p>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div class="mt-6 rounded-xl bg-slate-800 text-white p-4">
-                <i data-lucide="quote" class="w-4 h-4 text-violet-400 mb-2 opacity-60"></i>
+
+                <!-- With AW -->
+                <div class="rounded-2xl border border-green-200 bg-green-50/40 overflow-hidden">
+                  <div class="px-4 py-3 bg-green-700 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-white/80 flex-shrink-0"></i>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-white">With Application Workspace</span>
+                  </div>
+                  <div class="p-4">
+                    <div class="relative pl-1">
+                      <div class="absolute left-[19px] top-0 bottom-0 w-0.5 bg-green-200 rounded-full"></div>
+                      <div class="space-y-0">
+
+                        <div class="relative flex gap-4 pb-4">
+                          <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-red-100 border-2 border-red-500 flex items-center justify-center shadow-sm">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-red-600"></i>
+                          </div>
+                          <div class="flex-1 pt-1.5">
+                            <span class="text-[11px] font-bold text-red-600 uppercase tracking-wide">Day 1 &mdash; 6:00 AM</span>
+                            <p class="text-sm font-semibold text-slate-800 mt-0.5">CVE disclosed. Same clock. Same urgency.</p>
+                          </div>
+                        </div>
+
+                        <div class="relative flex gap-4 pb-4">
+                          <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5 text-green-700"></i>
+                          </div>
+                          <div class="flex-1 pt-2">
+                            <span class="text-[11px] font-semibold text-green-700 uppercase tracking-wide">Day 1 &mdash; Morning</span>
+                            <p class="text-[12px] text-slate-600 mt-0.5">Patch defined once in Application Workspace.</p>
+                          </div>
+                        </div>
+
+                        <div class="relative flex gap-4 pb-4">
+                          <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center shadow-sm">
+                            <i data-lucide="check" class="w-4 h-4 text-green-700"></i>
+                          </div>
+                          <div class="flex-1 pt-2">
+                            <span class="text-[11px] font-bold text-green-700 uppercase tracking-wide">Day 1 &mdash; Afternoon</span>
+                            <p class="text-sm font-semibold text-slate-800 mt-0.5">All ${plat} platform${plat > 1 ? 's' : ''} updated. Automatically.</p>
+                            <p class="text-[11px] text-green-700 mt-0.5 font-medium">No per-platform rebuilds. No multi-day window.</p>
+                          </div>
+                        </div>
+
+                        <div class="relative flex gap-4">
+                          <div class="relative z-10 flex-shrink-0 w-9 h-9 rounded-full bg-green-600 border-2 border-green-600 flex items-center justify-center shadow-sm">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-white"></i>
+                          </div>
+                          <div class="flex-1 pt-2">
+                            <span class="text-[11px] font-bold text-green-800 uppercase tracking-wide">End of Day 1</span>
+                            <p class="text-sm font-semibold text-green-900 mt-0.5">Audit trail generated. Compliance documented. Done.</p>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /grid -->
+
+              <div class="rounded-xl bg-slate-800 text-white p-4">
+                <i data-lucide="quote" class="w-4 h-4 text-violet-400 mb-2 opacity-50"></i>
                 <p class="text-[13px] leading-relaxed text-slate-200 italic">"The security team does not care how many platforms you are managing. The clock starts when the vulnerability is disclosed. Right now, every platform in your environment is another day on that clock."</p>
               </div>
+
             </div>
           `;
         }
 
-        function body3(){
-          return `
-            <div class="p-6">
-              <div class="grid grid-cols-5 gap-2 mb-2">
-                ${["MON","TUE","WED","THU","FRI"].map(d=>`<div class="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">${d}</div>`).join("")}
-              </div>
-              <div class="grid grid-cols-5 gap-2">
-                <div class="rounded-xl p-3 bg-orange-50 border border-orange-200 min-h-[130px] flex flex-col">
-                  <div class="w-2.5 h-2.5 rounded-full bg-orange-400 mb-2 flex-shrink-0"></div>
-                  <p class="text-[12px] font-semibold text-orange-800 leading-snug">Packaging backlog from last week</p>
-                  <p class="text-[11px] text-orange-600 mt-1.5">Update queue that built up over the weekend.</p>
-                </div>
-                <div class="rounded-xl p-3 bg-red-50 border border-red-200 min-h-[130px] flex flex-col">
-                  <div class="w-2.5 h-2.5 rounded-full bg-red-500 mb-2 flex-shrink-0"></div>
-                  <p class="text-[12px] font-semibold text-red-800 leading-snug">Emergency patch &mdash; four environments</p>
-                  <p class="text-[11px] text-red-600 mt-1.5">CVE from overnight. ConfigMgr &rarr; Intune &rarr; Citrix &rarr; testing failure.</p>
-                </div>
-                <div class="rounded-xl p-3 bg-slate-100 border border-slate-200 min-h-[130px] flex flex-col gap-3">
-                  <div>
-                    <div class="w-2.5 h-2.5 rounded-full bg-slate-500 mb-1.5"></div>
-                    <p class="text-[12px] font-semibold text-slate-700 leading-snug">New hire provisioning tickets</p>
-                  </div>
-                  <div class="border-t border-slate-200 pt-2">
-                    <div class="w-2.5 h-2.5 rounded-full bg-slate-400 mb-1.5"></div>
-                    <p class="text-[12px] font-semibold text-slate-600 leading-snug">App conflict troubleshooting</p>
-                  </div>
-                </div>
-                <div class="rounded-xl p-3 bg-red-50 border border-red-200 min-h-[130px] flex flex-col">
-                  <div class="w-2.5 h-2.5 rounded-full bg-red-500 mb-2 flex-shrink-0"></div>
-                  <p class="text-[12px] font-semibold text-red-800 leading-snug">Continuing Tuesday&rsquo;s patch</p>
-                  <p class="text-[11px] text-red-600 mt-1.5">Citrix rebuild. macOS still waiting.</p>
-                </div>
-                <div class="rounded-xl p-3 bg-green-50 border border-green-200 min-h-[130px] flex flex-col relative">
-                  <div class="absolute top-2 right-2"><span class="text-[9px] font-bold uppercase tracking-widest bg-green-200 text-green-800 rounded px-1.5 py-0.5">rare</span></div>
-                  <div class="w-2.5 h-2.5 rounded-full bg-green-500 mb-2 flex-shrink-0"></div>
-                  <p class="text-[12px] font-semibold text-green-800 leading-snug">Migration project kickoff</p>
-                  <p class="text-[11px] text-green-700 mt-1.5">First one in six weeks.</p>
-                </div>
-              </div>
-              <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-3 text-[11px] text-slate-400">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-400 inline-block"></span>Emergency / reactive</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block"></span>Backlog maintenance</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span>Support tickets</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-400 inline-block"></span>Strategic work <em class="ml-0.5">(rare)</em></span>
-              </div>
-              <div class="mt-5 rounded-xl border-2 border-[#0A1C60]/15 bg-blue-50 p-4">
-                <p class="text-base font-semibold text-[#0A1C60] mb-1">When does the work that actually moves your organization forward get done?</p>
-                <p class="text-sm text-[#4A5568]">This is not a rhetorical question. Take a moment with it.</p>
-              </div>
-              <div class="mt-4 rounded-xl bg-slate-800 text-white p-4">
-                <i data-lucide="quote" class="w-4 h-4 text-green-400 mb-2 opacity-60"></i>
-                <p class="text-[13px] leading-relaxed text-slate-200 italic">"This is not a bad week for most IT teams. This is just the week. The migration, the automation project, the security improvements &mdash; they live in the gaps between the packaging queue. Which means they mostly do not happen."</p>
-              </div>
-            </div>
-          `;
-        }
-
+        // ─────────────────────────────────────────────────────────────
+        // SCENE 4 — WHY IT GETS WORSE
+        // Capacity gap chart + three compounding events.
+        // Why/Now/Recast for deeper conversation.
+        // Goal: urgency. The problem does not stay the same size.
+        // ─────────────────────────────────────────────────────────────
         function body4(){
           return `
-            <div class="p-6">
-              <div class="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6 items-start">
-                <div>
-                  <div class="chart-container relative">
-                    <svg id="capacity-gap-chart" viewBox="0 0 800 400"></svg>
-                  </div>
-                </div>
-                <div class="space-y-3">
-                  <div class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">Multiplication Events Already in Motion</div>
-                  <div class="rounded-xl border border-orange-100 bg-orange-50 p-3">
-                    <p class="text-[13px] font-semibold text-orange-800">Windows 11 Migration</p>
-                    <p class="text-[12px] text-orange-700 mt-1">Not a new project. A multiplication event against every application you already manage.</p>
-                  </div>
-                  <div class="rounded-xl border border-red-100 bg-red-50 p-3">
-                    <p class="text-[13px] font-semibold text-red-800">Intune Consolidation</p>
-                    <p class="text-[12px] text-red-700 mt-1">Each platform you bring in requires apps to be re-packaged, re-tested, re-validated from scratch.</p>
-                  </div>
-                  <div class="rounded-xl border border-purple-100 bg-purple-50 p-3">
-                    <p class="text-[13px] font-semibold text-purple-800">AI Tooling Rollout</p>
-                    <p class="text-[12px] text-purple-700 mt-1">New capability the business demands. Another platform. Another multiplication event on your backlog.</p>
-                  </div>
-                  <div class="mt-3 pt-3 border-t border-slate-200">
-                    <div class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Dig Deeper</div>
-                    <div class="space-y-2">
-                      ${calloutDropdown('change','alert-triangle','Why Change','bg-slate-50')}
-                      ${calloutDropdown('now','clock-4','Why Now','bg-slate-50')}
-                      ${calloutDropdown('recast','sparkles','Why Recast','bg-slate-50')}
+            <div class="p-6 space-y-5">
+
+              <p class="text-sm text-slate-500 leading-relaxed">Scenes one through three describe a steady-state problem. This scene describes why that steady state does not hold. Every new platform your organization adopts does not <em>add</em> to your workload &mdash; it <strong class="text-slate-800">multiplies</strong> against every application you already manage.</p>
+
+              <!-- Capacity gap chart -->
+              <div class="chart-container relative">
+                <svg id="capacity-gap-chart" viewBox="0 0 800 400"></svg>
+              </div>
+
+              <!-- Three multiplication events -->
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Multiplication events already in motion at most organizations</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div class="rounded-xl border border-orange-100 bg-orange-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                      <div class="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0"></div>
+                      <p class="text-[13px] font-semibold text-orange-900">Windows 11 Migration</p>
                     </div>
+                    <p class="text-[12px] text-orange-700 leading-relaxed">Not a new project. A multiplication event against every application you already manage &mdash; re-packaged, re-tested, re-validated.</p>
+                  </div>
+                  <div class="rounded-xl border border-red-100 bg-red-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                      <div class="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                      <p class="text-[13px] font-semibold text-red-900">Intune Consolidation</p>
+                    </div>
+                    <p class="text-[12px] text-red-700 leading-relaxed">Each platform you bring in requires apps rebuilt from scratch. Your existing queue does not pause while you add a new environment.</p>
+                  </div>
+                  <div class="rounded-xl border border-purple-100 bg-purple-50 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                      <div class="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0"></div>
+                      <p class="text-[13px] font-semibold text-purple-900">AI Tooling Rollout</p>
+                    </div>
+                    <p class="text-[12px] text-purple-700 leading-relaxed">The business needs it now. Another platform. Another multiplication event on a team that is already at capacity.</p>
                   </div>
                 </div>
               </div>
-              <div class="mt-5 rounded-xl bg-slate-800 text-white p-4">
-                <i data-lucide="quote" class="w-4 h-4 text-orange-400 mb-2 opacity-60"></i>
+
+              <!-- Why Change / Now / Recast -->
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Go deeper</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  ${calloutDropdown('change','alert-triangle','Why Change','bg-slate-50')}
+                  ${calloutDropdown('now','clock-4','Why Now','bg-slate-50')}
+                  ${calloutDropdown('recast','sparkles','Why Recast','bg-slate-50')}
+                </div>
+              </div>
+
+              <div class="rounded-xl bg-slate-800 text-white p-4">
+                <i data-lucide="quote" class="w-4 h-4 text-orange-400 mb-2 opacity-50"></i>
                 <p class="text-[13px] leading-relaxed text-slate-200 italic">"Every new platform your organization needs does not add to your team&rsquo;s workload. It multiplies against every application you already manage. The gap does not stay the same size. It compounds. Quietly, every quarter, until it becomes a crisis."</p>
               </div>
+
             </div>
           `;
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // SCENE 5 — THREE QUESTIONS
+        // Close the problem half. Open the solution half.
+        // Goal: get them to say it out loud. That is the transition.
+        // ─────────────────────────────────────────────────────────────
         function body5(){
           return `
-            <div class="p-6">
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                <p class="text-base font-semibold text-[#0A1C60] mb-3">Your two most experienced packaging engineers just gave notice.</p>
-                <p class="text-sm text-slate-500 mb-4">Between them, they are taking:</p>
-                <div class="space-y-3 mb-6">
-                  <div class="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
-                    <div class="w-2 h-2 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
-                    <p class="text-sm text-slate-800"><strong>6 years of undocumented environment knowledge</strong> &mdash; the workarounds, the edge cases, the tribal knowledge that never got written down because there was never time.</p>
-                  </div>
-                  <div class="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
-                    <div class="w-2 h-2 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
-                    <p class="text-sm text-slate-800"><strong>The workarounds for 40+ application conflicts</strong> that nobody else on the team knows exist &mdash; yet.</p>
-                  </div>
-                  <div class="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
-                    <div class="w-2 h-2 rounded-full bg-red-400 mt-2 flex-shrink-0"></div>
-                    <p class="text-sm text-slate-800"><strong>The institutional memory of every platform quirk</strong> in your environment, built through years of painful troubleshooting that nobody documented.</p>
-                  </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div class="rounded-xl bg-red-50 border border-red-200 p-4 text-center">
-                    <div class="text-3xl font-extrabold text-red-600">9&ndash;12 months</div>
-                    <div class="text-sm text-slate-500 mt-1">to replace and fully ramp a specialist</div>
-                  </div>
-                  <div class="rounded-xl bg-slate-100 border border-slate-200 p-4 text-center">
-                    <div class="text-3xl font-extrabold text-slate-600">Immeasurable</div>
-                    <div class="text-sm text-slate-500 mt-1">backlog created in that window</div>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-5 rounded-xl border-2 border-[#0A1C60]/15 bg-blue-50 p-4">
-                <p class="text-base font-semibold text-[#0A1C60] mb-1">How much of your delivery capability lives in people&rsquo;s heads right now?</p>
-                <p class="text-sm text-slate-500">This is not a rhetorical question. It is a risk question. One that belongs in every infrastructure review.</p>
-              </div>
-              <div class="mt-4 rounded-xl bg-slate-800 text-white p-4">
-                <i data-lucide="quote" class="w-4 h-4 text-fuchsia-400 mb-2 opacity-60"></i>
-                <p class="text-[13px] leading-relaxed text-slate-200 italic">"Manual processes are not just inefficient. They are fragile. Every hour of undocumented packaging knowledge your team carries is an organizational risk that does not appear anywhere on a risk register &mdash; until the person who carries it is gone."</p>
-              </div>
-            </div>
-          `;
-        }
+            <div class="p-6 md:p-8 space-y-5">
 
-        function bodyQ(){
-          return `
-            <div class="p-6 md:p-8">
-              <div class="space-y-3 mb-7">
+              <p class="text-sm text-slate-500 leading-relaxed">You have seen the shape of the problem: the hidden cost, the week it consumes, the security exposure, the compounding trajectory. Before we show you what a different model looks like &mdash; three questions worth answering out loud.</p>
+
+              <div class="space-y-3">
                 <div class="flex gap-4 items-start p-5 rounded-2xl border-2 border-[#0070F3]/20 bg-blue-50">
                   <div class="flex-shrink-0 w-9 h-9 rounded-full bg-[#0070F3] text-white flex items-center justify-center text-sm font-bold shadow-sm">1</div>
-                  <p class="text-base font-medium text-[#0A1C60] leading-relaxed pt-0.5">How many hours did your team spend on packaging work last month that produced no new capability?</p>
+                  <div>
+                    <p class="text-[15px] font-semibold text-[#0A1C60] leading-snug">How many hours did your team spend on packaging work last month that produced no new capability for the business?</p>
+                    <p class="text-[11px] text-slate-400 mt-1.5 italic">The calculator in scene one made this answerable with a real number.</p>
+                  </div>
                 </div>
                 <div class="flex gap-4 items-start p-5 rounded-2xl border-2 border-[#0070F3]/20 bg-blue-50">
                   <div class="flex-shrink-0 w-9 h-9 rounded-full bg-[#0070F3] text-white flex items-center justify-center text-sm font-bold shadow-sm">2</div>
-                  <p class="text-base font-medium text-[#0A1C60] leading-relaxed pt-0.5">How many days does it take your team to fully deploy a critical patch across every platform in your environment?</p>
+                  <div>
+                    <p class="text-[15px] font-semibold text-[#0A1C60] leading-snug">How many days does it take your team to fully deploy a critical security patch across every platform you manage?</p>
+                    <p class="text-[11px] text-slate-400 mt-1.5 italic">Scene three made this concrete. Now make it personal to their environment.</p>
+                  </div>
                 </div>
                 <div class="flex gap-4 items-start p-5 rounded-2xl border-2 border-[#0070F3]/20 bg-blue-50">
                   <div class="flex-shrink-0 w-9 h-9 rounded-full bg-[#0070F3] text-white flex items-center justify-center text-sm font-bold shadow-sm">3</div>
-                  <p class="text-base font-medium text-[#0A1C60] leading-relaxed pt-0.5">If your two most experienced packaging engineers left tomorrow, what would break first?</p>
+                  <div>
+                    <p class="text-[15px] font-semibold text-[#0A1C60] leading-snug">If your two most experienced packaging engineers left tomorrow, what would break first &mdash; and how long to recover?</p>
+                    <p class="text-[11px] text-slate-400 mt-1.5 italic">The most important question. The one that reveals whether this is a priority.</p>
+                  </div>
                 </div>
               </div>
-              <div class="rounded-2xl bg-[#0A1C60] text-white p-5 mb-6">
+
+              <div class="rounded-2xl bg-[#0A1C60] text-white p-5">
                 <p class="text-sm leading-relaxed text-blue-100 italic">"The problem is not that your team is failing. The problem is that the model they are working inside was built for a world that no longer exists &mdash; and every quarter it falls further behind the world they are actually working in."</p>
               </div>
-              <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t border-slate-100">
-                <p class="text-sm text-slate-500">Ready to see what a different model looks like?</p>
-                <button type="button"
-                  class="inline-flex items-center gap-2 bg-[#0070F3] text-white px-6 py-2.5 text-sm font-semibold rounded-full hover:bg-[#005AD0] focus-ring transition shadow-sm"
-                  data-action="advance" data-next="solution">
-                  See the Approach <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
-              </div>
+
             </div>
           `;
         }
 
-        const bodyFns = { s1:body1, s2:body2, s3:body3, s4:body4, s5:body5, sq:bodyQ };
+        const bodyFns   = { s1:body1, s2:body2, s3:body3, s4:body4, s5:body5 };
         const activeBody = bodyFns[active] ? bodyFns[active]() : '';
 
         return `
           <section id="panel-problems">
+            <div class="flex rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white" style="min-height:640px;">
 
-            <!-- ── Layout: sidebar + content ── -->
-            <div class="flex gap-0 rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white" style="min-height: 600px;">
-
-              <!-- ── LEFT SIDEBAR ── -->
+              <!-- ── SIDEBAR ── -->
               <nav class="flex-shrink-0 w-56 bg-[#0f1729] flex flex-col" aria-label="Story navigation">
 
-                <!-- Brand strip -->
                 <div class="px-4 pt-5 pb-4 border-b border-white/10">
                   <p class="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">Current State</p>
                   <p class="text-[13px] font-semibold text-white/90 mt-0.5 leading-snug">Why the model is breaking</p>
                 </div>
 
-                <!-- Nav items -->
                 <div class="flex-1 py-2 overflow-y-auto">
                   ${nav.map((item, i) => {
-                    const isActive = item.id === active;
-                    const isVisited = SCENE_NAV.findIndex(n=>n.id===active) > i;
+                    const isActive  = item.id === active;
+                    const isVisited = activeIdx > i;
                     return `
                       <button
                         type="button"
                         data-action="toggle-scene"
                         data-scene="${item.id}"
-                        class="w-full text-left px-3 py-3 flex items-start gap-3 transition-all duration-150 focus-ring relative
-                          ${isActive
-                            ? 'bg-white/10 border-r-2 border-white'
-                            : 'hover:bg-white/5 border-r-2 border-transparent'}"
+                        class="w-full text-left px-3 py-3.5 flex items-start gap-3 transition-all duration-150 focus-ring relative
+                          ${isActive ? 'bg-white/10 border-r-2 border-white' : 'hover:bg-white/5 border-r-2 border-transparent'}"
                         aria-current="${isActive ? 'true' : 'false'}"
                       >
-                        <!-- Number badge -->
                         <span class="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold mt-0.5
-                          ${isActive   ? 'bg-white text-[#0f1729]'
-                            : isVisited ? 'bg-white/20 text-white/70'
-                            :             'bg-white/10 text-white/50'}">
-                          ${isVisited && !isActive
-                            ? `<i data-lucide="check" class="w-3 h-3"></i>`
-                            : item.num}
+                          ${isActive ? 'bg-white text-[#0f1729]' : isVisited ? 'bg-white/20 text-white/60' : 'bg-white/10 text-white/40'}">
+                          ${isVisited && !isActive ? `<i data-lucide="check" class="w-3 h-3"></i>` : item.num}
                         </span>
-                        <!-- Text -->
-                        <span class="min-w-0">
-                          <span class="block text-[12px] font-semibold leading-snug
-                            ${isActive ? 'text-white' : 'text-white/60'}">
+                        <span class="min-w-0 flex-1">
+                          <span class="block text-[12px] font-semibold leading-snug ${isActive ? 'text-white' : 'text-white/55'}">
                             ${item.title}
                           </span>
-                          <span class="block text-[10px] leading-snug mt-0.5
-                            ${isActive ? 'text-white/60' : 'text-white/30'}">
+                          <span class="block text-[10px] leading-snug mt-0.5 ${isActive ? 'text-white/55' : 'text-white/25'}">
                             ${item.sub}
                           </span>
                         </span>
@@ -1758,58 +1840,52 @@
                   }).join('')}
                 </div>
 
-                <!-- Progress footer -->
                 <div class="px-4 py-4 border-t border-white/10">
                   <div class="flex gap-1 mb-2">
-                    ${nav.map((item, i) => {
-                      const idx = nav.findIndex(n=>n.id===active);
-                      return `<div class="flex-1 h-1 rounded-full ${i <= idx ? 'bg-white/70' : 'bg-white/15'}"></div>`;
-                    }).join('')}
+                    ${nav.map((item, i) => `
+                      <div class="flex-1 h-1 rounded-full ${i <= activeIdx ? 'bg-white/70' : 'bg-white/15'}"></div>
+                    `).join('')}
                   </div>
-                  <p class="text-[10px] text-white/40">${nav.findIndex(n=>n.id===active)+1} of ${nav.length}</p>
+                  <p class="text-[10px] text-white/35">${activeIdx + 1} of ${nav.length}</p>
                 </div>
               </nav>
 
-              <!-- ── RIGHT CONTENT PANE ── -->
+              <!-- ── CONTENT PANE ── -->
               <div id="scene-content-pane" class="flex-1 overflow-y-auto flex flex-col min-w-0">
 
-                <!-- Scene header bar -->
-                <div class="flex-shrink-0 px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4"
-                     style="background:${activeNav.accentLight}">
-                  <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest"
-                          style="color:${activeNav.accentText}">${activeNav.num === '↓' ? 'Closing' : activeNav.num}</span>
+                <div class="flex-shrink-0 px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4"
+                     style="background:${activeNav.accentLight};">
+                  <div class="min-w-0">
+                    <span class="text-[10px] font-bold uppercase tracking-widest" style="color:${activeNav.accentText};">${activeNav.num}</span>
                     <h2 class="text-xl font-bold text-slate-900 leading-snug mt-0.5">${activeNav.title}</h2>
-                    <p class="text-[12px] text-slate-500 mt-0.5 italic">${activeNav.sub}</p>
+                    <p class="text-[13px] text-slate-600 mt-1 leading-relaxed max-w-xl">${activeNav.hook}</p>
                   </div>
-                  ${nextScene ? `
-                    <button
-                      type="button"
-                      data-action="toggle-scene"
-                      data-scene="${nextScene.id}"
-                      class="flex-shrink-0 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors focus-ring"
-                      style="border-color:${activeNav.accentText}; color:${activeNav.accentText}; background:white;">
-                      Next <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                  ` : `
-                    <button
-                      type="button"
-                      data-action="advance"
-                      data-next="solution"
-                      class="flex-shrink-0 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-[#0070F3] text-white border border-[#0070F3] hover:bg-[#005AD0] transition-colors focus-ring">
-                      See the Approach <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                  `}
+                  <div class="flex-shrink-0 pt-1">
+                    ${nextScene ? `
+                      <button type="button"
+                        data-action="toggle-scene"
+                        data-scene="${nextScene.id}"
+                        class="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors focus-ring whitespace-nowrap"
+                        style="border-color:${activeNav.accentText}; color:${activeNav.accentText}; background:white;">
+                        Next <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    ` : `
+                      <button type="button"
+                        data-action="advance"
+                        data-next="solution"
+                        class="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-[#0070F3] text-white border border-[#0070F3] hover:bg-[#005AD0] transition-colors focus-ring whitespace-nowrap">
+                        See the Approach <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    `}
+                  </div>
                 </div>
 
-                <!-- Scene body -->
                 <div class="flex-1">
                   ${activeBody}
                 </div>
 
-              </div><!-- /content pane -->
-            </div><!-- /layout -->
-
+              </div>
+            </div>
           </section>
         `;
       }
