@@ -2142,6 +2142,194 @@
         `;
       }
 
+      // ════════════════════════════════════════════════
+      // CHALLENGE & SOLUTION MATRIX
+      // ════════════════════════════════════════════════
+
+      const CHALLENGE_MATRIX = {
+        speed: {
+          label: 'Speed Problems',
+          icon: 'zap',
+          color: 'blue',
+          tagline: 'Everything the business experiences as IT moving too slowly.',
+          rows: [
+            {
+              challenge: 'Slow security patching',
+              who: 'Security, CISOs, Compliance',
+              aw: 'Automated ring-based patching deploys across all platforms simultaneously on a controlled schedule',
+              outcome: 'Patch deployment in hours and days, not weeks'
+            },
+            {
+              challenge: 'New hire onboarding',
+              who: 'IT Help Desk, HR, New Employees',
+              aw: 'Right applications delivered automatically at first login based on role, device, location and network',
+              outcome: 'Day one productivity. Zero provisioning tickets'
+            },
+            {
+              challenge: 'AI and new tooling rollouts',
+              who: 'CIOs, Business Leaders, IT Teams',
+              aw: 'New applications added to the catalog and delivered through the same single-definition model',
+              outcome: 'New tools reach users in days, not next quarter'
+            },
+            {
+              challenge: 'Application support tickets',
+              who: 'Help Desk, End Users',
+              aw: 'Applications defined and delivered consistently — inconsistency eliminated at the source',
+              outcome: '40–65% reduction in app-related support tickets'
+            },
+            {
+              challenge: 'IT capacity for strategic work',
+              who: 'CIOs, IT Directors',
+              aw: '30–65% of packaging and troubleshooting hours returned to the team',
+              outcome: 'IT becomes a strategic enabler, not a delivery bottleneck'
+            }
+          ]
+        },
+        scale: {
+          label: 'Scale Problems',
+          icon: 'trending-up',
+          color: 'orange',
+          tagline: 'Everything that gets worse as the organization grows.',
+          rows: [
+            {
+              challenge: 'Multi-platform packaging',
+              who: 'IT Engineers, Packaging Teams',
+              aw: 'Define the application once — platform handles delivery to every environment automatically',
+              outcome: 'Packaging hours reduced by the number of platforms you run'
+            },
+            {
+              challenge: 'Platform sprawl',
+              who: 'IT Directors, CIOs',
+              aw: 'Single definition layer sits across all platforms — new environments added without rebuilding existing apps',
+              outcome: 'New platforms add capability, not workload'
+            },
+            {
+              challenge: 'Cloud and platform migrations',
+              who: 'CIOs, Project Managers, IT Architects',
+              aw: 'Applications already defined in a platform-agnostic model — migration becomes a configuration, not a rebuild',
+              outcome: 'Migrations move at the speed of the project, not the packaging queue'
+            },
+            {
+              challenge: 'Talent scarcity',
+              who: 'IT Directors, CIOs',
+              aw: '8,000+ pre-tested applications eliminate custom packaging for the majority of the third-party portfolio',
+              outcome: 'Team operates at scale without specialist headcount to match'
+            },
+            {
+              challenge: 'Engineer burnout and retention',
+              who: 'IT Managers, HR',
+              aw: 'Repetitive packaging work eliminated or handled by the platform — engineers redirected to strategic projects',
+              outcome: 'Higher retention. Engineering capacity redirected to work that matters'
+            }
+          ]
+        },
+        risk: {
+          label: 'Risk Problems',
+          icon: 'shield-alert',
+          color: 'red',
+          tagline: 'Everything that keeps the CIO and CISO up at night.',
+          rows: [
+            {
+              challenge: 'Compliance documentation',
+              who: 'Compliance Officers, Audit Teams',
+              aw: 'Deployment evidence generated automatically with every patch and update',
+              outcome: 'Audit-ready documentation without anyone creating it'
+            },
+            {
+              challenge: 'Single points of failure',
+              who: 'IT Directors, CIOs',
+              aw: 'Applications defined in a documented, repeatable system — not in institutional memory',
+              outcome: 'Knowledge lives in the platform, not the person'
+            },
+            {
+              challenge: 'Regulatory and security frameworks',
+              who: 'CISOs, Compliance, Legal',
+              aw: 'Automated patching with built-in audit trails produces compliance evidence as a byproduct of normal operations',
+              outcome: 'Compliance posture strengthened without additional compliance work'
+            },
+            {
+              challenge: 'Inconsistent user experience',
+              who: 'End Users, Business Leaders',
+              aw: 'One definition, one consistent delivery — same experience regardless of device or platform',
+              outcome: 'Users stop noticing IT. Which is exactly the goal'
+            },
+            {
+              challenge: 'Contractor and remote worker access',
+              who: 'IT Security, End Users, HR',
+              aw: 'Context-aware delivery assigns the right app based on identity, device, location and network — automatically',
+              outcome: 'Every user gets exactly what they need regardless of where or how they connect'
+            }
+          ]
+        }
+      };
+
+      function renderChallengeMatrix(){
+        const colorMap = {
+          blue:   { header: 'bg-[#0A1C60]', badge: 'bg-blue-900/60 text-blue-200 border-blue-800', tagline: 'text-blue-200', icon: 'text-blue-300', outcome: 'bg-blue-50 text-blue-800 border-blue-200', rowHover: 'hover:bg-blue-50/40' },
+          orange: { header: 'bg-[#7c2d12]', badge: 'bg-orange-900/60 text-orange-200 border-orange-800', tagline: 'text-orange-200', icon: 'text-orange-300', outcome: 'bg-orange-50 text-orange-800 border-orange-200', rowHover: 'hover:bg-orange-50/40' },
+          red:    { header: 'bg-[#4a044e]', badge: 'bg-fuchsia-900/60 text-fuchsia-200 border-fuchsia-800', tagline: 'text-fuchsia-200', icon: 'text-fuchsia-300', outcome: 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200', rowHover: 'hover:bg-fuchsia-50/40' }
+        };
+
+        const groups = ['speed', 'scale', 'risk'];
+
+        return `
+          <div class="mt-5 section-card overflow-hidden">
+            <div class="bg-[#0A1C60] px-6 py-5 flex items-start justify-between gap-4">
+              <div>
+                <div class="text-[10px] font-bold uppercase tracking-widest text-blue-300 mb-1">Challenge &amp; Solution Matrix</div>
+                <h3 class="text-lg font-bold text-white">Every problem. One root cause. One solution.</h3>
+                <p class="text-sm text-blue-200 mt-1 max-w-2xl">These challenges look different on the surface. Patching backlogs. Onboarding delays. Compliance gaps. Migration stalls. They share a single root cause: a delivery model that requires manual, platform-specific work every single time. Application Workspace solves all three categories — because it solves the root cause.</p>
+              </div>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+              ${groups.map(gKey => {
+                const g = CHALLENGE_MATRIX[gKey];
+                const c = colorMap[g.color];
+                return `
+                  <div>
+                    <div class="${c.header} px-5 py-3 flex items-center gap-3">
+                      <i data-lucide="${g.icon}" class="w-4 h-4 ${c.icon} flex-shrink-0"></i>
+                      <div class="flex-1 min-w-0">
+                        <span class="text-[11px] font-bold uppercase tracking-widest text-white">${g.label}</span>
+                        <span class="hidden sm:inline text-[12px] ${c.tagline} ml-2 italic">${g.tagline}</span>
+                      </div>
+                      <span class="inline-block text-[10px] font-bold uppercase tracking-wider ${c.badge} border rounded px-2 py-0.5 flex-shrink-0">${g.rows.length} challenges</span>
+                    </div>
+                    <!-- Column headers -->
+                    <div class="hidden md:grid grid-cols-[1fr_1.6fr_1fr] gap-0 px-5 py-2 bg-slate-50 border-b border-slate-100">
+                      <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Challenge / Who Feels It</span>
+                      <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-4">What Application Workspace Does</span>
+                      <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 pl-4">Outcome</span>
+                    </div>
+                    <div class="divide-y divide-slate-100">
+                      ${g.rows.map((row, i) => `
+                        <div class="grid grid-cols-1 md:grid-cols-[1fr_1.6fr_1fr] gap-0 px-5 py-3.5 transition-colors ${c.rowHover}">
+                          <div class="pr-4">
+                            <p class="text-[13px] font-semibold text-slate-900 leading-snug">${row.challenge}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">${row.who}</p>
+                          </div>
+                          <div class="pl-0 md:pl-4 mt-2 md:mt-0 border-t md:border-t-0 md:border-l border-slate-100 pt-2 md:pt-0">
+                            <p class="text-[12px] text-slate-600 leading-relaxed">${row.aw}</p>
+                          </div>
+                          <div class="pl-0 md:pl-4 mt-2 md:mt-0 border-t md:border-t-0 md:border-l border-slate-100 pt-2 md:pt-0 flex items-start">
+                            <span class="inline-block text-[11px] font-semibold rounded-lg border px-2.5 py-1.5 leading-snug ${c.outcome}">${row.outcome}</span>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <div class="px-5 py-4 bg-slate-50 border-t border-slate-200">
+              <p class="text-[12px] text-slate-500 italic text-center">Application Workspace does not solve one of these categories. It solves all three — because they all share the same root cause.</p>
+            </div>
+          </div>
+        `;
+      }
+
       function renderSolution(){
         return `
           <section id="panel-solution" class="space-y-3">
@@ -2157,10 +2345,11 @@
                 <button type="button" class="md:hidden bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] py-2 text-sm rounded hover:text-[#0070F3] hover:border-[#0070F3]" data-action="expand-all">Expand All</button>
                 ${NEW_CARDS.map(card => popoutCard(card)).join('')}
                 <div class="sticky bottom-0 bg-white/70 backdrop-blur-lg py-3 shadow-lg mt-3 rounded-xl px-2 border border-slate-200">
-                  <button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="healthcare">See Healthcare ROI</button>
+                  <button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="healthcare">See Business Impact Calculator</button>
                 </div>
               </div>
             </div>
+            ${renderChallengeMatrix()}
           </section>
         `;
       }
