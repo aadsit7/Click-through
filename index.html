@@ -393,6 +393,7 @@
         openCards: { core: false, onboarding: false, trust: false },
         openScenes: { s1: true, s2: false, s3: false, s4: false, s5: false, sq: false },
         activeScene: 's1',
+        activeSolutionScene: 'r1',
         visitedCards: [],
         openBuckets: { one: false, zero: false, per: false },
         modalOpen: false,
@@ -754,7 +755,7 @@
         if (window.lucide?.createIcons) { try { window.lucide.createIcons(); } catch {} }
         attachEvents();
 
-        if (STATE.activeTab === 'solution') { buildFlow(); attachAccordionKeyboard(); }
+        // flow removed — solution tab uses scene-based layout
         if (STATE.activeTab === 'roi') { updateROIOutputs(); }
         if (STATE.activeTab === 'problems') {
           renderCapacityGapChart();
@@ -2490,26 +2491,538 @@
         `;
       }
 
+      // ════════════════════════════════════════════════════
+      // RECAST APPROACH — 4-scene clarity arc
+      //
+      // Scene 1: The Root Cause (one idea, one visual)
+      // Scene 2: How It Works  (the mechanic, made simple)
+      // Scene 3: What Changes  (4 outcomes tied to 4 pains)
+      // Scene 4: Why Recast    (proof + CTA)
+      // ════════════════════════════════════════════════════
+
+      const SOLUTION_NAV = [
+        {
+          id: 'r1',
+          num: '01',
+          accent: '#0A1C60', accentLight: '#EFF6FF', accentText: '#1d4ed8',
+          title: 'The Root Cause',
+          sub:   'Every problem traces to the same source',
+          hook:  'The packaging backlog, the slow patches, the compounding workload — they are not separate problems. They share one cause.'
+        },
+        {
+          id: 'r2',
+          num: '02',
+          accent: '#14532d', accentLight: '#F0FDF4', accentText: '#15803d',
+          title: 'Define Once. Deliver Everywhere.',
+          hook:  'One application definition. Every platform you run. Automatically. No rebuild per environment.',
+          sub:   'The mechanism that changes everything'
+        },
+        {
+          id: 'r3',
+          num: '03',
+          accent: '#1e1b4b', accentLight: '#F5F3FF', accentText: '#5b21b6',
+          title: 'What Changes',
+          sub:   'Four outcomes. Each tied to a pain you just saw.',
+          hook:  'The same four problems — cost, time, scale, fragility — resolved by the same single change in model.'
+        },
+        {
+          id: 'r4',
+          num: '04',
+          accent: '#0A1C60', accentLight: '#EFF6FF', accentText: '#1d4ed8',
+          title: 'Why Recast',
+          sub:   'Proof, scale, and speed to value',
+          hook:  'Application Workspace is not a new idea to validate. It is proven at scale, in production, across every major platform environment.'
+        },
+      ];
+
       function renderSolution(){
-        return `
-          <section id="panel-solution" class="space-y-3">
-            <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              ${renderFlow()}
-              <div class="flex flex-col gap-3 relative">
-                <div class="sticky top-0 z-10 bg-white/60 backdrop-blur-lg py-2 shadow-sm rounded-xl px-2">
-                  <div class="flex justify-between items-center text-sm">
-                    <span class="font-semibold">Application Workspace Approach</span>
-                    <span class="text-[#4A5568]">${STATE.visitedCards.length} of 3 explored</span>
+        const active    = STATE.activeSolutionScene || 'r1';
+        const nav       = SOLUTION_NAV;
+        const activeNav = nav.find(n => n.id === active) || nav[0];
+        const activeIdx = nav.findIndex(n => n.id === active);
+        const nextScene = activeIdx < nav.length - 1 ? nav[activeIdx + 1] : null;
+
+        // ──────────────────────────────────────────────────────────
+        // SCENE 1 — THE ROOT CAUSE
+        // Before/after model diagram. Two boxes. One insight.
+        // ──────────────────────────────────────────────────────────
+        function sceneR1(){
+          return `
+            <div class="p-6 md:p-8 space-y-6">
+
+              <p class="text-sm text-slate-500 leading-relaxed max-w-2xl">Look at the two models below. The one on the left is how almost every IT team delivers applications today. Everything in the previous tab — the hidden cost, the reactive week, the slow patches, the compounding backlog — comes from that left box.</p>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                <!-- OLD MODEL -->
+                <div class="rounded-2xl border-2 border-red-200 bg-red-50/30 overflow-hidden">
+                  <div class="bg-red-600 px-5 py-3 flex items-center gap-2">
+                    <i data-lucide="x-circle" class="w-4 h-4 text-white/80 flex-shrink-0"></i>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-white">Today&rsquo;s Delivery Model</span>
+                  </div>
+                  <div class="p-5">
+                    <!-- Source app -->
+                    <div class="flex justify-center mb-4">
+                      <div class="rounded-xl border-2 border-slate-300 bg-white px-5 py-3 text-center shadow-sm">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Application</div>
+                        <div class="text-[13px] font-bold text-slate-700">Microsoft Teams v4.x</div>
+                      </div>
+                    </div>
+                    <!-- Branching arrows -->
+                    <div class="flex justify-center gap-0 mb-3">
+                      ${['ConfigMgr','Intune','Citrix','macOS'].map((p,i) => `
+                        <div class="flex flex-col items-center flex-1">
+                          <div class="w-px h-5 bg-red-300"></div>
+                          <div class="w-2 h-2 rounded-full bg-red-400 border-2 border-red-500"></div>
+                          <div class="w-px h-5 bg-red-300"></div>
+                        </div>
+                      `).join('')}
+                    </div>
+                    <!-- Platform boxes -->
+                    <div class="grid grid-cols-2 gap-2">
+                      ${[
+                        {n:'ConfigMgr',  t:'Repackage\n+ test'},
+                        {n:'Intune',     t:'Repackage\n+ test'},
+                        {n:'Citrix',     t:'Repackage\n+ test'},
+                        {n:'macOS',      t:'Repackage\n+ test'},
+                      ].map(p => `
+                        <div class="rounded-lg border border-red-200 bg-white p-2.5 text-center">
+                          <div class="text-[11px] font-bold text-slate-700">${p.n}</div>
+                          <div class="text-[10px] text-red-500 mt-0.5 font-medium">Rebuilt manually</div>
+                        </div>
+                      `).join('')}
+                    </div>
+                    <div class="mt-4 rounded-lg bg-red-100 border border-red-200 p-3 text-center">
+                      <p class="text-[12px] font-semibold text-red-800">4 platforms &times; every app &times; every update</p>
+                      <p class="text-[11px] text-red-600 mt-0.5">The work multiplies. Every time. By design.</p>
+                    </div>
                   </div>
                 </div>
-                <button type="button" class="md:hidden bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] py-2 text-sm rounded hover:text-[#0070F3] hover:border-[#0070F3]" data-action="expand-all">Expand All</button>
-                ${NEW_CARDS.map(card => popoutCard(card)).join('')}
-                <div class="sticky bottom-0 bg-white/70 backdrop-blur-lg py-3 shadow-lg mt-3 rounded-xl px-2 border border-slate-200">
-                  <button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="healthcare">See Business Impact Calculator</button>
+
+                <!-- NEW MODEL -->
+                <div class="rounded-2xl border-2 border-green-200 bg-green-50/30 overflow-hidden">
+                  <div class="bg-green-700 px-5 py-3 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-white/80 flex-shrink-0"></i>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-white">Application Workspace Model</span>
+                  </div>
+                  <div class="p-5">
+                    <!-- Source app -->
+                    <div class="flex justify-center mb-4">
+                      <div class="rounded-xl border-2 border-slate-300 bg-white px-5 py-3 text-center shadow-sm">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Application</div>
+                        <div class="text-[13px] font-bold text-slate-700">Microsoft Teams v4.x</div>
+                      </div>
+                    </div>
+                    <!-- Single arrow down -->
+                    <div class="flex justify-center mb-3">
+                      <div class="flex flex-col items-center">
+                        <div class="w-px h-5 bg-green-400"></div>
+                        <div class="w-2 h-2 rounded-full bg-green-600"></div>
+                        <div class="w-px h-5 bg-green-400"></div>
+                      </div>
+                    </div>
+                    <!-- AW hub -->
+                    <div class="flex justify-center mb-3">
+                      <div class="rounded-xl border-2 border-green-400 bg-green-100 px-6 py-3 text-center shadow-sm">
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-green-700 mb-0.5">Defined Once In</div>
+                        <div class="text-[13px] font-bold text-green-900">Application Workspace</div>
+                      </div>
+                    </div>
+                    <!-- Fan out arrows -->
+                    <div class="flex justify-center gap-0 mb-3">
+                      ${['ConfigMgr','Intune','Citrix','macOS'].map(() => `
+                        <div class="flex flex-col items-center flex-1">
+                          <div class="w-px h-5 bg-green-300"></div>
+                          <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                          <div class="w-px h-5 bg-green-300"></div>
+                        </div>
+                      `).join('')}
+                    </div>
+                    <!-- Platform boxes -->
+                    <div class="grid grid-cols-2 gap-2">
+                      ${['ConfigMgr','Intune','Citrix','macOS'].map(p => `
+                        <div class="rounded-lg border border-green-200 bg-white p-2.5 text-center">
+                          <div class="text-[11px] font-bold text-slate-700">${p}</div>
+                          <div class="text-[10px] text-green-600 mt-0.5 font-medium flex items-center justify-center gap-1">
+                            <i data-lucide="check" class="w-3 h-3"></i> Delivered automatically
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                    <div class="mt-4 rounded-lg bg-green-100 border border-green-200 p-3 text-center">
+                      <p class="text-[12px] font-semibold text-green-800">Defined once. All platforms. Every update.</p>
+                      <p class="text-[11px] text-green-600 mt-0.5">The work stays flat. No matter how many platforms.</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /grid -->
+
+              <div class="rounded-xl bg-slate-800 text-white p-5">
+                <p class="text-sm leading-relaxed text-slate-200">"The delivery model on the left requires manual, platform-specific work every single time. That is the root cause — not team size, not tool choices, not priorities. <strong class="text-white">Change the model. Everything changes.</strong>"</p>
+              </div>
+
+            </div>
+          `;
+        }
+
+        // ──────────────────────────────────────────────────────────
+        // SCENE 2 — HOW IT WORKS
+        // The mechanic. Simple. No jargon.
+        // ──────────────────────────────────────────────────────────
+        function sceneR2(){
+          const plat = Math.max(1, +STATE.hcInputs.deliveryPlatforms || 3);
+          return `
+            <div class="p-6 md:p-8 space-y-6">
+
+              <p class="text-sm text-slate-500 leading-relaxed max-w-2xl">Application Workspace sits between your applications and your delivery platforms. You interact with it once per application — it handles everything downstream, to every environment you run, automatically.</p>
+
+              <!-- The mechanic visual -->
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
+
+                <!-- Three column layout -->
+                <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-0">
+
+                  <!-- LEFT: What you define -->
+                  <div class="p-5 border-r border-slate-200">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">You define it once</div>
+                    <div class="space-y-2">
+                      ${[
+                        {i:'package-2',  t:'Application package',   s:'The installer, version, dependencies'},
+                        {i:'settings-2', t:'Delivery rules',        s:'Who gets it, on what device, in what context'},
+                        {i:'shield',     t:'Patch schedule',        s:'Ring-based rollout — pilot then broad'},
+                        {i:'file-check', t:'Compliance config',     s:'Audit trail generated automatically'},
+                      ].map(r => `
+                        <div class="flex items-start gap-3 p-3 rounded-xl bg-white border border-slate-200">
+                          <div class="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i data-lucide="${r.i}" class="w-3.5 h-3.5 text-blue-600"></i>
+                          </div>
+                          <div>
+                            <p class="text-[12px] font-semibold text-slate-800">${r.t}</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">${r.s}</p>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <!-- CENTER: AW hub -->
+                  <div class="flex flex-col items-center px-4 py-8 bg-[#0A1C60] self-stretch justify-center">
+                    <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-3">
+                      <i data-lucide="layers" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <p class="text-[9px] font-bold uppercase tracking-widest text-white/60 text-center">Application</p>
+                    <p class="text-[11px] font-bold text-white text-center leading-snug mt-0.5">Workspace</p>
+                    <div class="mt-4 w-px flex-1 bg-white/20 min-h-[40px]"></div>
+                    <div class="mt-2 text-[9px] text-white/40 text-center">8,000+<br>pre-tested apps</div>
+                  </div>
+
+                  <!-- RIGHT: Where it goes -->
+                  <div class="p-5 border-l border-slate-200">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Delivered to every platform</div>
+                    <div class="space-y-2">
+                      ${[
+                        'ConfigMgr','Intune','Citrix / Omnissa','Azure Virtual Desktop','macOS / Jamf','Web / Remote'
+                      ].map((p, i) => `
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200">
+                          <div class="w-6 h-6 rounded-full bg-green-100 border border-green-300 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="check" class="w-3 h-3 text-green-700"></i>
+                          </div>
+                          <p class="text-[12px] font-semibold text-slate-700">${p}</p>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                </div><!-- /grid -->
+
+                <div class="bg-green-50 border-t border-green-100 px-5 py-3 flex items-center gap-2">
+                  <i data-lucide="info" class="w-3.5 h-3.5 text-green-700 flex-shrink-0"></i>
+                  <p class="text-[12px] text-green-800 font-medium">No rip and replace. Application Workspace layers on top of your existing infrastructure. What you have keeps working — and works better.</p>
+                </div>
+
+              </div><!-- /mechanic -->
+
+              <!-- The catalog stat -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
+                  <div class="text-4xl font-extrabold text-[#0A1C60] tabular-nums">8,000+</div>
+                  <div class="text-sm text-slate-600 mt-1">pre-tested enterprise applications</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">Ready to deploy without custom packaging work</div>
+                </div>
+                <div class="rounded-2xl border border-green-100 bg-green-50 p-5 text-center">
+                  <div class="text-4xl font-extrabold text-green-700 tabular-nums">1&times;</div>
+                  <div class="text-sm text-slate-600 mt-1">the number of times you define each app</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">Regardless of how many platforms you run</div>
                 </div>
               </div>
+
             </div>
-            ${renderChallengeMatrix()}
+          `;
+        }
+
+        // ──────────────────────────────────────────────────────────
+        // SCENE 3 — WHAT CHANGES
+        // Four outcomes tied directly to the four problem scenes.
+        // ──────────────────────────────────────────────────────────
+        function sceneR3(){
+          const outcomes = [
+            {
+              sceneNum: '01', sceneName: 'The Hidden Cost',
+              accent: '#1d4ed8', accentBg: '#EFF6FF', accentBorder: '#bfdbfe',
+              icon: 'clock',
+              headline: '30–65% of packaging hours returned to the team',
+              body: 'Every hour your team spent rebuilding the same application for every platform comes back. Not eliminated — redirected. To migrations. To automation. To work that actually moves the business.',
+              proof: 'Based on Recast customer data across 130+ countries'
+            },
+            {
+              sceneNum: '03', sceneName: 'When a CVE Drops',
+              accent: '#5b21b6', accentBg: '#F5F3FF', accentBorder: '#ddd6fe',
+              icon: 'shield-check',
+              headline: 'Critical patches close in hours, not days',
+              body: 'Define the patch once. Application Workspace deploys to every platform simultaneously, on a controlled ring schedule. The five-day exposure window becomes a same-day close. Audit trail generated automatically.',
+              proof: 'Automated ring-based deployment across all managed environments'
+            },
+            {
+              sceneNum: '04', sceneName: 'Why It Gets Worse',
+              accent: '#c2410c', accentBg: '#FFF7ED', accentBorder: '#fed7aa',
+              icon: 'trending-up',
+              headline: 'New platforms add capability — not workload',
+              body: 'Adding Intune. Migrating to AVD. Rolling out a new AI tool. With the old model, each one multiplies your backlog. With Application Workspace, each one is a configuration — not a rebuild. The gap stops compounding.',
+              proof: 'Applications defined in a platform-agnostic model from the start'
+            },
+            {
+              sceneNum: 'Q3', sceneName: 'The Question That Matters',
+              accent: '#1d4ed8', accentBg: '#F8FAFC', accentBorder: '#e2e8f0',
+              icon: 'database',
+              headline: 'Knowledge lives in the platform, not in people',
+              body: 'When packaging lives in a documented, repeatable system — not in an engineer\'s head — one person leaving does not create a capability gap. The system carries the knowledge. New team members inherit a working environment.',
+              proof: 'Every application definition stored, versioned, and transferable'
+            },
+          ];
+
+          return `
+            <div class="p-6 space-y-4">
+
+              <p class="text-sm text-slate-500 leading-relaxed max-w-2xl">The same model change — define once, deliver everywhere — resolves each of the four problems from the previous tab. Not as separate features. As one architectural shift.</p>
+
+              ${outcomes.map(o => `
+                <div class="rounded-2xl border overflow-hidden" style="border-color:${o.accentBorder}; background:${o.accentBg};">
+                  <div class="px-5 py-4 flex items-start gap-4">
+                    <!-- Icon + scene tie -->
+                    <div class="flex-shrink-0 flex flex-col items-center gap-1.5">
+                      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${o.accentBg}; border: 2px solid ${o.accentBorder};">
+                        <i data-lucide="${o.icon}" class="w-4.5 h-4.5" style="color:${o.accent};"></i>
+                      </div>
+                      <span class="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap" style="color:${o.accent}; opacity:0.6;">Scene ${o.sceneNum}</span>
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-[15px] font-bold leading-snug" style="color:${o.accent};">${o.headline}</p>
+                      <p class="text-[13px] text-slate-600 mt-2 leading-relaxed">${o.body}</p>
+                      <p class="text-[11px] mt-2 font-medium flex items-center gap-1.5" style="color:${o.accent}; opacity:0.7;">
+                        <i data-lucide="check-circle" class="w-3 h-3 flex-shrink-0"></i>
+                        ${o.proof}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+
+            </div>
+          `;
+        }
+
+        // ──────────────────────────────────────────────────────────
+        // SCENE 4 — WHY RECAST
+        // Proof, scale, speed. Then the CTA.
+        // ──────────────────────────────────────────────────────────
+        function sceneR4(){
+          const h = STATE.hcInputs;
+          const apps  = Math.max(1, +h.appsPackagedPerMonth || 20);
+          const plat  = Math.max(1, +h.deliveryPlatforms    || 3);
+          const hrs   = Math.max(0.5, +h.hoursPerPackage    || 4);
+          const saved = Math.round(apps * 12 * hrs * (plat - 1));
+          const salary = Math.round(+h.itAdminSalary || 110000);
+          const dollarVal = Math.round(saved * (salary / 2080));
+          const hasCalcData = apps > 1 || plat > 1 || hrs !== 4;
+
+          return `
+            <div class="p-6 md:p-8 space-y-5">
+
+              <!-- CSAT headline -->
+              <div class="rounded-2xl bg-[#0A1C60] text-white p-6 text-center">
+                <div class="text-6xl font-extrabold text-white tabular-nums leading-none">87</div>
+                <div class="text-sm text-blue-200 mt-2 font-medium">CSAT Score &mdash; consistently highest-rated in endpoint and application management</div>
+              </div>
+
+              <!-- Three proof pillars -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 text-center">
+                  <div class="text-3xl font-extrabold text-[#0A1C60] tabular-nums">60M+</div>
+                  <div class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">Endpoints Managed</div>
+                  <div class="text-[12px] text-slate-500 mt-1.5">130+ countries. Organizations from 200 to 200,000 people.</div>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 text-center">
+                  <div class="text-3xl font-extrabold text-[#0A1C60]">4&ndash;6</div>
+                  <div class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">Weeks to Production</div>
+                  <div class="text-[12px] text-slate-500 mt-1.5">1&ndash;2 engineers part-time. No rip-and-replace. No large project team.</div>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 text-center">
+                  <div class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Trusted By</div>
+                  <div class="space-y-1 text-[12px] font-semibold text-slate-700">
+                    <div>Costco &middot; McKinsey &amp; Co.</div>
+                    <div>U.S. Air Force &middot; FEMA</div>
+                    <div>Citibank &middot; Johns Hopkins</div>
+                    <div>Government of Canada</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Certifications -->
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                  <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 flex-shrink-0"></i>
+                  <span class="text-[12px] font-semibold text-slate-700">SOC 2 Type II Certified</span>
+                </div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                  <i data-lucide="shield-check" class="w-4 h-4 text-blue-600 flex-shrink-0"></i>
+                  <span class="text-[12px] font-semibold text-slate-700">ISO 27001 Certified</span>
+                </div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                  <i data-lucide="layers" class="w-4 h-4 text-blue-600 flex-shrink-0"></i>
+                  <span class="text-[12px] font-semibold text-slate-700">ConfigMgr &middot; Intune &middot; Citrix &middot; AVD &middot; macOS</span>
+                </div>
+              </div>
+
+              ${hasCalcData ? `
+                <!-- Your numbers (from scene 1 calculator) -->
+                <div class="rounded-2xl border-2 border-[#0070F3]/20 bg-blue-50 p-5">
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-3">Based on your environment</div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div class="text-center">
+                      <div class="text-3xl font-extrabold text-[#0A1C60] tabular-nums">${saved.toLocaleString()}</div>
+                      <div class="text-[11px] text-slate-500 mt-0.5">hours reclaimed per year</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-3xl font-extrabold text-green-700">~$${dollarVal.toLocaleString()}</div>
+                      <div class="text-[11px] text-slate-500 mt-0.5">annual value of hours saved</div>
+                    </div>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-3 italic text-center">Calculated from your inputs in Scene 01 of the current state tab.</p>
+                </div>
+              ` : ''}
+
+              <!-- CTA -->
+              <div class="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p class="text-base font-semibold text-[#0A1C60]">Ready to quantify the full impact?</p>
+                  <p class="text-sm text-slate-500 mt-0.5">The Business Impact Calculator models packaging labor, IT support reduction, and end-user productivity across your specific environment.</p>
+                </div>
+                <button type="button"
+                  class="flex-shrink-0 inline-flex items-center gap-2 bg-[#0070F3] text-white px-6 py-3 text-sm font-bold rounded-full hover:bg-[#005AD0] focus-ring transition shadow-sm whitespace-nowrap"
+                  data-action="advance" data-next="healthcare">
+                  See Business Impact <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+
+            </div>
+          `;
+        }
+
+        const sceneFns = { r1:sceneR1, r2:sceneR2, r3:sceneR3, r4:sceneR4 };
+        const activeBody = sceneFns[active] ? sceneFns[active]() : '';
+
+        return `
+          <section id="panel-solution">
+            <div class="flex rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white" style="min-height:640px;">
+
+              <!-- ── SIDEBAR ── -->
+              <nav class="flex-shrink-0 w-56 bg-[#0f1729] flex flex-col" aria-label="Solution navigation">
+
+                <div class="px-4 pt-5 pb-4 border-b border-white/10">
+                  <p class="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">The Approach</p>
+                  <p class="text-[13px] font-semibold text-white/90 mt-0.5 leading-snug">How AW changes the model</p>
+                </div>
+
+                <div class="flex-1 py-2 overflow-y-auto">
+                  ${nav.map((item, i) => {
+                    const isActive  = item.id === active;
+                    const isVisited = activeIdx > i;
+                    return `
+                      <button
+                        type="button"
+                        data-action="toggle-solution-scene"
+                        data-scene="${item.id}"
+                        class="w-full text-left px-3 py-3.5 flex items-start gap-3 transition-all duration-150 focus-ring relative
+                          ${isActive ? 'bg-white/10 border-r-2 border-white' : 'hover:bg-white/5 border-r-2 border-transparent'}"
+                        aria-current="${isActive ? 'true' : 'false'}"
+                      >
+                        <span class="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold mt-0.5
+                          ${isActive ? 'bg-white text-[#0f1729]' : isVisited ? 'bg-white/20 text-white/60' : 'bg-white/10 text-white/40'}">
+                          ${isVisited && !isActive ? `<i data-lucide="check" class="w-3 h-3"></i>` : item.num}
+                        </span>
+                        <span class="min-w-0 flex-1">
+                          <span class="block text-[12px] font-semibold leading-snug ${isActive ? 'text-white' : 'text-white/55'}">
+                            ${item.title}
+                          </span>
+                          <span class="block text-[10px] leading-snug mt-0.5 ${isActive ? 'text-white/55' : 'text-white/25'}">
+                            ${item.sub}
+                          </span>
+                        </span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+
+                <div class="px-4 py-4 border-t border-white/10">
+                  <div class="flex gap-1 mb-2">
+                    ${nav.map((item, i) => `
+                      <div class="flex-1 h-1 rounded-full ${i <= activeIdx ? 'bg-white/70' : 'bg-white/15'}"></div>
+                    `).join('')}
+                  </div>
+                  <p class="text-[10px] text-white/35">${activeIdx + 1} of ${nav.length}</p>
+                </div>
+              </nav>
+
+              <!-- ── CONTENT PANE ── -->
+              <div id="solution-content-pane" class="flex-1 overflow-y-auto flex flex-col min-w-0">
+
+                <!-- Scene header -->
+                <div class="flex-shrink-0 px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4"
+                     style="background:${activeNav.accentLight};">
+                  <div class="min-w-0">
+                    <span class="text-[10px] font-bold uppercase tracking-widest" style="color:${activeNav.accentText};">${activeNav.num}</span>
+                    <h2 class="text-xl font-bold text-slate-900 leading-snug mt-0.5">${activeNav.title}</h2>
+                    <p class="text-[13px] text-slate-600 mt-1 leading-relaxed max-w-xl">${activeNav.hook}</p>
+                  </div>
+                  <div class="flex-shrink-0 pt-1">
+                    ${nextScene ? `
+                      <button type="button"
+                        data-action="toggle-solution-scene"
+                        data-scene="${nextScene.id}"
+                        class="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors focus-ring whitespace-nowrap"
+                        style="border-color:${activeNav.accentText}; color:${activeNav.accentText}; background:white;">
+                        Next <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    ` : `
+                      <button type="button"
+                        data-action="advance"
+                        data-next="healthcare"
+                        class="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-[#0070F3] text-white border border-[#0070F3] hover:bg-[#005AD0] transition-colors focus-ring whitespace-nowrap">
+                        See Business Impact <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                      </button>
+                    `}
+                  </div>
+                </div>
+
+                <!-- Scene body -->
+                <div class="flex-1">
+                  ${activeBody}
+                </div>
+
+              </div>
+            </div>
           </section>
         `;
       }
@@ -3353,6 +3866,9 @@
               STATE.openScenes.s1 = true;
               STATE.activeScene = 's1';
             }
+            if (STATE.activeTab === 'solution') {
+              STATE.activeSolutionScene = 'r1';
+            }
             render();
             return;
           }
@@ -3554,6 +4070,17 @@
           }
 
           if (action === 'reset-sliders') { resetSliders(); return; }
+
+          if (action === 'toggle-solution-scene') {
+            const sid = act.getAttribute('data-scene');
+            if (sid) {
+              STATE.activeSolutionScene = sid;
+              render();
+              const pane = document.getElementById('solution-content-pane');
+              if (pane) pane.scrollTop = 0;
+            }
+            return;
+          }
 
           if (action === 'toggle-scene') {
             const sid = act.getAttribute('data-scene');
