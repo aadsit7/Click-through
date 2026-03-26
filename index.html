@@ -225,16 +225,16 @@
       .catalog-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 10px;
-        padding: 16px;
+        gap: 6px;
+        padding: 12px;
       }
       .catalog-app {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
         cursor: default;
-        padding: 8px 4px;
+        padding: 5px 2px;
         border-radius: 8px;
         transition: all 0.2s ease;
         position: relative;
@@ -245,16 +245,16 @@
         transform: scale(0.95);
       }
       .catalog-app .app-icon {
-        width: 36px; height: 36px;
-        border-radius: 10px;
+        width: 32px; height: 32px;
+        border-radius: 8px;
         display: grid; place-items: center;
-        font-weight: 800; font-size: 14px;
+        font-weight: 800; font-size: 12px;
         color: white;
         transition: all 0.3s ease;
         position: relative;
       }
       .catalog-app .app-name {
-        font-size: 9px;
+        font-size: 8px;
         color: #475569;
         text-align: center;
         line-height: 1.1;
@@ -271,7 +271,7 @@
       .click-ring {
         position: absolute;
         inset: 0;
-        border-radius: 10px;
+        border-radius: 8px;
         border: 2px solid #0070F3;
         animation: clickRing 0.6s ease-out forwards;
         pointer-events: none;
@@ -1097,78 +1097,88 @@
         { id: 'word', letter: 'W', color: '#185ABD', name: 'Word' },
         { id: 'excel', letter: 'X', color: '#107C41', name: 'Excel' },
         { id: 'teams', letter: 'T', color: '#5B53D6', name: 'Teams' },
-        { id: 'zoom', letter: 'Z', color: '#0B5CFF', name: 'Zoom' },
+        { id: 'ppt', letter: 'P', color: '#D24726', name: 'PowerPoint' },
         { id: 'outlook', letter: 'O', color: '#106EBE', name: 'Outlook' },
-        { id: 'salesforce', letter: 'SF', color: '#00A1E0', name: 'Salesforce' },
+        { id: 'zoom', letter: 'Z', color: '#0B5CFF', name: 'Zoom' },
         { id: 'chrome', letter: 'C', color: '#4285F4', name: 'Chrome' },
         { id: 'slack', letter: 'S', color: '#E01E5A', name: 'Slack' },
+        { id: 'salesforce', letter: 'SF', color: '#00A1E0', name: 'Salesforce' },
         { id: 'sap', letter: 'SAP', color: '#0A6ED1', name: 'SAP' },
+        { id: 'adobe', letter: 'A', color: '#ED2224', name: 'Acrobat' },
+        { id: 'servicenow', letter: 'SN', color: '#81B29A', name: 'ServiceNow' },
+        { id: 'onedrive', letter: 'OD', color: '#0A5BD5', name: 'OneDrive' },
+        { id: 'okta', letter: 'Ok', color: '#007DC1', name: 'Okta' },
         { id: 'duo', letter: 'D', color: '#3CB371', name: 'Duo' },
+        { id: 'edge', letter: 'E', color: '#0C8EC5', name: 'Edge' },
+        { id: 'workday', letter: 'WD', color: '#1F5BFF', name: 'Workday' },
+        { id: 'crowdstrike', letter: 'CS', color: '#D61F26', name: 'CrowdStrike' },
+        { id: 'box', letter: 'BX', color: '#0061D5', name: 'Box' },
+        { id: 'defender', letter: 'MD', color: '#0067B8', name: 'Defender' },
       ];
 
       const SCENARIOS = [
         {
-          id: 'install',
-          label: 'First launch',
-          subtitle: 'App not yet on device',
-          scenarioDesc: "A new employee clicks Teams for the first time. They don't have it installed — but they don't need to know that.",
+          id: 'access',
+          label: 'First access',
+          subtitle: 'New user opens their workspace',
+          scenarioDesc: "A new employee opens Application Workspace and sees their personalized app catalog — every app assigned to them, ready to go. They click Teams. The system determines the best delivery method based on their device, location, and policy. They can also download it to their desktop for offline access.",
           userMsg: 'Launching Teams...',
           successMsg: 'Teams is ready',
           checks: [
-            { q: 'Installed?', a: 'No — needs install' },
-            { q: 'Version?', a: 'Will install v2.2' },
-            { q: 'Config?', a: 'Pending — will apply' },
-            { q: 'Environment?', a: 'Windows / Corporate' },
+            { q: 'User identity?', a: 'Verified — assigned to Engineering' },
+            { q: 'Best delivery?', a: 'Local install (corporate device)' },
+            { q: 'Config?', a: 'Applying MFA + VPN policy' },
+            { q: 'Environment?', a: 'Windows / On-prem network' },
           ],
           activePath: 'local',
-          pathLabel: 'Local Install',
-          configNote: 'MFA policy + VPN settings applied automatically',
-          bannerMsg: 'Install, configure, update, and launch — automatically. No tickets. No waiting.',
+          pathLabel: 'Install + Configure Locally',
+          configNote: 'App delivered with MFA + VPN policy — also available for desktop download',
+          bannerMsg: 'One catalog. Every app. The right delivery method chosen automatically — users can also download to their desktop.',
         },
         {
           id: 'backend',
           label: 'Backend changed',
-          subtitle: 'IT migrated VDI → SaaS',
-          scenarioDesc: "IT migrated Teams from VDI to SaaS last week. The user clicks the same icon — the system routes to the new delivery method. The user never knows.",
+          subtitle: 'IT migrated VDI to SaaS',
+          scenarioDesc: "IT migrated Teams delivery from VDI to SaaS last week. The same user opens their workspace and clicks the same icon. Application Workspace routes to the new delivery path automatically. The user experience is identical — they never need to know the backend changed.",
           userMsg: 'Launching Teams...',
           successMsg: 'Teams is ready',
           checks: [
-            { q: 'Installed?', a: 'N/A — routed to SaaS' },
-            { q: 'Version?', a: 'Always latest (web)' },
-            { q: 'Config?', a: 'SSO policy enforced' },
-            { q: 'Environment?', a: 'IT switched VDI → SaaS' },
+            { q: 'User identity?', a: 'Verified — same user' },
+            { q: 'Best delivery?', a: 'SaaS (IT changed routing)' },
+            { q: 'Config?', a: 'SSO policy enforced via web' },
+            { q: 'Environment?', a: 'Delivery switched VDI to SaaS' },
           ],
           activePath: 'saas',
-          pathLabel: 'Open SaaS URL',
-          configNote: 'Same config, different delivery — user never knows',
-          bannerMsg: "Backend changes. User experience doesn't. No repackaging. No rework.",
+          pathLabel: 'Route to SaaS URL',
+          configNote: 'Same policies, different delivery path — zero user disruption',
+          bannerMsg: "Backend changes. User experience doesn't. No repackaging. No rework. No retraining.",
         },
         {
           id: 'update',
           label: 'Version outdated',
-          subtitle: 'Auto-patched at launch',
-          scenarioDesc: "A security patch was released overnight. When the user clicks Teams, the system detects the outdated version and updates it instantly — no maintenance window required.",
+          subtitle: 'Auto-patched at access',
+          scenarioDesc: "A critical security patch was released overnight. When the user accesses Teams through their workspace, Application Workspace detects the outdated version and updates it automatically — no maintenance window, no IT ticket, no user action required.",
           userMsg: 'Launching Teams...',
           successMsg: 'Teams updated and ready',
           checks: [
-            { q: 'Installed?', a: 'Yes' },
-            { q: 'Version?', a: 'No — v2.1 outdated' },
-            { q: 'Config?', a: 'Already applied' },
-            { q: 'Environment?', a: 'Windows / Corporate' },
+            { q: 'User identity?', a: 'Verified — existing user' },
+            { q: 'Best delivery?', a: 'Local (already installed)' },
+            { q: 'Version current?', a: 'No — v2.1, updating to v2.2' },
+            { q: 'Config?', a: 'Re-validating compliance' },
           ],
           activePath: 'update',
           pathLabel: 'Auto-Update to v2.2',
-          configNote: 'Updated at launch — no maintenance window needed',
-          bannerMsg: 'Updated at launch — no disruption. No maintenance windows. No user impact.',
+          configNote: 'Patched at access — no maintenance window, no downtime',
+          bannerMsg: 'Security patches applied at launch — no maintenance windows. No disruption. No user impact.',
         },
       ];
 
       const ALL_PATHS = [
-        { id: 'local', icon: 'hard-drive', label: 'Local Install' },
-        { id: 'vdi', icon: 'monitor', label: 'Launch via VDI' },
-        { id: 'saas', icon: 'globe', label: 'Open SaaS URL' },
+        { id: 'local', icon: 'hard-drive', label: 'Install to Device' },
+        { id: 'vdi', icon: 'monitor', label: 'Stream via VDI' },
+        { id: 'saas', icon: 'globe', label: 'Open via SaaS/Web' },
         { id: 'update', icon: 'refresh-cw', label: 'Auto-Update' },
-        { id: 'config', icon: 'wrench', label: 'Apply Config' },
+        { id: 'download', icon: 'download', label: 'Desktop Download' },
       ];
 
       function renderFlow(){
@@ -1239,7 +1249,7 @@
                   <div class="device-dot device-dot-r"></div>
                   <div class="device-dot device-dot-y"></div>
                   <div class="device-dot device-dot-g"></div>
-                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : 'Application Catalog'}</span>
+                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : 'Application Workspace'}</span>
                 </div>
                 <div class="catalog-grid" id="catalogGrid">
                   ${CATALOG_APPS.map(app => `
