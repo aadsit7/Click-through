@@ -190,172 +190,267 @@
       }
 
       /* ===========================
-         NEW FLOW ANIMATION STYLES
+         SPLIT-VIEW FLOW ANIMATION
          =========================== */
 
-      /* Step container */
-      .flow-step {
-        opacity: 0;
-        transform: translateY(12px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
+      /* Device mockup */
+      .device-frame {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 6px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.05);
+        position: relative;
+        overflow: hidden;
+      }
+      .device-screen {
+        background: #f8fafc;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .device-titlebar {
+        background: linear-gradient(180deg, #f1f5f9, #e2e8f0);
+        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-bottom: 1px solid #cbd5e1;
+      }
+      .device-dot { width: 8px; height: 8px; border-radius: 50%; }
+      .device-dot-r { background: #ef4444; }
+      .device-dot-y { background: #eab308; }
+      .device-dot-g { background: #22c55e; }
+      .device-titlebar-text { font-size: 11px; color: #64748b; margin-left: 8px; font-weight: 500; }
+
+      /* App catalog grid */
+      .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        padding: 16px;
+      }
+      .catalog-app {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        cursor: default;
+        padding: 8px 4px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+      .catalog-app:hover { background: #f1f5f9; }
+      .catalog-app.clicked {
+        background: #eff6ff;
+        transform: scale(0.95);
+      }
+      .catalog-app .app-icon {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        display: grid; place-items: center;
+        font-weight: 800; font-size: 14px;
+        color: white;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+      .catalog-app .app-name {
+        font-size: 9px;
+        color: #475569;
+        text-align: center;
+        line-height: 1.1;
+      }
+      .catalog-app.clicked .app-icon {
+        box-shadow: 0 0 0 3px rgba(0,112,243,0.4);
+      }
+
+      /* Click ring animation */
+      @keyframes clickRing {
+        0% { transform: scale(0.8); opacity: 1; }
+        100% { transform: scale(1.8); opacity: 0; }
+      }
+      .click-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 10px;
+        border: 2px solid #0070F3;
+        animation: clickRing 0.6s ease-out forwards;
         pointer-events: none;
       }
-      .flow-step.active {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
+
+      /* User status bar */
+      .user-status {
+        padding: 10px 16px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        transition: all 0.4s ease;
+        font-size: 12px;
+        color: #64748b;
       }
-      .flow-step.completed {
-        opacity: 0.4;
-        transform: translateY(0) scale(0.97);
-        pointer-events: auto;
+      .user-status.loading { color: #0070F3; }
+      .user-status.success { color: #059669; background: #f0fdf4; }
+      .user-status.idle { color: #94a3b8; }
+
+      /* Loading spinner */
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spinner {
+        width: 14px; height: 14px;
+        border: 2px solid #e2e8f0;
+        border-top-color: #0070F3;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
       }
 
-      /* Step label pill */
-      .step-label {
+      /* Behind the scenes section */
+      .bts-section {
+        position: relative;
+        overflow: hidden;
+      }
+      .bts-label {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
-        font-size: 0.65rem;
+        gap: 6px;
+        font-size: 10px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #6b7280;
-        padding: 0.15rem 0.5rem;
+        letter-spacing: 0.1em;
+        padding: 3px 10px;
         border-radius: 9999px;
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        margin-bottom: 0.4rem;
+        margin-bottom: 8px;
       }
-      .flow-step.active .step-label {
+      .bts-label-user {
+        color: #059669;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+      }
+      .bts-label-engine {
         color: #0070F3;
         background: #eff6ff;
-        border-color: #bfdbfe;
+        border: 1px solid #bfdbfe;
       }
 
-      /* Smart icon pulse */
-      @keyframes smartIconPulse {
-        0% { box-shadow: 0 0 0 0 rgba(0,112,243,0.4); }
-        50% { box-shadow: 0 0 0 12px rgba(0,112,243,0); }
-        100% { box-shadow: 0 0 0 0 rgba(0,112,243,0); }
-      }
-      .smart-icon-active {
-        animation: smartIconPulse 1.5s ease-in-out infinite;
-        border: 2px solid #0070F3 !important;
-      }
-
-      /* Decision branch */
-      .decision-branch {
+      /* Orchestration row */
+      .orch-row {
         opacity: 0;
-        transform: translateX(-10px);
-        transition: opacity 0.4s ease, transform 0.4s ease, background 0.3s ease;
+        transform: translateY(8px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
       }
-      .decision-branch.visible {
+      .orch-row.visible {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
       }
-      .decision-branch.checked {
-        background: #f0fdf4 !important;
-        border-color: #86efac !important;
-      }
-      .decision-branch.checked .branch-icon {
-        color: #10b981;
+      .orch-row.dimming {
+        opacity: 0.3;
+        filter: blur(1px);
+        transition: opacity 1s ease, filter 1s ease;
       }
 
-      /* Execution path */
-      .exec-path {
-        opacity: 0.3;
-        transform: scaleX(0.95);
-        transition: all 0.5s ease;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
+      /* Decision checks inline */
+      .check-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        transition: all 0.3s ease;
+        color: #94a3b8;
       }
-      .exec-path.lit {
-        opacity: 1;
-        transform: scaleX(1);
+      .check-item.pass {
+        border-color: #86efac;
+        background: #f0fdf4;
+        color: #166534;
+      }
+
+      /* Execution paths */
+      .path-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        border: 1px solid #e5e7eb;
+        background: #fafafa;
+        transition: all 0.4s ease;
+        color: #94a3b8;
+      }
+      .path-row.active-path {
         border-color: #0070F3;
         background: #eff6ff;
-        box-shadow: 0 0 12px rgba(0,112,243,0.15);
+        color: #1e40af;
+        box-shadow: 0 0 8px rgba(0,112,243,0.12);
       }
-      .exec-path.dimmed {
-        opacity: 0.15;
-        transform: scaleX(0.95);
-      }
-
-      /* Config layer wrap */
-      @keyframes configWrap {
-        0% { border-color: transparent; box-shadow: none; }
-        100% { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
-      }
-      .config-wrapped {
-        animation: configWrap 0.8s ease forwards;
-        border: 2px dashed transparent;
-        border-radius: 0.5rem;
-        padding: 0.5rem;
+      .path-row.inactive-path {
+        opacity: 0.2;
       }
 
-      /* Reuse connector lines */
-      .reuse-line {
+      /* Connector lines */
+      .orch-connector {
         height: 2px;
         background: linear-gradient(to right, #0070F3, #10b981);
-        transform-origin: left center;
+        transform-origin: left;
         transform: scaleX(0);
-        transition: transform 0.8s ease;
+        transition: transform 0.6s ease;
         border-radius: 2px;
+        margin: 4px 0;
       }
-      .reuse-line.drawn {
-        transform: scaleX(1);
+      .orch-connector.drawn { transform: scaleX(1); }
+
+      /* Config wrap animation */
+      @keyframes cfgWrap {
+        0% { border-color: transparent; }
+        100% { border-color: #f59e0b; }
+      }
+      .cfg-wrap {
+        border: 2px dashed transparent;
+        border-radius: 6px;
+        padding: 4px 8px;
+        transition: all 0.5s ease;
+      }
+      .cfg-wrap.wrapped {
+        animation: cfgWrap 0.6s ease forwards;
+        background: rgba(245,158,11,0.05);
       }
 
-      /* Backend shift */
-      @keyframes backendShift {
-        0% { background: #fef3c7; border-color: #f59e0b; }
-        50% { background: #dbeafe; border-color: #3b82f6; }
-        100% { background: #eff6ff; border-color: #0070F3; }
-      }
-      .backend-shifting {
-        animation: backendShift 1.2s ease forwards;
-      }
-
-      /* Version update bar */
-      .update-bar {
-        height: 4px;
+      /* Update progress bar */
+      .upd-bar {
+        height: 3px;
         background: linear-gradient(to right, #0070F3, #10b981);
         border-radius: 2px;
         transform-origin: left;
         transform: scaleX(0);
-        transition: transform 1s ease;
+        transition: transform 1.2s ease;
       }
-      .update-bar.filling {
-        transform: scaleX(1);
-      }
+      .upd-bar.filling { transform: scaleX(1); }
 
-      /* Complexity fade */
-      .complexity-layer {
-        transition: opacity 1s ease, filter 1s ease;
-      }
-      .complexity-layer.faded {
-        opacity: 0.08 !important;
-        filter: blur(2px);
-      }
-
-      /* Step message overlay */
-      .step-message {
-        font-size: 0.8rem;
+      /* Scenario indicator */
+      .scenario-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 10px;
         font-weight: 600;
-        color: #0070F3;
-        text-align: center;
-        padding: 0.5rem 1rem;
-        background: rgba(239,246,255,0.9);
-        border: 1px solid #bfdbfe;
-        border-radius: 0.5rem;
-        opacity: 0;
-        transform: translateY(5px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        transition: all 0.3s ease;
       }
-      .step-message.visible {
-        opacity: 1;
-        transform: translateY(0);
+      .scenario-pill.active-scenario {
+        border-color: #0070F3;
+        background: #eff6ff;
+        color: #0070F3;
+      }
+      .scenario-pill.done-scenario {
+        border-color: #10b981;
+        background: #ecfdf5;
+        color: #059669;
       }
 
       /* Final payoff */
@@ -364,41 +459,250 @@
         50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); }
         100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
       }
-      .final-glow {
-        animation: finalGlow 2s ease-in-out;
-      }
+      .final-glow { animation: finalGlow 2s ease-in-out; }
 
-      /* Step indicator dots */
-      .step-dots {
-        display: flex;
-        gap: 0.35rem;
-        justify-content: center;
-        padding: 0.5rem 0;
+      /* Pipeline workflow connectors */
+      .pipeline {
+        position: relative;
+        padding-left: 20px;
       }
-      .step-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 9999px;
-        background: #e5e7eb;
-        transition: all 0.3s ease;
+      .pipeline::before {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
       }
-      .step-dot.active {
-        background: #0070F3;
-        transform: scale(1.3);
+      .pipeline-stage {
+        position: relative;
+        padding: 6px 0;
+        opacity: 0.25;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        transform: translateX(-4px);
       }
-      .step-dot.done {
+      .pipeline-stage.reached {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .pipeline-stage.active-stage {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .pipeline-node {
+        position: absolute;
+        left: -20px;
+        top: 10px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        border: 2px solid white;
+        display: grid;
+        place-items: center;
+        z-index: 2;
+        transition: all 0.4s ease;
+      }
+      .pipeline-stage.reached .pipeline-node {
         background: #10b981;
       }
-
-      /* Click cursor animation */
-      @keyframes cursorClick {
-        0% { transform: scale(1); }
-        30% { transform: scale(0.85); }
-        60% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+      .pipeline-stage.active-stage .pipeline-node {
+        background: #0070F3;
+        box-shadow: 0 0 0 4px rgba(0,112,243,0.2);
       }
-      .cursor-clicking {
-        animation: cursorClick 0.4s ease;
+      .pipeline-stage .stage-content {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 10px;
+        transition: all 0.4s ease;
+      }
+      .pipeline-stage.active-stage .stage-content {
+        border-color: #0070F3;
+        background: #eff6ff;
+        box-shadow: 0 0 8px rgba(0,112,243,0.08);
+      }
+      .pipeline-stage.reached .stage-content {
+        border-color: #a7f3d0;
+        background: #f0fdf4;
+      }
+      .pipeline-progress {
+        position: absolute;
+        left: 7px;
+        top: 0;
+        width: 2px;
+        background: linear-gradient(180deg, #0070F3, #10b981);
+        z-index: 1;
+        transition: height 0.6s ease;
+      }
+      .stage-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .pipeline-stage:not(.reached):not(.active-stage) .stage-title { color: #94a3b8; }
+      .stage-detail {
+        font-size: 10px;
+        color: #64748b;
+        line-height: 1.4;
+      }
+      .pipeline-stage:not(.reached):not(.active-stage) .stage-detail { color: #cbd5e1; }
+
+      /* Message banner */
+      .flow-banner {
+        font-size: 12px;
+        font-weight: 600;
+        color: #0070F3;
+        text-align: center;
+        padding: 6px 12px;
+        background: rgba(239,246,255,0.9);
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .flow-banner.visible { opacity: 1; }
+
+      /* App window that opens inside device */
+      .app-window-overlay {
+        position: absolute;
+        inset: 0;
+        top: 28px; /* below titlebar */
+        background: white;
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+        transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2,0.8,0.2,1);
+        pointer-events: none;
+      }
+      .app-window-overlay.open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+      .app-window-topbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+      }
+      .app-window-topbar .aw-icon {
+        width: 22px; height: 22px;
+        border-radius: 5px;
+        display: grid; place-items: center;
+        font-size: 10px; font-weight: 800;
+        color: white;
+        flex-shrink: 0;
+      }
+      .app-window-topbar .aw-title {
+        font-size: 11px; font-weight: 600; color: #1e293b;
+      }
+      .app-window-topbar .aw-subtitle {
+        font-size: 9px; color: #94a3b8;
+      }
+      .app-window-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      /* Fake Teams UI */
+      .teams-sidebar {
+        width: 44px;
+        background: #292b3a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 0;
+        flex-shrink: 0;
+      }
+      .teams-sidebar-dot {
+        width: 26px; height: 26px; border-radius: 6px;
+        background: rgba(255,255,255,0.08);
+        display: grid; place-items: center;
+      }
+      .teams-sidebar-dot.active { background: rgba(91,83,214,0.5); }
+      .teams-sidebar-dot i { color: rgba(255,255,255,0.5); }
+      .teams-sidebar-dot.active i { color: white; }
+      .teams-chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+      }
+      .teams-chat-header {
+        padding: 6px 10px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 11px; font-weight: 600; color: #1e293b;
+        display: flex; align-items: center; gap: 6px;
+      }
+      .teams-chat-body {
+        flex: 1;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: hidden;
+      }
+      .teams-msg {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .teams-msg.show { opacity: 1; transform: translateY(0); }
+      .teams-msg-avatar {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: grid; place-items: center;
+        font-size: 8px; font-weight: 700; color: white;
+      }
+      .teams-msg-bubble {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0 8px 8px 8px;
+        padding: 5px 8px;
+        font-size: 10px;
+        color: #334155;
+        line-height: 1.3;
+        max-width: 80%;
+      }
+      .teams-msg-bubble.self {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        border-radius: 8px 0 8px 8px;
+        margin-left: auto;
+      }
+      .teams-chat-input {
+        padding: 6px 10px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .teams-chat-input-box {
+        flex: 1;
+        height: 24px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        background: white;
+        padding: 0 8px;
+        font-size: 9px;
+        color: #94a3b8;
+        display: flex; align-items: center;
       }
     </style>
   </head>
@@ -552,7 +856,9 @@
         // New flow state
         flowStep: -1,
         flowRunning: false,
-        flowScenario: 'first' // 'first' or 'second' for backend change demo
+        flowScenario: 'first',
+        flowScenarioIdx: -1,
+        flowPhase: 'idle'
       };
 
       STATE.recastMode = false;
@@ -634,17 +940,435 @@
          FLOW ANIMATION STEP DEFINITIONS
          ============================= */
 
-      const FLOW_STEPS = [
-        { id: 'user-click',     num: 1, title: 'User clicks application',            message: 'This is where everything changes' },
-        { id: 'smart-icon',     num: 2, title: 'Icon becomes a workflow',             message: 'This is not just an icon — it\'s a workflow' },
-        { id: 'decisioning',    num: 3, title: 'System evaluates conditions',         message: 'Every app click triggers real-time orchestration' },
-        { id: 'multi-path',     num: 4, title: 'Correct action is executed',          message: 'The right action happens automatically' },
-        { id: 'config-layer',   num: 5, title: 'Configuration applied',              message: 'Install, configure, update, and launch — automatically' },
-        { id: 'reuse',          num: 6, title: 'One definition, every environment',   message: 'One definition adapts across every environment' },
-        { id: 'backend-change', num: 7, title: 'Backend changes, UX doesn\'t',        message: 'Users get a consistent experience — regardless of backend' },
-        { id: 'live-update',    num: 8, title: 'Updated at launch',                  message: 'Updated at launch — no disruption' },
-        { id: 'simplicity',     num: 9, title: 'Click → It just works',              message: 'No repackaging. No rework.' }
+      /* ========== CATALOG APPS for device mockup ========== */
+      const CATALOG_APPS = [
+        { id: 'word', letter: 'W', color: '#185ABD', name: 'Word' },
+        { id: 'excel', letter: 'X', color: '#107C41', name: 'Excel' },
+        { id: 'teams', letter: 'T', color: '#5B53D6', name: 'Teams' },
+        { id: 'zoom', letter: 'Z', color: '#0B5CFF', name: 'Zoom' },
+        { id: 'outlook', letter: 'O', color: '#106EBE', name: 'Outlook' },
+        { id: 'salesforce', letter: 'SF', color: '#00A1E0', name: 'Salesforce' },
+        { id: 'chrome', letter: 'C', color: '#4285F4', name: 'Chrome' },
+        { id: 'slack', letter: 'S', color: '#E01E5A', name: 'Slack' },
+        { id: 'sap', letter: 'SAP', color: '#0A6ED1', name: 'SAP' },
+        { id: 'duo', letter: 'D', color: '#3CB371', name: 'Duo' },
       ];
+
+      const SCENARIOS = [
+        {
+          id: 'install',
+          label: 'First launch',
+          userMsg: 'Launching Teams...',
+          successMsg: 'Teams is ready',
+          checks: [
+            { q: 'Is app installed?', a: 'No — needs install' },
+            { q: 'Correct version?', a: 'Will install v2.2' },
+            { q: 'Config applied?', a: 'Pending' },
+            { q: 'Environment?', a: 'Windows / Corporate' },
+          ],
+          activePath: 'local',
+          pathLabel: 'Local Install',
+          configNote: 'App + MFA policy + VPN settings applied',
+          bannerMsg: 'Every app click triggers real-time orchestration',
+        },
+        {
+          id: 'backend',
+          label: 'Backend changed',
+          userMsg: 'Launching Teams...',
+          successMsg: 'Teams is ready',
+          checks: [
+            { q: 'Is app installed?', a: 'N/A — routed to SaaS' },
+            { q: 'Correct version?', a: 'Always latest (web)' },
+            { q: 'Config applied?', a: 'SSO policy enforced' },
+            { q: 'Environment?', a: 'IT switched VDI → SaaS' },
+          ],
+          activePath: 'saas',
+          pathLabel: 'Open SaaS URL',
+          configNote: 'Same config, different delivery — user never knows',
+          bannerMsg: "Backend changes. User experience doesn't.",
+        },
+        {
+          id: 'update',
+          label: 'Version outdated',
+          userMsg: 'Launching Teams...',
+          successMsg: 'Teams updated and ready',
+          checks: [
+            { q: 'Is app installed?', a: 'Yes' },
+            { q: 'Correct version?', a: 'No — v2.1 outdated' },
+            { q: 'Config applied?', a: 'Yes' },
+            { q: 'Environment?', a: 'Windows / Corporate' },
+          ],
+          activePath: 'update',
+          pathLabel: 'Auto-Update to v2.2',
+          configNote: 'Updated at launch — no maintenance window needed',
+          bannerMsg: 'Updated at launch — no disruption',
+        },
+      ];
+
+      const ALL_PATHS = [
+        { id: 'local', icon: 'hard-drive', label: 'Local Install' },
+        { id: 'vdi', icon: 'monitor', label: 'Launch via VDI' },
+        { id: 'saas', icon: 'globe', label: 'Open SaaS URL' },
+        { id: 'update', icon: 'refresh-cw', label: 'Auto-Update' },
+        { id: 'config', icon: 'wrench', label: 'Apply Config' },
+      ];
+
+      function renderFlow(){
+        const sc = STATE.flowScenarioIdx;
+        const phase = STATE.flowPhase; // 'idle','clicking','checking','routing','config','done','final'
+        const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
+        const appOpen = scenario && phase !== 'idle';
+
+        // Pipeline stage states
+        const stageState = (stagePhases) => {
+          if (!scenario) return '';
+          const idx = ['clicking','checking','routing','config','done','final'];
+          const currentIdx = idx.indexOf(phase);
+          const stageIdx = idx.indexOf(stagePhases[0]);
+          const lastIdx = idx.indexOf(stagePhases[stagePhases.length - 1]);
+          if (currentIdx > lastIdx) return 'reached';
+          if (stagePhases.includes(phase)) return 'active-stage';
+          return '';
+        };
+
+        // Pipeline progress height (percentage through stages)
+        const progressPct = !scenario ? 0 :
+          phase === 'clicking' ? 8 :
+          phase === 'checking' ? 28 :
+          phase === 'routing' ? 48 :
+          phase === 'config' ? 68 :
+          phase === 'done' ? 88 :
+          phase === 'final' ? 100 : 0;
+
+        return `
+          <div class="section-card p-4">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center gap-2">
+                <div class="h-6 w-6 rounded-[2px] grid place-items-center bg-[#0A1C60]"><i data-lucide="zap" class="h-3.5 w-3.5 text-white"></i></div>
+                <div>
+                  <h3 class="text-base font-semibold">What happens when a user clicks an app?</h3>
+                  <div class="text-[12px] text-[#4A5568]">The user sees simplicity. The system handles everything else.</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-[12px]">
+                <button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0]">${STATE.flowRunning ? 'Playing...' : 'Start'}</button>
+                <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+              </div>
+            </div>
+
+            <!-- Scenario indicators -->
+            <div class="flex gap-2 mb-3">
+              ${SCENARIOS.map((s, i) => `
+                <div class="scenario-pill ${i === sc ? 'active-scenario' : (i < sc ? 'done-scenario' : '')}">
+                  ${i < sc ? '<i data-lucide="check" class="w-3 h-3"></i>' : '<span class="w-3 h-3 grid place-items-center">' + (i+1) + '</span>'}
+                  <span>${s.label}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- ===== TOP: WHAT THE USER SEES ===== -->
+            <div class="bts-label bts-label-user"><i data-lucide="user" class="w-3 h-3"></i> What the user sees</div>
+
+            <div class="device-frame" id="deviceFrame">
+              <div class="device-screen" style="position:relative">
+                <div class="device-titlebar">
+                  <div class="device-dot device-dot-r"></div>
+                  <div class="device-dot device-dot-y"></div>
+                  <div class="device-dot device-dot-g"></div>
+                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : 'Application Catalog'}</span>
+                </div>
+                <div class="catalog-grid" id="catalogGrid">
+                  ${CATALOG_APPS.map(app => `
+                    <div class="catalog-app ${(appOpen && app.id === 'teams') ? 'clicked' : ''}" data-app="${app.id}">
+                      <div class="app-icon" style="background:${app.color}">
+                        ${app.letter}
+                        ${(phase === 'clicking' && app.id === 'teams') ? '<div class="click-ring"></div>' : ''}
+                      </div>
+                      <span class="app-name">${app.name}</span>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- App window opens IMMEDIATELY on click — no spinner -->
+                <div class="app-window-overlay ${appOpen ? 'open' : ''}" id="appWindow">
+                  <div class="app-window-topbar">
+                    <div class="aw-icon" style="background:#5B53D6">T</div>
+                    <div>
+                      <div class="aw-title">Microsoft Teams</div>
+                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com (SaaS)' : scenario && scenario.id === 'update' ? 'v2.2 — just updated' : 'Desktop App'}</div>
+                    </div>
+                  </div>
+                  <div class="app-window-body" style="flex-direction:row">
+                    <div class="teams-sidebar">
+                      <div class="teams-sidebar-dot active"><i data-lucide="message-square" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="users" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="calendar" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="phone" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="file" class="w-3 h-3"></i></div>
+                    </div>
+                    <div class="teams-chat-area">
+                      <div class="teams-chat-header">
+                        <i data-lucide="hash" class="w-3 h-3 text-slate-400"></i>
+                        General
+                      </div>
+                      <div class="teams-chat-body" id="teamsChatBody">
+                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.3s">
+                          <div class="teams-msg-avatar" style="background:#3b82f6">AK</div>
+                          <div class="teams-msg-bubble">Hey team, the Q3 deck is updated and ready for review</div>
+                        </div>
+                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.6s">
+                          <div class="teams-msg-avatar" style="background:#10b981">JR</div>
+                          <div class="teams-msg-bubble">Perfect timing — pulling it up now</div>
+                        </div>
+                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.9s">
+                          <div class="teams-msg-bubble self">On it. Give me 5 min.</div>
+                        </div>
+                      </div>
+                      <div class="teams-chat-input">
+                        <div class="teams-chat-input-box">Type a message...</div>
+                        <i data-lucide="send" class="w-3 h-3 text-slate-300"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-3 my-3">
+              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+              <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> Behind the scenes</div>
+              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+            </div>
+
+            <!-- ===== BOTTOM: ORCHESTRATION PIPELINE ===== -->
+            <div class="sub-card p-3 bg-gradient-to-b from-white to-slate-50" id="orchEngine">
+
+              ${!scenario ? `
+                <div class="text-center py-6 text-sm text-slate-400">
+                  <i data-lucide="play-circle" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                  <div>Press <strong>Start</strong> to see what happens behind every click</div>
+                </div>
+              ` : `
+                <div class="pipeline">
+                  <div class="pipeline-progress" style="height:${progressPct}%"></div>
+
+                  <!-- Stage 1: Icon triggers workflow -->
+                  <div class="pipeline-stage ${stageState(['clicking'])}">
+                    <div class="pipeline-node"><i data-lucide="zap" class="w-2 h-2 text-white"></i></div>
+                    <div class="stage-content">
+                      <div class="stage-title"><i data-lucide="workflow" class="w-3.5 h-3.5 text-[#0070F3]"></i> App icon triggers workflow engine</div>
+                      <div class="stage-detail">User clicked Teams — the icon is not just a shortcut, it activates a real-time decision engine</div>
+                    </div>
+                  </div>
+
+                  <!-- Stage 2: Evaluate conditions -->
+                  <div class="pipeline-stage ${stageState(['checking'])}">
+                    <div class="pipeline-node"><i data-lucide="search" class="w-2 h-2 text-white"></i></div>
+                    <div class="stage-content">
+                      <div class="stage-title"><i data-lucide="scan-search" class="w-3.5 h-3.5 text-[#0070F3]"></i> Evaluate conditions</div>
+                      <div class="flex flex-wrap gap-1.5 mt-1" id="checkItems">
+                        ${scenario.checks.map((c, i) => `
+                          <div class="check-item" id="check-${i}">
+                            <i data-lucide="${['routing','config','done','final'].includes(phase) ? 'check-circle' : 'circle'}" class="w-3 h-3"></i>
+                            <span>${c.q}</span>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Stage 3: Select execution path -->
+                  <div class="pipeline-stage ${stageState(['routing'])}">
+                    <div class="pipeline-node"><i data-lucide="git-branch" class="w-2 h-2 text-white"></i></div>
+                    <div class="stage-content">
+                      <div class="stage-title"><i data-lucide="route" class="w-3.5 h-3.5 text-[#0070F3]"></i> Select execution path</div>
+                      <div class="stage-detail mb-1">One path activates — the rest stay dormant</div>
+                      <div class="flex flex-wrap gap-1.5">
+                        ${ALL_PATHS.map(p => {
+                          const isActive = p.id === scenario.activePath && ['routing','config','done','final'].includes(phase);
+                          const isInactive = p.id !== scenario.activePath && ['routing','config','done','final'].includes(phase);
+                          return `
+                            <div class="path-row ${isActive ? 'active-path' : ''} ${isInactive ? 'inactive-path' : ''}">
+                              <i data-lucide="${p.icon}" class="w-3 h-3"></i>
+                              <span>${p.id === scenario.activePath ? scenario.pathLabel : p.label}</span>
+                              ${isActive ? '<i data-lucide="check" class="w-3 h-3 text-green-500"></i>' : ''}
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Stage 4: Apply configuration -->
+                  <div class="pipeline-stage ${stageState(['config'])}">
+                    <div class="pipeline-node"><i data-lucide="settings" class="w-2 h-2 text-white"></i></div>
+                    <div class="stage-content">
+                      <div class="stage-title"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-500"></i> Apply configuration</div>
+                      <div class="cfg-wrap ${['config','done','final'].includes(phase) ? 'wrapped' : ''} flex items-center gap-2 mt-1">
+                        <div style="background:#5B53D6;width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;color:white;flex-shrink:0">T</div>
+                        <span class="text-[10px] text-slate-400">+</span>
+                        <i data-lucide="settings" class="w-3 h-3 text-amber-500"></i>
+                        <span class="text-[10px] text-slate-400">=</span>
+                        <i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i>
+                        <span class="text-[10px] text-slate-500">${scenario.configNote}</span>
+                      </div>
+                      ${scenario.id === 'update' ? `
+                        <div class="flex items-center gap-2 mt-2">
+                          <span class="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-red-600 text-[10px]">v2.1</span>
+                          <div class="flex-1"><div class="upd-bar ${['config','done','final'].includes(phase) ? 'filling' : ''}"></div></div>
+                          <span class="px-1.5 py-0.5 rounded ${['done','final'].includes(phase) ? 'bg-green-50 border border-green-200 text-green-600' : 'bg-slate-50 border border-slate-200 text-slate-400'} text-[10px]">v2.2</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+
+                  <!-- Stage 5: Deliver to user -->
+                  <div class="pipeline-stage ${stageState(['done','final'])}">
+                    <div class="pipeline-node"><i data-lucide="check" class="w-2 h-2 text-white"></i></div>
+                    <div class="stage-content">
+                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> Delivered — one definition, every environment</div>
+                      <div class="flex items-center gap-2 mt-1">
+                        <div style="background:#5B53D6;width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:7px;font-weight:800;color:white;border:2px solid #0070F3;flex-shrink:0">T</div>
+                        ${['Laptop','VDI','Cloud PC','Browser'].map((env, i) => `
+                          <div class="orch-connector flex-1 ${['done','final'].includes(phase) ? 'drawn' : ''}" style="transition-delay:${i * 0.15}s"></div>
+                          <span class="text-[9px] text-slate-400 flex-shrink-0">${env}</span>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              `}
+            </div>
+
+            <!-- Banner message -->
+            <div id="flowBanner" class="flow-banner mt-2 ${scenario && phase !== 'idle' ? 'visible' : ''}">
+              ${scenario ? scenario.bannerMsg : ''}
+            </div>
+
+            <!-- Final payoff after all 3 scenarios -->
+            ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
+              <div id="finalPayoff" class="sub-card p-4 mt-2 text-center final-glow" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
+                <div class="text-lg font-bold text-[#0A1C60] mb-1">Click → It just works</div>
+                <div class="text-xs text-[#4A5568]">Three different scenarios. Same simple user experience. All orchestration happens invisibly.</div>
+                <div class="text-[10px] text-slate-400 mt-2">No repackaging. No rework. One definition adapts across every environment.</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      /* ========== FLOW ANIMATION ENGINE ========== */
+
+      function clearFlowTimers(){
+        if (!STATE.flowTimers) STATE.flowTimers = { intervals: [], timeouts: [] };
+        STATE.flowTimers.intervals.forEach(id => clearInterval(id));
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.intervals = [];
+        STATE.flowTimers.timeouts = [];
+      }
+
+      function startFlow(){
+        if (STATE.flowRunning) return;
+        clearFlowTimers();
+        STATE.flowRunning = true;
+        STATE.flowScenarioIdx = 0;
+        STATE.flowPhase = 'idle';
+        render();
+
+        // Play scenarios sequentially
+        let delay = 600;
+        for (let i = 0; i < SCENARIOS.length; i++) {
+          const idx = i;
+          // Start scenario
+          STATE.flowTimers.timeouts.push(setTimeout(() => {
+            STATE.flowScenarioIdx = idx;
+            STATE.flowPhase = 'clicking';
+            updateFlowDOM();
+          }, delay));
+          delay += 1200;
+
+          // Checking phase
+          STATE.flowTimers.timeouts.push(setTimeout(() => {
+            STATE.flowPhase = 'checking';
+            updateFlowDOM();
+            // Animate checks one by one
+            animateChecks();
+          }, delay));
+          delay += 2000;
+
+          // Routing phase
+          STATE.flowTimers.timeouts.push(setTimeout(() => {
+            STATE.flowPhase = 'routing';
+            updateFlowDOM();
+          }, delay));
+          delay += 1500;
+
+          // Config phase
+          STATE.flowTimers.timeouts.push(setTimeout(() => {
+            STATE.flowPhase = 'config';
+            updateFlowDOM();
+          }, delay));
+          delay += 1500;
+
+          // Done phase
+          STATE.flowTimers.timeouts.push(setTimeout(() => {
+            STATE.flowPhase = 'done';
+            updateFlowDOM();
+          }, delay));
+          delay += 2000;
+
+          // If last scenario, show final payoff
+          if (i === SCENARIOS.length - 1) {
+            STATE.flowTimers.timeouts.push(setTimeout(() => {
+              STATE.flowPhase = 'final';
+              updateFlowDOM();
+            }, delay));
+            delay += 3000;
+
+            STATE.flowTimers.timeouts.push(setTimeout(() => {
+              STATE.flowRunning = false;
+            }, delay));
+          } else {
+            // Brief pause before next scenario
+            delay += 800;
+          }
+        }
+      }
+
+      function animateChecks(){
+        const items = document.querySelectorAll('.check-item');
+        items.forEach((item, i) => {
+          STATE.flowTimers.timeouts.push(setTimeout(() => {
+            item.classList.add('pass');
+            const ico = item.querySelector('[data-lucide]');
+            if (ico) {
+              ico.setAttribute('data-lucide', 'check-circle');
+              if (window.lucide?.createIcons) try { window.lucide.createIcons(); } catch {}
+            }
+          }, i * 350));
+        });
+      }
+
+      function updateFlowDOM(){
+        // Re-render just the flow portion by updating the whole panel
+        // This is the simplest reliable approach with this architecture
+        const panel = document.querySelector('#panel-solution');
+        if (!panel) { render(); return; }
+
+        // Full re-render to pick up new state
+        render();
+      }
+
+      function resetFlow(){
+        clearFlowTimers();
+        STATE.flowStep = -1;
+        STATE.flowRunning = false;
+        STATE.flowScenarioIdx = -1;
+        STATE.flowPhase = 'idle';
+        render();
+      }
 
       function render(){
         const root=document.getElementById('app');
@@ -1083,10 +1807,9 @@
         `;
       }
 
-      /* ========== SOLUTION TAB — NEW STEP-BASED FLOW ========== */
+      /* ========== SOLUTION TAB ========== */
 
       function renderSolution(){
-        const s = STATE.flowStep;
         return `
           <section id="panel-solution" class="space-y-3">
             <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -1109,432 +1832,6 @@
         `;
       }
 
-      function renderFlow(){
-        const s = STATE.flowStep;
-        const stepClass = (idx) => {
-          if (s < 0) return 'flow-step';
-          if (idx === s) return 'flow-step active';
-          if (idx < s) return 'flow-step completed';
-          return 'flow-step';
-        };
-
-        // Determine which path lights for step 4 (multi-path)
-        const activePath = STATE.flowScenario === 'first' ? 'local' : 'saas';
-
-        return `
-          <div class="section-card p-4">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <div class="h-6 w-6 rounded-[2px] grid place-items-center bg-[#0A1C60]"><i data-lucide="zap" class="h-3.5 w-3.5 text-white"></i></div>
-                <div>
-                  <h3 class="text-base font-semibold">What happens when a user clicks an app?</h3>
-                  <div class="text-[12px] text-[#4A5568]">The real-time orchestration that makes Application Workspace different</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 text-[12px]">
-                <button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0]">${STATE.flowRunning ? 'Playing...' : 'Start'}</button>
-                <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
-              </div>
-            </div>
-
-            <!-- Step progress dots -->
-            <div class="step-dots mt-2">
-              ${FLOW_STEPS.map((st, i) => `<div class="step-dot ${i === s ? 'active' : i < s ? 'done' : ''}" title="Step ${i+1}: ${st.title}"></div>`).join('')}
-            </div>
-
-            <!-- Step message banner -->
-            <div id="flowMessage" class="step-message mt-2 ${s >= 0 ? 'visible' : ''}">
-              ${s >= 0 ? FLOW_STEPS[s].message : ''}
-            </div>
-
-            <div id="flowContainer" class="mt-3 space-y-3">
-
-              <!-- STEP 1: User Click -->
-              <div class="${stepClass(0)}" id="step-0">
-                <div class="step-label"><span>Step 1</span></div>
-                <div class="sub-card p-4 flex items-center gap-4 bg-gradient-to-r from-white to-slate-50">
-                  <div class="flex items-center gap-3">
-                    <div class="relative">
-                      <i data-lucide="laptop" class="w-10 h-10 text-slate-600"></i>
-                      <div id="clickCursor" class="absolute -right-1 -bottom-1 ${s === 0 ? 'cursor-clicking' : ''}">
-                        <i data-lucide="mouse-pointer-click" class="w-5 h-5 text-[#0070F3]"></i>
-                      </div>
-                    </div>
-                    <div>
-                      <div class="text-sm font-semibold text-[#0A1C60]">User clicks application</div>
-                      <div class="text-xs text-[#4A5568]">User on laptop clicks "Microsoft Teams"</div>
-                    </div>
-                  </div>
-                  <div class="ml-auto flex items-center gap-2">
-                    <div id="appIconStatic" class="logo-ring ${s === 0 ? 'cursor-clicking' : ''}" style="width:2.5rem;height:2.5rem;border:2px solid #e5e7eb">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28"><rect x="1.5" y="1.5" width="45" height="45" rx="12" fill="#5B53D6" stroke="rgba(0,0,0,.15)"/><text x="50%" y="56%" text-anchor="middle" font-size="22" font-family="Inter" font-weight="800" fill="#fff">T</text></svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 2: Smart Icon -->
-              <div class="${stepClass(1)}" id="step-1">
-                <div class="step-label"><span>Step 2</span></div>
-                <div class="sub-card p-4 bg-gradient-to-r from-white to-blue-50/50">
-                  <div class="flex items-center gap-4">
-                    <div id="smartIcon" class="logo-ring ${s === 1 ? 'smart-icon-active' : ''}" style="width:3rem;height:3rem;position:relative">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="32" height="32"><rect x="1.5" y="1.5" width="45" height="45" rx="12" fill="#5B53D6" stroke="rgba(0,0,0,.15)"/><text x="50%" y="56%" text-anchor="middle" font-size="22" font-family="Inter" font-weight="800" fill="#fff">T</text></svg>
-                      ${s >= 1 ? `
-                        <div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0070F3] grid place-items-center">
-                          <i data-lucide="workflow" class="w-2.5 h-2.5 text-white"></i>
-                        </div>
-                      ` : ''}
-                    </div>
-                    <div>
-                      <div class="text-sm font-semibold text-[#0A1C60]">This is not just an icon — it's a workflow</div>
-                      <div class="text-xs text-[#4A5568]">The app icon is a decision engine that evaluates context in real time</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 3: Real-Time Decisioning -->
-              <div class="${stepClass(2)}" id="step-2">
-                <div class="step-label"><span>Step 3</span></div>
-                <div class="sub-card p-4 bg-gradient-to-r from-white to-slate-50" id="decisioningCard">
-                  <div class="text-sm font-semibold text-[#0A1C60] mb-3">Real-time evaluation</div>
-                  <div class="grid grid-cols-2 gap-2" id="decisionBranches">
-                    ${renderDecisionBranch(0, 'download', 'Is app installed?', s >= 2)}
-                    ${renderDecisionBranch(1, 'git-branch', 'Correct version present?', s >= 2)}
-                    ${renderDecisionBranch(2, 'settings', 'Are settings applied?', s >= 2)}
-                    ${renderDecisionBranch(3, 'globe', 'What environment is user in?', s >= 2)}
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 4: Multi-Path Execution -->
-              <div class="${stepClass(3)}" id="step-3">
-                <div class="step-label"><span>Step 4</span></div>
-                <div class="sub-card p-4 bg-gradient-to-r from-white to-slate-50">
-                  <div class="text-sm font-semibold text-[#0A1C60] mb-2">Only ONE path activates per click</div>
-                  <div class="text-xs text-[#4A5568] mb-3">The right action happens automatically based on context</div>
-                  <div class="space-y-2">
-                    ${renderExecPath('local', 'hard-drive', 'Local Install', 'App installed to device', activePath === 'local' && s >= 3)}
-                    ${renderExecPath('vdi', 'monitor', 'Launch via VDI', 'Streamed from virtual desktop', activePath === 'vdi' && s >= 3)}
-                    ${renderExecPath('saas', 'globe', 'Open SaaS URL', 'Redirected to web app', activePath === 'saas' && s >= 3)}
-                    ${renderExecPath('update', 'refresh-cw', 'Trigger Update', 'New version applied', activePath === 'update' && s >= 3)}
-                    ${renderExecPath('config', 'wrench', 'Apply Configuration', 'Settings enforced', activePath === 'config' && s >= 3)}
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 5: Configuration Layer -->
-              <div class="${stepClass(4)}" id="step-4">
-                <div class="step-label"><span>Step 5</span></div>
-                <div class="sub-card p-4 bg-gradient-to-r from-white to-amber-50/30">
-                  <div class="text-sm font-semibold text-[#0A1C60] mb-2">App + configuration = working experience</div>
-                  <div class="text-xs text-[#4A5568] mb-3">Apps without config are useless — config is applied automatically</div>
-                  <div class="${s >= 4 ? 'config-wrapped' : ''} flex items-center gap-3 p-2">
-                    <div class="logo-ring" style="width:2.5rem;height:2.5rem">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28"><rect x="1.5" y="1.5" width="45" height="45" rx="12" fill="#5B53D6" stroke="rgba(0,0,0,.15)"/><text x="50%" y="56%" text-anchor="middle" font-size="22" font-family="Inter" font-weight="800" fill="#fff">T</text></svg>
-                    </div>
-                    <i data-lucide="plus" class="w-4 h-4 text-slate-400"></i>
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
-                      <i data-lucide="settings" class="w-4 h-4 text-amber-600"></i>
-                      <span class="text-xs font-medium text-amber-800">Configuration</span>
-                    </div>
-                    <i data-lucide="equal" class="w-4 h-4 text-slate-400"></i>
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 border border-green-200">
-                      <i data-lucide="check-circle" class="w-4 h-4 text-green-600"></i>
-                      <span class="text-xs font-medium text-green-800">Working Experience</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 6: Reuse (Define Once) -->
-              <div class="${stepClass(5)} complexity-layer ${s === 8 ? 'faded' : ''}" id="step-5">
-                <div class="step-label"><span>Step 6</span></div>
-                <div class="sub-card p-4 bg-gradient-to-r from-white to-slate-50">
-                  <div class="text-sm font-semibold text-[#0A1C60] mb-2">Defined once. Reused everywhere.</div>
-                  <div class="text-xs text-[#4A5568] mb-3">One app definition — NOT duplicated — reused across all environments</div>
-                  <div class="flex items-start gap-4">
-                    <div class="flex flex-col items-center flex-shrink-0">
-                      <div class="logo-ring" style="width:2.5rem;height:2.5rem;border:2px solid #0070F3">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28"><rect x="1.5" y="1.5" width="45" height="45" rx="12" fill="#5B53D6" stroke="rgba(0,0,0,.15)"/><text x="50%" y="56%" text-anchor="middle" font-size="22" font-family="Inter" font-weight="800" fill="#fff">T</text></svg>
-                      </div>
-                      <span class="text-[10px] text-[#4A5568] mt-1">One definition</span>
-                    </div>
-                    <div class="flex-1 space-y-2 pt-2">
-                      ${renderReuseLine('Laptop (Windows)', s >= 5, 0)}
-                      ${renderReuseLine('VDI / Citrix', s >= 5, 1)}
-                      ${renderReuseLine('Cloud PC / AVD', s >= 5, 2)}
-                      ${renderReuseLine('Browser (SaaS)', s >= 5, 3)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 7: Backend Change -->
-              <div class="${stepClass(6)} complexity-layer ${s === 8 ? 'faded' : ''}" id="step-6">
-                <div class="step-label"><span>Step 7</span></div>
-                <div class="sub-card p-4 ${s === 6 ? 'backend-shifting' : 'bg-gradient-to-r from-white to-slate-50'}" id="backendCard">
-                  <div class="text-sm font-semibold text-[#0A1C60] mb-2">Backend changes. User experience doesn't.</div>
-                  <div class="text-xs text-[#4A5568] mb-3">IT shifts from VDI to SaaS — user clicks the same icon, different path activates</div>
-                  <div class="flex items-center gap-3">
-                    <div class="flex flex-col items-center">
-                      <div class="px-3 py-1.5 rounded-lg border text-xs font-medium ${s === 6 ? 'bg-slate-100 border-slate-300 text-slate-400 line-through' : 'bg-blue-50 border-blue-200 text-blue-700'}">
-                        <i data-lucide="monitor" class="w-3 h-3 inline mr-1"></i>VDI
-                      </div>
-                    </div>
-                    <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400"></i>
-                    <div class="flex flex-col items-center">
-                      <div class="px-3 py-1.5 rounded-lg border text-xs font-medium ${s === 6 ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-slate-100 border-slate-200 text-slate-400'}">
-                        <i data-lucide="globe" class="w-3 h-3 inline mr-1"></i>SaaS
-                      </div>
-                    </div>
-                    <div class="ml-auto flex items-center gap-2">
-                      <div class="h-8 w-8 rounded-full grid place-items-center font-semibold text-white text-sm" style="background:#EA4335">U</div>
-                      <span class="text-xs text-[#4A5568]">Same experience</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 8: Live Update -->
-              <div class="${stepClass(7)} complexity-layer ${s === 8 ? 'faded' : ''}" id="step-7">
-                <div class="step-label"><span>Step 8</span></div>
-                <div class="sub-card p-4 bg-gradient-to-r from-white to-slate-50">
-                  <div class="text-sm font-semibold text-[#0A1C60] mb-2">Updated at launch — no disruption</div>
-                  <div class="text-xs text-[#4A5568] mb-3">User clicks app → system detects outdated version → auto-update → app launches</div>
-                  <div class="flex items-center gap-3 text-xs">
-                    <div class="px-2 py-1 rounded bg-red-50 border border-red-200 text-red-700"><i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i>v2.1 outdated</div>
-                    <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400"></i>
-                    <div class="flex-1">
-                      <div id="updateBar" class="update-bar ${s >= 7 ? 'filling' : ''}"></div>
-                    </div>
-                    <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400"></i>
-                    <div class="px-2 py-1 rounded ${s >= 7 ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-slate-50 border border-slate-200 text-slate-400'}"><i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>v2.2 launched</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- STEP 9: Simplicity Payoff -->
-              <div class="${stepClass(8)}" id="step-8">
-                <div class="step-label"><span>Step 9</span></div>
-                <div id="simplicityCard" class="sub-card p-5 text-center ${s === 8 ? 'final-glow' : ''}" style="background: ${s === 8 ? 'linear-gradient(135deg, #f0fdf4, #eff6ff)' : '#f9fafb'}; border-color: ${s === 8 ? '#10b981' : '#e5e7eb'}">
-                  <div class="flex items-center justify-center gap-3 mb-2">
-                    <div class="h-10 w-10 rounded-full grid place-items-center font-semibold text-white text-sm" style="background:${s===8?'var(--re-green)':'#EA4335'}">U</div>
-                    <i data-lucide="arrow-right" class="w-5 h-5 ${s===8?'text-green-500':'text-slate-300'}"></i>
-                    <div class="logo-ring" style="width:2.5rem;height:2.5rem;border:2px solid ${s===8?'#10b981':'#e5e7eb'}">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="28" height="28"><rect x="1.5" y="1.5" width="45" height="45" rx="12" fill="#5B53D6" stroke="rgba(0,0,0,.15)"/><text x="50%" y="56%" text-anchor="middle" font-size="22" font-family="Inter" font-weight="800" fill="#fff">T</text></svg>
-                    </div>
-                  </div>
-                  <div class="text-lg font-bold ${s===8?'text-[#0A1C60]':'text-slate-400'}">Click → It just works</div>
-                  <div class="text-xs ${s===8?'text-[#4A5568]':'text-slate-300'} mt-1">All backend complexity fades away. The user just sees their app open cleanly.</div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        `;
-      }
-
-      function renderDecisionBranch(idx, icon, label, active){
-        const delays = [0, 0.15, 0.3, 0.45];
-        return `
-          <div class="decision-branch rounded-lg border border-slate-200 bg-white p-2.5 flex items-center gap-2 ${active ? 'visible checked' : ''}" style="transition-delay:${delays[idx]}s">
-            <i data-lucide="${active ? 'check-circle' : icon}" class="w-4 h-4 branch-icon ${active ? 'text-green-500' : 'text-slate-400'}"></i>
-            <span class="text-xs ${active ? 'text-green-800' : 'text-slate-600'}">${label}</span>
-          </div>
-        `;
-      }
-
-      function renderExecPath(id, icon, label, desc, isLit){
-        const litClass = STATE.flowStep >= 3 ? (isLit ? 'exec-path lit' : 'exec-path dimmed') : 'exec-path';
-        return `
-          <div class="${litClass} rounded-lg p-2.5 flex items-center gap-3">
-            <i data-lucide="${icon}" class="w-4 h-4 ${isLit ? 'text-[#0070F3]' : 'text-slate-400'}"></i>
-            <div>
-              <div class="text-xs font-medium ${isLit ? 'text-[#0A1C60]' : 'text-slate-500'}">${label}</div>
-              <div class="text-[10px] ${isLit ? 'text-[#4A5568]' : 'text-slate-400'}">${desc}</div>
-            </div>
-            ${isLit ? '<i data-lucide="check" class="w-4 h-4 text-green-500 ml-auto"></i>' : ''}
-          </div>
-        `;
-      }
-
-      function renderReuseLine(label, active, idx){
-        const delays = [0, 0.2, 0.4, 0.6];
-        return `
-          <div class="flex items-center gap-2">
-            <div class="reuse-line flex-1 ${active ? 'drawn' : ''}" style="transition-delay:${delays[idx]}s"></div>
-            <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-white border border-slate-200 text-xs">
-              <i data-lucide="${['laptop','monitor','cloud','globe'][idx]}" class="w-3 h-3 text-slate-500"></i>
-              <span class="text-slate-600">${label}</span>
-            </div>
-          </div>
-        `;
-      }
-
-      /* ========== FLOW ANIMATION ENGINE ========== */
-
-      function clearFlowTimers(){
-        if (!STATE.flowTimers) STATE.flowTimers = { intervals: [], timeouts: [] };
-        STATE.flowTimers.intervals.forEach(id => clearInterval(id));
-        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
-        STATE.flowTimers.intervals = [];
-        STATE.flowTimers.timeouts = [];
-      }
-
-      function startFlow(){
-        if (STATE.flowRunning) return;
-        clearFlowTimers();
-        STATE.flowRunning = true;
-        STATE.flowStep = -1;
-        STATE.flowScenario = 'first';
-        render();
-
-        // Step through each step with timing
-        const stepDurations = [
-          1800,  // Step 1: User click (1.8s)
-          2000,  // Step 2: Smart icon (2s)
-          2500,  // Step 3: Decisioning (2.5s — checks animate in)
-          3000,  // Step 4: Multi-path (3s — paths light up)
-          2500,  // Step 5: Config layer (2.5s)
-          3000,  // Step 6: Reuse lines (3s — lines draw)
-          3000,  // Step 7: Backend change (3s — shift animation)
-          3000,  // Step 8: Live update (3s — progress bar fills)
-          4000   // Step 9: Simplicity (4s — final payoff)
-        ];
-
-        let cumulative = 500; // initial delay
-        for (let i = 0; i < FLOW_STEPS.length; i++) {
-          const stepIdx = i;
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
-            STATE.flowStep = stepIdx;
-            // For step 7, switch scenario to show backend change
-            if (stepIdx === 6) STATE.flowScenario = 'second';
-            updateFlowUI();
-            // Scroll step into view
-            const el = document.getElementById(`step-${stepIdx}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }, cumulative));
-          cumulative += stepDurations[i];
-        }
-
-        // End
-        STATE.flowTimers.timeouts.push(setTimeout(() => {
-          STATE.flowRunning = false;
-          updateFlowUI();
-        }, cumulative + 1000));
-      }
-
-      function updateFlowUI(){
-        // Update step classes
-        const s = STATE.flowStep;
-        FLOW_STEPS.forEach((_, i) => {
-          const el = document.getElementById(`step-${i}`);
-          if (!el) return;
-          el.className = 'flow-step' +
-            (i === s ? ' active' : '') +
-            (i < s ? ' completed' : '') +
-            ((i >= 5 && i <= 7 && s === 8) ? ' complexity-layer faded' : '');
-        });
-
-        // Update dots
-        document.querySelectorAll('.step-dot').forEach((dot, i) => {
-          dot.className = 'step-dot' + (i === s ? ' active' : '') + (i < s ? ' done' : '');
-        });
-
-        // Update message
-        const msg = document.getElementById('flowMessage');
-        if (msg) {
-          if (s >= 0) {
-            msg.textContent = FLOW_STEPS[s].message;
-            msg.classList.add('visible');
-          } else {
-            msg.classList.remove('visible');
-          }
-        }
-
-        // Step-specific animations
-        if (s === 0) {
-          const cursor = document.getElementById('clickCursor');
-          const icon = document.getElementById('appIconStatic');
-          if (cursor) cursor.parentElement?.classList.add('cursor-clicking');
-          if (icon) icon.classList.add('cursor-clicking');
-        }
-
-        if (s === 1) {
-          const smart = document.getElementById('smartIcon');
-          if (smart) smart.classList.add('smart-icon-active');
-        }
-
-        if (s === 2) {
-          document.querySelectorAll('.decision-branch').forEach((b, i) => {
-            setTimeout(() => {
-              b.classList.add('visible', 'checked');
-              const ico = b.querySelector('.branch-icon');
-              if (ico) ico.classList.replace('text-slate-400', 'text-green-500');
-            }, i * 400);
-          });
-        }
-
-        if (s === 3) {
-          const activePath = STATE.flowScenario === 'first' ? 'local' : 'saas';
-          document.querySelectorAll('.exec-path').forEach(p => {
-            const pathId = p.querySelector('[data-lucide]')?.getAttribute('data-lucide');
-            // Determine based on label text
-            const label = p.querySelector('.text-xs.font-medium')?.textContent?.toLowerCase() || '';
-            const isTarget = (activePath === 'local' && label.includes('local')) || (activePath === 'saas' && label.includes('saas'));
-            if (isTarget) {
-              p.className = 'exec-path lit rounded-lg p-2.5 flex items-center gap-3';
-            } else {
-              p.className = 'exec-path dimmed rounded-lg p-2.5 flex items-center gap-3';
-            }
-          });
-        }
-
-        if (s === 4) {
-          const wrapper = document.querySelector('.config-wrapped') || document.querySelector('#step-4 .flex.items-center.gap-3.p-2');
-          if (wrapper && !wrapper.classList.contains('config-wrapped')) {
-            wrapper.classList.add('config-wrapped');
-          }
-        }
-
-        if (s === 5) {
-          document.querySelectorAll('.reuse-line').forEach((line, i) => {
-            setTimeout(() => line.classList.add('drawn'), i * 250);
-          });
-        }
-
-        if (s === 6) {
-          const card = document.getElementById('backendCard');
-          if (card) card.classList.add('backend-shifting');
-        }
-
-        if (s === 7) {
-          const bar = document.getElementById('updateBar');
-          if (bar) bar.classList.add('filling');
-        }
-
-        if (s === 8) {
-          const card = document.getElementById('simplicityCard');
-          if (card) card.classList.add('final-glow');
-          // Fade complexity layers
-          document.querySelectorAll('.complexity-layer').forEach(el => {
-            el.classList.add('faded');
-          });
-        }
-
-        // Update lucide icons for dynamically changed content
-        if (window.lucide?.createIcons) { try { window.lucide.createIcons(); } catch {} }
-      }
-
-      function resetFlow(){
-        clearFlowTimers();
-        STATE.flowStep = -1;
-        STATE.flowRunning = false;
-        STATE.flowScenario = 'first';
-        render();
-      }
 
       /* ========== SOLUTION CARDS (UNCHANGED) ========== */
 
@@ -1861,7 +2158,7 @@
 
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
