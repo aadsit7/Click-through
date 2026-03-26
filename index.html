@@ -858,7 +858,10 @@
         flowRunning: false,
         flowScenario: 'first',
         flowScenarioIdx: -1,
-        flowPhase: 'idle'
+        flowPhase: 'idle',
+        flowPaused: false,
+        flowQueue: [],
+        flowQueueIdx: 0
       };
 
       STATE.recastMode = false;
@@ -1134,10 +1137,16 @@
               </div>
             </div>
 
-            <!-- Divider -->
+            <!-- Divider with pause control -->
             <div class="flex items-center gap-3 my-3">
               <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
               <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> Behind the scenes</div>
+              ${STATE.flowRunning ? `
+                <button type="button" data-action="pause-flow" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full border transition ${STATE.flowPaused ? 'bg-[#0070F3] text-white border-[#0070F3] hover:bg-[#005AD0]' : 'bg-white text-[#64748b] border-slate-300 hover:border-[#0070F3] hover:text-[#0070F3]'}">
+                  <i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i>
+                  ${STATE.flowPaused ? 'Resume' : 'Pause'}
+                </button>
+              ` : ''}
               <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
             </div>
 
@@ -1259,7 +1268,7 @@
         `;
       }
 
-      /* ========== FLOW ANIMATION ENGINE ========== */
+      /* ========== FLOW ANIMATION ENGINE (queue-based, supports pause/resume) ========== */
 
       function clearFlowTimers(){
         if (!STATE.flowTimers) STATE.flowTimers = { intervals: [], timeouts: [] };
@@ -1269,95 +1278,82 @@
         STATE.flowTimers.timeouts = [];
       }
 
+      function buildFlowQueue(){
+        // Build a flat array of { delay, action } steps for all scenarios
+        const queue = [];
+        for (let i = 0; i < SCENARIOS.length; i++) {
+          const idx = i;
+          queue.push({ delay: (i === 0 ? 600 : 800), fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; updateFlowDOM(); } });
+          queue.push({ delay: 1200, fn(){ STATE.flowPhase = 'checking'; updateFlowDOM(); animateChecks(); } });
+          queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'routing'; updateFlowDOM(); } });
+          queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'config'; updateFlowDOM(); } });
+          queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'done'; updateFlowDOM(); } });
+          if (i === SCENARIOS.length - 1) {
+            queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'final'; updateFlowDOM(); } });
+            queue.push({ delay: 3000, fn(){ STATE.flowRunning = false; STATE.flowPaused = false; updateFlowDOM(); } });
+          }
+        }
+        return queue;
+      }
+
+      function runFlowQueue(){
+        if (STATE.flowPaused || STATE.flowQueueIdx >= STATE.flowQueue.length) return;
+        const step = STATE.flowQueue[STATE.flowQueueIdx];
+        const tid = setTimeout(() => {
+          if (STATE.flowPaused) return; // double-check in case paused mid-timeout
+          step.fn();
+          STATE.flowQueueIdx++;
+          runFlowQueue();
+        }, step.delay);
+        STATE.flowTimers.timeouts.push(tid);
+      }
+
       function startFlow(){
         if (STATE.flowRunning) return;
         clearFlowTimers();
         STATE.flowRunning = true;
+        STATE.flowPaused = false;
         STATE.flowScenarioIdx = 0;
         STATE.flowPhase = 'idle';
+        STATE.flowQueue = buildFlowQueue();
+        STATE.flowQueueIdx = 0;
         render();
+        runFlowQueue();
+      }
 
-        // Play scenarios sequentially
-        let delay = 600;
-        for (let i = 0; i < SCENARIOS.length; i++) {
-          const idx = i;
-          // Start scenario
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
-            STATE.flowScenarioIdx = idx;
-            STATE.flowPhase = 'clicking';
-            updateFlowDOM();
-          }, delay));
-          delay += 1200;
+      function pauseFlow(){
+        if (!STATE.flowRunning) return;
+        STATE.flowPaused = true;
+        // Clear pending timeouts so nothing fires while paused
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        render();
+      }
 
-          // Checking phase
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
-            STATE.flowPhase = 'checking';
-            updateFlowDOM();
-            // Animate checks one by one
-            animateChecks();
-          }, delay));
-          delay += 2000;
-
-          // Routing phase
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
-            STATE.flowPhase = 'routing';
-            updateFlowDOM();
-          }, delay));
-          delay += 1500;
-
-          // Config phase
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
-            STATE.flowPhase = 'config';
-            updateFlowDOM();
-          }, delay));
-          delay += 1500;
-
-          // Done phase
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
-            STATE.flowPhase = 'done';
-            updateFlowDOM();
-          }, delay));
-          delay += 2000;
-
-          // If last scenario, show final payoff
-          if (i === SCENARIOS.length - 1) {
-            STATE.flowTimers.timeouts.push(setTimeout(() => {
-              STATE.flowPhase = 'final';
-              updateFlowDOM();
-            }, delay));
-            delay += 3000;
-
-            STATE.flowTimers.timeouts.push(setTimeout(() => {
-              STATE.flowRunning = false;
-            }, delay));
-          } else {
-            // Brief pause before next scenario
-            delay += 800;
-          }
-        }
+      function resumeFlow(){
+        if (!STATE.flowRunning || !STATE.flowPaused) return;
+        STATE.flowPaused = false;
+        render();
+        runFlowQueue();
       }
 
       function animateChecks(){
         const items = document.querySelectorAll('.check-item');
         items.forEach((item, i) => {
-          STATE.flowTimers.timeouts.push(setTimeout(() => {
+          const tid = setTimeout(() => {
+            if (STATE.flowPaused) return;
             item.classList.add('pass');
             const ico = item.querySelector('[data-lucide]');
             if (ico) {
               ico.setAttribute('data-lucide', 'check-circle');
               if (window.lucide?.createIcons) try { window.lucide.createIcons(); } catch {}
             }
-          }, i * 350));
+          }, i * 350);
+          STATE.flowTimers.timeouts.push(tid);
         });
       }
 
       function updateFlowDOM(){
-        // Re-render just the flow portion by updating the whole panel
-        // This is the simplest reliable approach with this architecture
-        const panel = document.querySelector('#panel-solution');
-        if (!panel) { render(); return; }
-
-        // Full re-render to pick up new state
         render();
       }
 
@@ -1365,8 +1361,11 @@
         clearFlowTimers();
         STATE.flowStep = -1;
         STATE.flowRunning = false;
+        STATE.flowPaused = false;
         STATE.flowScenarioIdx = -1;
         STATE.flowPhase = 'idle';
+        STATE.flowQueue = [];
+        STATE.flowQueueIdx = 0;
         render();
       }
 
@@ -2158,7 +2157,7 @@
 
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
@@ -2192,6 +2191,7 @@
           if (action === 'calculate-impact') { calculateImpact(); render(); return; }
           if (action === 'start-flow') { startFlow(); return; }
           if (action === 'reset-flow') { resetFlow(); return; }
+          if (action === 'pause-flow') { if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
 
           if (action === 'open-currentstate-editor') {
             STATE.modalOpen = true; STATE.editTab = 'change';
