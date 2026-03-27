@@ -2515,7 +2515,8 @@
                 ${!scenario ? `
                   <div class="text-center py-8 text-slate-400">
                     <i data-lucide="monitor-cog" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
-                    <div>Start the animation to see the admin view in sync</div>
+                    <div class="mb-3">Start the animation to see the admin view in sync</div>
+                    <button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-4 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">Start</button>
                   </div>
                 ` : `
                   <div class="font-semibold text-[#0A1C60] mb-2">Package: ${scenario.appName || 'Microsoft Teams'}</div>
@@ -2598,7 +2599,13 @@
                   <div class="text-[10px] text-slate-400">New hire laptop goes from zero to fully configured</div>
                 </div>
               </div>
-              <button type="button" data-action="start-autopilot" class="bg-[#0070F3] text-white px-3 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">${running ? 'Playing...' : 'Play'}</button>
+              <div class="flex items-center gap-2">
+                ${s >= 6 ? `
+                  <button type="button" data-action="reset-autopilot" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-3 py-1 text-[11px] font-semibold rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+                ` : `
+                  <button type="button" data-action="start-autopilot" class="bg-[#0070F3] text-white px-3 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">${s >= 0 && s < 6 ? 'Playing...' : 'Play'}</button>
+                `}
+              </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -3318,7 +3325,7 @@
           if (action === 'reset-flow') { resetFlow(); return; }
           if (action === 'pause-flow') { if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
           if (action === 'toggle-admin-view') { STATE.showAdminView = !STATE.showAdminView; render(); return; }
-          if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; render(); return; }
+          if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; STATE.flowTimers.intervals.forEach(id => clearInterval(id)); STATE.flowTimers.intervals = []; render(); return; }
           if (action === 'start-autopilot') {
             if (STATE.autopilotStep >= 0) return;
             STATE.autopilotStep = 0; render();
@@ -3330,6 +3337,11 @@
             }, 1800);
             STATE.flowTimers.intervals.push(apInterval);
             return;
+          }
+          if (action === 'reset-autopilot') {
+            STATE.flowTimers.intervals.forEach(id => clearInterval(id));
+            STATE.flowTimers.intervals = [];
+            STATE.autopilotStep = -1; render(); return;
           }
 
           if (action === 'open-currentstate-editor') {
