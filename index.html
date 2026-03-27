@@ -461,6 +461,94 @@
       }
       .final-glow { animation: finalGlow 2s ease-in-out; }
 
+      /* Config bundle items */
+      .cfg-item {
+        display: flex; align-items: center; gap: 5px;
+        padding: 3px 7px; border-radius: 5px;
+        font-size: 10px; color: #475569;
+        background: white; border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        opacity: 0; transform: translateX(-6px);
+      }
+      .cfg-item.attached { opacity: 1; transform: translateX(0); border-color: #a7f3d0; background: #f0fdf4; }
+      .cfg-item .cfg-status { color: #059669; font-weight: 600; margin-left: auto; }
+
+      /* DTAP ring pipeline */
+      .dtap-bar { display: flex; align-items: center; gap: 0; margin-top: 8px; }
+      .dtap-stage {
+        flex: 1; text-align: center; padding: 4px 2px;
+        font-size: 9px; font-weight: 600; color: #94a3b8;
+        border-bottom: 3px solid #e2e8f0;
+        transition: all 0.4s ease;
+      }
+      .dtap-stage.dtap-done { border-color: #10b981; color: #059669; }
+      .dtap-stage.dtap-current { border-color: #0070F3; color: #0070F3; }
+      .dtap-arrow { font-size: 10px; color: #cbd5e1; flex-shrink: 0; }
+
+      /* Admin console mockup */
+      .admin-panel {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 11px;
+        background: #f8fafc;
+      }
+      .admin-sidebar {
+        width: 100px;
+        background: #0A1C60;
+        color: rgba(255,255,255,0.6);
+        padding: 8px 0;
+        flex-shrink: 0;
+      }
+      .admin-sidebar-item {
+        padding: 5px 10px;
+        font-size: 10px;
+        cursor: default;
+        transition: all 0.2s;
+      }
+      .admin-sidebar-item.active { background: rgba(255,255,255,0.1); color: white; }
+      .admin-main { flex: 1; padding: 10px; background: white; }
+      .admin-highlight { background: #eff6ff !important; border-color: #0070F3 !important; transition: all 0.4s ease; }
+
+      /* Autopilot timeline */
+      .ap-step {
+        display: flex; align-items: center; gap: 8px;
+        padding: 5px 0;
+        opacity: 0.3; transition: all 0.4s ease;
+      }
+      .ap-step.ap-active { opacity: 1; }
+      .ap-step.ap-done { opacity: 0.7; }
+      .ap-dot { width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; transition: all 0.3s; }
+      .ap-step.ap-active .ap-dot { background: #0070F3; box-shadow: 0 0 0 3px rgba(0,112,243,0.2); }
+      .ap-step.ap-done .ap-dot { background: #10b981; }
+
+      /* Catalog browse view (Scenario 0) */
+      .catalog-browse { padding: 8px; }
+      .catalog-search {
+        display: flex; align-items: center; gap: 6px;
+        padding: 5px 8px; border-radius: 6px;
+        border: 1px solid #e2e8f0; background: white;
+        font-size: 10px; color: #94a3b8; margin-bottom: 8px;
+      }
+      .catalog-featured {
+        background: linear-gradient(135deg, #eff6ff, #e0e7ff);
+        border-radius: 8px; padding: 8px; margin-bottom: 8px;
+      }
+      .catalog-browse-item {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 8px; border-radius: 6px;
+        border: 1px solid #e2e8f0; background: white;
+        margin-bottom: 4px; transition: all 0.2s;
+      }
+      .catalog-browse-item:hover { border-color: #bfdbfe; }
+      .catalog-get-btn {
+        padding: 2px 10px; border-radius: 9999px;
+        font-size: 9px; font-weight: 600;
+        background: #0070F3; color: white;
+        border: none; cursor: default;
+      }
+      .catalog-get-btn.gotten { background: #10b981; }
+
       /* ===========================
          IMPACT DASHBOARD STYLES
          =========================== */
@@ -1127,7 +1215,10 @@
         flowPaused: false,
         flowQueue: [],
         flowQueueIdx: 0,
-        flowAppOpened: false
+        flowAppOpened: false,
+        showAdminView: false,
+        showAutopilot: false,
+        autopilotStep: -1
       };
 
       STATE.recastMode = false;
@@ -1235,12 +1326,40 @@
 
       const SCENARIOS = [
         {
+          id: 'catalog',
+          label: 'Self-service',
+          subtitle: 'User gets an app — no ticket',
+          scenarioDesc: "A user needs Adobe Acrobat. Instead of filing a ticket and waiting days, they browse the self-service catalog, click Get, and the app is delivered — approved, configured — in seconds.",
+          userMsg: 'Adding Acrobat...',
+          successMsg: 'Acrobat added to workspace',
+          appName: 'Adobe Acrobat',
+          appIcon: {letter: 'A', color: '#ED2224'},
+          checks: [
+            { q: 'User identity?', a: 'Verified — entitled to app' },
+            { q: 'Approval?', a: 'Auto-approved (catalog policy)' },
+            { q: 'Best delivery?', a: 'Local install (corporate)' },
+            { q: 'Config?', a: 'Applying PDF policy + defaults' },
+          ],
+          activePath: 'local',
+          pathLabel: 'Install + Configure',
+          configBundle: [
+            {icon:'shield', label:'PDF security policy', status:'applied'},
+            {icon:'printer', label:'Default print settings', status:'applied'},
+            {icon:'folder', label:'Save-to-SharePoint plugin', status:'installed'},
+          ],
+          configNote: 'App + policies delivered — zero tickets created',
+          bannerMsg: 'Users get what they need instantly. IT stays in control. Tickets drop.',
+          dtap: null,
+        },
+        {
           id: 'access',
           label: 'First access',
           subtitle: 'New user opens their workspace',
-          scenarioDesc: "A new employee opens Application Workspace and sees their personalized app catalog — every app assigned to them, ready to go. They click Teams. The system determines the best delivery method based on their device, location, and policy. They can also download it to their desktop for offline access.",
+          scenarioDesc: "A new employee opens Application Workspace and sees their personalized app catalog. They click Teams. The system determines the best delivery method based on their device, location, and policy.",
           userMsg: 'Launching Teams...',
           successMsg: 'Teams is ready',
+          appName: 'Microsoft Teams',
+          appIcon: {letter: 'T', color: '#5B53D6'},
           checks: [
             { q: 'User identity?', a: 'Verified — assigned to Engineering' },
             { q: 'Best delivery?', a: 'Local install (corporate device)' },
@@ -1249,16 +1368,27 @@
           ],
           activePath: 'local',
           pathLabel: 'Install + Configure Locally',
-          configNote: 'App delivered with MFA + VPN policy — also available for desktop download',
-          bannerMsg: 'One catalog. Every app. The right delivery method chosen automatically — users can also download to their desktop.',
+          configBundle: [
+            {icon:'shield', label:'MFA Policy', status:'applied'},
+            {icon:'globe', label:'VPN Auto-Connect', status:'applied'},
+            {icon:'printer', label:'Default Printer (Floor 3)', status:'mapped'},
+            {icon:'hard-drive', label:'Drive Mapping (S:\\ Team Share)', status:'mapped'},
+            {icon:'file-cog', label:'Registry Keys (3)', status:'set'},
+            {icon:'link', label:'Dependencies (WebView2)', status:'verified'},
+          ],
+          configNote: 'App + MFA + VPN + printer + drives — ready to work',
+          bannerMsg: 'One workspace. Every app. The right delivery method chosen automatically.',
+          dtap: null,
         },
         {
           id: 'backend',
           label: 'Backend changed',
           subtitle: 'IT migrated VDI to SaaS',
-          scenarioDesc: "IT migrated Teams delivery from VDI to SaaS last week. The same user opens their workspace and clicks the same icon. Application Workspace routes to the new delivery path automatically. The user experience is identical — they never need to know the backend changed.",
+          scenarioDesc: "IT migrated Teams delivery from VDI to SaaS. The same user clicks the same icon. Application Workspace routes to the new delivery path automatically. The user experience is identical.",
           userMsg: 'Launching Teams...',
           successMsg: 'Teams is ready',
+          appName: 'Microsoft Teams',
+          appIcon: {letter: 'T', color: '#5B53D6'},
           checks: [
             { q: 'User identity?', a: 'Verified — same user' },
             { q: 'Best delivery?', a: 'SaaS (IT changed routing)' },
@@ -1267,16 +1397,25 @@
           ],
           activePath: 'saas',
           pathLabel: 'Route to SaaS URL',
-          configNote: 'Same policies, different delivery path — zero user disruption',
-          bannerMsg: "Backend changes. User experience doesn't. No repackaging. No rework. No retraining.",
+          configBundle: [
+            {icon:'key', label:'SSO Policy', status:'enforced'},
+            {icon:'globe', label:'Web Proxy Config', status:'applied'},
+            {icon:'puzzle', label:'Browser Extension', status:'installed'},
+            {icon:'settings', label:'Session Settings', status:'applied'},
+          ],
+          configNote: 'Same policies, different delivery — zero user disruption',
+          bannerMsg: "Backend changes. User experience doesn't. No repackaging. No rework.",
+          dtap: null,
         },
         {
           id: 'update',
           label: 'Version outdated',
           subtitle: 'Auto-patched at access',
-          scenarioDesc: "A critical security patch was released overnight. When the user accesses Teams through their workspace, Application Workspace detects the outdated version and updates it automatically — no maintenance window, no IT ticket, no user action required.",
+          scenarioDesc: "A critical security patch was released. Application Workspace detects the outdated version and updates it — already validated through Dev, Test, and Acceptance stages before reaching production.",
           userMsg: 'Launching Teams...',
           successMsg: 'Teams updated and ready',
+          appName: 'Microsoft Teams',
+          appIcon: {letter: 'T', color: '#5B53D6'},
           checks: [
             { q: 'User identity?', a: 'Verified — existing user' },
             { q: 'Best delivery?', a: 'Local (already installed)' },
@@ -1285,8 +1424,15 @@
           ],
           activePath: 'update',
           pathLabel: 'Auto-Update to v2.2',
-          configNote: 'Patched at access — no maintenance window, no downtime',
-          bannerMsg: 'Security patches applied at launch — no maintenance windows. No disruption. No user impact.',
+          configBundle: [
+            {icon:'shield-check', label:'Compliance re-validation', status:'passed'},
+            {icon:'settings', label:'User settings preserved', status:'confirmed'},
+            {icon:'link', label:'Dependencies verified', status:'OK'},
+            {icon:'file-cog', label:'Registry updated', status:'applied'},
+          ],
+          configNote: 'Validated through Dev, Test, Acceptance before production',
+          bannerMsg: 'Every update tested before production. Rollback is one click. Audit trail automatic.',
+          dtap: {stages:['Development','Test','Acceptance','Production'], current: 3, version:'v2.2'},
         },
       ];
 
@@ -1295,7 +1441,6 @@
         { id: 'vdi', icon: 'monitor', label: 'Stream via VDI' },
         { id: 'saas', icon: 'globe', label: 'Open via SaaS/Web' },
         { id: 'update', icon: 'refresh-cw', label: 'Auto-Update' },
-        { id: 'download', icon: 'download', label: 'Desktop Download' },
       ];
 
       function renderFlow(){
@@ -1303,8 +1448,10 @@
         const phase = STATE.flowPhase;
         const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
         const appOpen = STATE.flowAppOpened;
-        // Only animate the very first time Teams opens
-        const firstOpen = appOpen && phase === 'clicking' && sc === 0;
+        const catalogMode = scenario && scenario.id === 'catalog';
+        // Only animate the very first time the app window opens
+        const firstOpen = appOpen && phase === 'clicking' && !catalogMode && !STATE._firstOpenDone;
+        if (firstOpen) STATE._firstOpenDone = true;
         const appWindowClass = appOpen ? (firstOpen ? 'open' : 'open-instant') : '';
         const msgClass = appOpen ? (firstOpen ? 'show' : 'show-instant') : '';
         const appClickedClass = appOpen ? (firstOpen ? 'clicked' : 'clicked-instant') : '';
@@ -1373,8 +1520,39 @@
                   <div class="device-dot device-dot-r"></div>
                   <div class="device-dot device-dot-y"></div>
                   <div class="device-dot device-dot-g"></div>
-                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : 'Application Workspace'}</span>
+                  <span class="device-titlebar-text">${appOpen && !catalogMode ? (scenario?.appName || 'App') : 'Application Workspace'}</span>
                 </div>
+
+                ${catalogMode && phase !== 'idle' ? `
+                <!-- Catalog browse view for Scenario 0 -->
+                <div class="catalog-browse">
+                  <div class="catalog-search"><i data-lucide="search" class="w-3 h-3"></i> Search apps...</div>
+                  <div class="catalog-featured">
+                    <div class="text-[8px] font-semibold text-[#0A1C60] uppercase mb-1">Featured</div>
+                    <div class="flex gap-2">
+                      ${[{l:'T',c:'#5B53D6',n:'Teams'},{l:'Z',c:'#0B5CFF',n:'Zoom'},{l:'S',c:'#E01E5A',n:'Slack'}].map(a=>`
+                        <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-white border border-slate-200 text-[9px]">
+                          <div style="background:${a.c};width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:7px;font-weight:800;color:white">${a.l}</div>
+                          ${a.n}
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  ${[
+                    {l:'A',c:'#ED2224',n:'Adobe Acrobat',d:'PDF viewer & editor',target:true},
+                    {l:'WD',c:'#1F5BFF',n:'Workday',d:'HR & finance platform',target:false},
+                    {l:'SF',c:'#00A1E0',n:'Salesforce',d:'CRM platform',target:false},
+                  ].map(a=>`
+                    <div class="catalog-browse-item ${a.target && ['done','final'].includes(phase) ? 'border-green-300 bg-green-50' : ''}">
+                      <div style="background:${a.c};width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;color:white;flex-shrink:0">${a.l}</div>
+                      <div class="flex-1"><div class="text-[10px] font-semibold text-slate-700">${a.n}</div><div class="text-[8px] text-slate-400">${a.d}</div></div>
+                      <div class="catalog-get-btn ${a.target && ['done','final'].includes(phase) ? 'gotten' : ''}">${a.target && ['done','final'].includes(phase) ? 'Added' : 'Get'}</div>
+                    </div>
+                  `).join('')}
+                  ${['done','final'].includes(phase) ? '<div class="text-[9px] text-emerald-600 text-center mt-2 font-semibold">0 tickets created</div>' : ''}
+                </div>
+                ` : `
+                <!-- Normal icon grid -->
                 <div class="catalog-grid" id="catalogGrid">
                   ${CATALOG_APPS.map(app => `
                     <div class="catalog-app ${(appOpen && app.id === 'teams') ? appClickedClass : ''}" data-app="${app.id}">
@@ -1386,14 +1564,15 @@
                     </div>
                   `).join('')}
                 </div>
+                `}
 
-                <!-- App window opens IMMEDIATELY -->
-                <div class="app-window-overlay ${appWindowClass}" id="appWindow">
+                <!-- App window opens IMMEDIATELY (not for catalog scenario) -->
+                <div class="app-window-overlay ${!catalogMode && appOpen ? (firstOpen ? 'open' : 'open-instant') : ''}" id="appWindow">
                   <div class="app-window-topbar">
-                    <div class="aw-icon" style="background:#5B53D6">T</div>
+                    <div class="aw-icon" style="background:${scenario?.appIcon?.color || '#5B53D6'}">${scenario?.appIcon?.letter || 'T'}</div>
                     <div>
-                      <div class="aw-title">Microsoft Teams</div>
-                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com — routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 — auto-patched by Workspace' : 'Installed and configured by Workspace'}</div>
+                      <div class="aw-title">${scenario?.appName || 'Microsoft Teams'}</div>
+                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com — routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 — auto-patched by Workspace' : 'Configured by Workspace'}</div>
                     </div>
                   </div>
                   <div class="app-window-body" style="flex-direction:row">
@@ -1405,20 +1584,17 @@
                       <div class="teams-sidebar-dot"><i data-lucide="file" class="w-3 h-3"></i></div>
                     </div>
                     <div class="teams-chat-area">
-                      <div class="teams-chat-header">
-                        <i data-lucide="hash" class="w-3 h-3 text-slate-400"></i>
-                        General
-                      </div>
-                      <div class="teams-chat-body" id="teamsChatBody">
-                        <div class="teams-msg ${msgClass}" style="transition-delay:0.3s">
+                      <div class="teams-chat-header"><i data-lucide="hash" class="w-3 h-3 text-slate-400"></i> General</div>
+                      <div class="teams-chat-body">
+                        <div class="teams-msg ${!catalogMode && appOpen ? 'show-instant' : ''}" style="transition-delay:0.3s">
                           <div class="teams-msg-avatar" style="background:#3b82f6">AK</div>
                           <div class="teams-msg-bubble">Hey team, the Q3 deck is updated and ready for review</div>
                         </div>
-                        <div class="teams-msg ${msgClass}" style="transition-delay:0.6s">
+                        <div class="teams-msg ${!catalogMode && appOpen ? 'show-instant' : ''}" style="transition-delay:0.6s">
                           <div class="teams-msg-avatar" style="background:#10b981">JR</div>
                           <div class="teams-msg-bubble">Perfect timing — pulling it up now</div>
                         </div>
-                        <div class="teams-msg ${msgClass}" style="transition-delay:0.9s">
+                        <div class="teams-msg ${!catalogMode && appOpen ? 'show-instant' : ''}" style="transition-delay:0.9s">
                           <div class="teams-msg-bubble self">On it. Give me 5 min.</div>
                         </div>
                       </div>
@@ -1430,7 +1606,7 @@
                   </div>
                 </div>
 
-                ${appOpen && ['checking','routing','config'].includes(phase) ? `
+                ${appOpen && !catalogMode && ['checking','routing','config'].includes(phase) ? `
                   <div style="position:absolute;bottom:6px;right:6px;z-index:10;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9999px;background:rgba(255,255,255,0.92);border:1px solid #a7f3d0;font-size:9px;font-weight:600;color:#059669;backdrop-filter:blur(4px)">
                     <i data-lucide="check-circle" class="w-3 h-3"></i>
                     User is working — orchestration happens invisibly
@@ -1571,20 +1747,33 @@
                     </div>
                   </div>
 
-                  <!-- Stage 4: Apply configuration -->
+                  <!-- Stage 4: Apply configuration — expanded bundle -->
                   <div class="pipeline-stage ${stageState(['config'])}">
                     <div class="pipeline-node"><i data-lucide="settings" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
                       <div class="stage-title"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-500"></i> Apply configuration + policy</div>
-                      <div class="stage-detail mb-1.5">Apps without configuration are useless. Workspace attaches security policies, settings, and compliance rules automatically.</div>
-                      <div class="cfg-wrap ${['config','done','final'].includes(phase) ? 'wrapped' : ''} flex items-center gap-2 mt-1">
-                        <div style="background:#5B53D6;width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;color:white;flex-shrink:0">T</div>
-                        <span class="text-[10px] text-slate-400">+</span>
-                        <i data-lucide="settings" class="w-3 h-3 text-amber-500"></i>
-                        <span class="text-[10px] text-slate-400">=</span>
-                        <i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i>
-                        <span class="text-[10px] text-slate-500 font-medium">${scenario.configNote}</span>
-                      </div>
+                      <div class="stage-detail mb-1.5">Apps without configuration are useless. Workspace delivers the app ready to use — settings, policies, dependencies included.</div>
+                      ${scenario.configBundle ? `
+                        <div class="space-y-1 mt-1.5">
+                          ${scenario.configBundle.map((c, i) => `
+                            <div class="cfg-item ${['config','done','final'].includes(phase) ? 'attached' : ''}" style="transition-delay:${i * 0.15}s">
+                              <i data-lucide="${c.icon}" class="w-3 h-3 text-amber-500 flex-shrink-0"></i>
+                              <span>${c.label}</span>
+                              <span class="cfg-status">${c.status}</span>
+                            </div>
+                          `).join('')}
+                        </div>
+                        <div class="text-[9px] text-slate-400 mt-2 italic">Configurations are context-aware — same app, different config per location and role.</div>
+                      ` : `
+                        <div class="cfg-wrap ${['config','done','final'].includes(phase) ? 'wrapped' : ''} flex items-center gap-2 mt-1">
+                          <div style="background:${scenario.appIcon?.color || '#5B53D6'};width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;color:white;flex-shrink:0">${scenario.appIcon?.letter || 'T'}</div>
+                          <span class="text-[10px] text-slate-400">+</span>
+                          <i data-lucide="settings" class="w-3 h-3 text-amber-500"></i>
+                          <span class="text-[10px] text-slate-400">=</span>
+                          <i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i>
+                          <span class="text-[10px] text-slate-500 font-medium">${scenario.configNote}</span>
+                        </div>
+                      `}
                       ${scenario.id === 'update' ? `
                         <div class="flex items-center gap-2 mt-2">
                           <span class="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-red-600 text-[10px]">v2.1</span>
@@ -1594,6 +1783,27 @@
                       ` : ''}
                     </div>
                   </div>
+
+                  ${scenario.dtap ? `
+                  <!-- DTAP Ring-Based Deployment -->
+                  <div class="pipeline-stage ${stageState(['config','done','final'])}">
+                    <div class="pipeline-node"><i data-lucide="git-merge" class="w-2 h-2 text-white"></i></div>
+                    <div class="stage-content">
+                      <div class="stage-title"><i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-500"></i> Release pipeline — validated before production</div>
+                      <div class="stage-detail mb-1">This update passed through every stage before reaching end users. Rollback is one click.</div>
+                      <div class="dtap-bar">
+                        ${scenario.dtap.stages.map((s, i) => `
+                          ${i > 0 ? '<span class="dtap-arrow">→</span>' : ''}
+                          <div class="dtap-stage ${['config','done','final'].includes(phase) ? (i < scenario.dtap.current ? 'dtap-done' : i === scenario.dtap.current ? 'dtap-current' : '') : ''}">
+                            ${s}
+                            ${['config','done','final'].includes(phase) ? '<div class="text-[7px]">' + (i < scenario.dtap.current ? '✓ Passed' : i === scenario.dtap.current ? scenario.dtap.version : '') + '</div>' : ''}
+                          </div>
+                        `).join('')}
+                      </div>
+                      ${['done','final'].includes(phase) ? '<div class="text-[9px] text-emerald-600 mt-1.5 font-medium">Rollback available at every stage. Full audit trail.</div>' : ''}
+                    </div>
+                  </div>
+                  ` : ''}
 
                   <!-- Stage 5: Why this is sustainable -->
                   <div class="pipeline-stage ${stageState(['done','final'])}">
@@ -1646,12 +1856,11 @@
         const queue = [];
         for (let i = 0; i < SCENARIOS.length; i++) {
           const idx = i;
+          const isCatalog = SCENARIOS[i].id === 'catalog';
           if (i === 0) {
-            // First scenario: open Teams
-            queue.push({ delay: 600, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; STATE.flowAppOpened = true; updateFlowDOM(); } });
+            queue.push({ delay: 600, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; if (!isCatalog) { STATE.flowAppOpened = true; } updateFlowDOM(); } });
           } else {
-            // Subsequent scenarios: Teams stays open, just switch scenario and restart pipeline
-            queue.push({ delay: 1200, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; updateFlowDOM(); } });
+            queue.push({ delay: 1200, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; if (SCENARIOS[idx].id !== 'catalog') STATE.flowAppOpened = true; updateFlowDOM(); } });
           }
           queue.push({ delay: 1200, fn(){ STATE.flowPhase = 'checking'; updateFlowDOM(); animateChecks(); } });
           queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'routing'; updateFlowDOM(); } });
@@ -1736,6 +1945,7 @@
         STATE.flowQueue = [];
         STATE.flowQueueIdx = 0;
         STATE.flowAppOpened = false;
+        STATE._firstOpenDone = false;
         render();
       }
 
@@ -1816,10 +2026,10 @@
 
       function renderProblems(){
         const items=[
-          {t:'Inconsistent Apps',s:'The same app works fine on one machine but breaks or behaves differently on another, which is why tickets keep bouncing around.',i:'layers'},
-          {t:'Slow Changes',s:'Even simple updates take way longer than they should because every platform needs its own build, testing, and rollout.',i:'boxes'},
-          {t:'Delayed Patching',s:"Security patches sit in limbo while teams test compatibility and chase edge cases, leaving known gaps open longer than anyone's comfortable with",i:'shield'},
-          {t:'Risky Upgrades',s:"Teams delay upgrades because no one's confident which apps will break, where they'll break, or how painful the rollback will be.",i:'layout-grid'}
+          {t:'Growing Environment Complexity',s:'More platforms mean more overhead to manage applications.',i:'layers'},
+          {t:'Inconsistent Application Experience',s:'Apps behave differently depending on where and how they are delivered.',i:'monitor-smartphone'},
+          {t:'Repetitive Application Work',s:'The same apps must be rebuilt, tested, and maintained multiple times.',i:'repeat'},
+          {t:'Limited IT Capacity',s:'Teams are stuck in maintenance work instead of driving strategic initiatives.',i:'clock'}
         ];
 
         return `
@@ -2272,8 +2482,28 @@
       function renderSolution(){
         return `
           <section id="panel-solution" class="space-y-3">
-            <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              ${renderFlow()}
+            <!-- View toggles -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" data-action="toggle-admin-view" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition ${STATE.showAdminView ? 'bg-[#0A1C60] text-white border-[#0A1C60]' : 'bg-white text-[#64748b] border-slate-200 hover:border-[#0070F3] hover:text-[#0070F3]'}">
+                <i data-lucide="${STATE.showAdminView ? 'eye-off' : 'settings-2'}" class="w-3.5 h-3.5"></i>
+                ${STATE.showAdminView ? 'Hide Admin View' : 'Show Admin View'}
+              </button>
+              <button type="button" data-action="toggle-autopilot" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition ${STATE.showAutopilot ? 'bg-[#0A1C60] text-white border-[#0A1C60]' : 'bg-white text-[#64748b] border-slate-200 hover:border-[#0070F3] hover:text-[#0070F3]'}">
+                <i data-lucide="${STATE.showAutopilot ? 'eye-off' : 'laptop'}" class="w-3.5 h-3.5"></i>
+                ${STATE.showAutopilot ? 'Hide Day One' : 'Day One Experience'}
+              </button>
+            </div>
+
+            ${STATE.showAutopilot ? renderAutopilot() : ''}
+
+            <div class="grid grid-cols-1 gap-3 ${STATE.showAdminView ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}">
+              ${STATE.showAdminView ? `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <div>${renderFlow()}</div>
+                  <div>${renderAdminPanel()}</div>
+                </div>
+              ` : renderFlow()}
+              ${!STATE.showAdminView ? `
               <div class="flex flex-col gap-3 relative">
                 <div class="sticky top-0 z-10 bg-white/60 backdrop-blur-lg py-2 shadow-sm rounded-xl px-2">
                   <div class="flex justify-between items-center text-sm">
@@ -2287,8 +2517,195 @@
                   <button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
                 </div>
               </div>
+              ` : `
+              <div class="flex justify-start mt-2">
+                <button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
+              </div>
+              `}
             </div>
           </section>
+        `;
+      }
+
+      function renderAdminPanel(){
+        const sc = STATE.flowScenarioIdx;
+        const phase = STATE.flowPhase;
+        const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
+        const sidebarItems = ['Packages','Deployments','Identities','Contexts','Connectors','Reports','Audit'];
+        const isBackend = scenario?.id === 'backend';
+        const isUpdate = scenario?.id === 'update';
+
+        return `
+          <div class="section-card p-0 rounded-2xl overflow-hidden">
+            <div class="px-3 py-2 bg-[#0A1C60] text-white text-xs font-semibold flex items-center gap-2">
+              <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console
+            </div>
+            <div class="admin-panel flex" style="min-height:380px">
+              <div class="admin-sidebar">
+                ${sidebarItems.map((s,i) => `
+                  <div class="admin-sidebar-item ${i===0 ? 'active' : ''}">${s}</div>
+                `).join('')}
+              </div>
+              <div class="admin-main text-[10px]">
+                ${!scenario ? `
+                  <div class="text-center py-8 text-slate-400">
+                    <i data-lucide="monitor-cog" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                    <div>Start the animation to see the admin view in sync</div>
+                  </div>
+                ` : `
+                  <div class="font-semibold text-[#0A1C60] mb-2">Package: ${scenario.appName || 'Microsoft Teams'}</div>
+                  <div class="border border-slate-200 rounded p-2 mb-2 ${['routing','config','done','final'].includes(phase) ? 'admin-highlight' : ''}">
+                    <div class="font-semibold mb-1">Define Once</div>
+                    <div class="text-slate-500 space-y-0.5">
+                      <div>Type: <span class="text-slate-700">Launch</span> &nbsp; Priority: <span class="text-slate-700">100</span></div>
+                      <div>Agent Required: <span class="text-slate-700">Yes</span> &nbsp; Offline: <span class="text-slate-700">Yes</span></div>
+                    </div>
+                  </div>
+                  <div class="font-semibold mb-1">Action Sets</div>
+                  <div class="space-y-1 mb-2">
+                    <div class="border rounded p-1.5 ${scenario.activePath === 'local' && ['routing','config','done','final'].includes(phase) ? 'admin-highlight border-[#0070F3]' : 'border-slate-200'}">
+                      <span class="text-slate-500">Launch — Corporate Network →</span> <span class="font-medium">Local install</span>
+                    </div>
+                    <div class="border rounded p-1.5 ${scenario.activePath === 'saas' && ['routing','config','done','final'].includes(phase) ? 'admin-highlight border-[#0070F3]' : 'border-slate-200'}">
+                      <span class="text-slate-500">Launch — VPN / Remote →</span>
+                      <span class="font-medium">${isBackend && ['done','final'].includes(phase) ? 'SaaS URL' : 'AVD RemoteApp'}</span>
+                      ${isBackend && ['config','done','final'].includes(phase) ? '<span class="ml-1 px-1 py-0.5 rounded bg-blue-100 text-blue-700 text-[8px] font-semibold">Changed</span>' : ''}
+                    </div>
+                    <div class="border rounded p-1.5 border-slate-200">
+                      <span class="text-slate-500">Launch — Browser / No Agent →</span> <span class="font-medium">SaaS URL</span>
+                    </div>
+                  </div>
+                  <div class="font-semibold mb-1">Entitlements</div>
+                  <div class="space-y-1 mb-2 text-slate-500">
+                    <div class="border rounded p-1 border-slate-200 ${['done','final'].includes(phase) ? 'admin-highlight' : ''}">All Users — <span class="text-slate-700">Forced</span> — Production</div>
+                    <div class="border rounded p-1 border-slate-200">Engineering — <span class="text-slate-700">Forced</span> — Production</div>
+                    <div class="border rounded p-1 border-slate-200">Contractors — <span class="text-slate-700">Catalog</span> — Production</div>
+                  </div>
+                  ${isBackend ? `
+                    <div class="mt-2 p-2 rounded bg-blue-50 border border-blue-200 text-[9px] text-blue-800 font-medium">
+                      <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                      IT changed one routing rule. Zero user impact.
+                    </div>
+                  ` : ''}
+                  ${isUpdate ? `
+                    <div class="mt-2 p-2 rounded bg-indigo-50 border border-indigo-200 text-[9px] text-indigo-800 font-medium">
+                      <i data-lucide="git-merge" class="w-3 h-3 inline mr-1"></i>
+                      Setup Store flagged v2.2. Auto-promoted through release pipeline.
+                    </div>
+                  ` : ''}
+                  <div class="mt-2 flex gap-1">
+                    ${['Intune','SCCM','AVD','Citrix'].map(e => `
+                      <span class="px-1.5 py-0.5 rounded text-[8px] border border-slate-200 bg-slate-50">${e}</span>
+                    `).join('')}
+                  </div>
+                `}
+              </div>
+            </div>
+            <div class="px-3 py-2 bg-slate-50 border-t border-slate-200 text-[9px] text-slate-500 text-center">
+              One definition. One console. Every environment. No rebuilds.
+            </div>
+          </div>
+        `;
+      }
+
+      function renderAutopilot(){
+        const s = STATE.autopilotStep;
+        const steps = [
+          {icon:'power', label:'Laptop powers on', detail:'Windows boot sequence'},
+          {icon:'cloud-cog', label:'Autopilot enrolls device', detail:'Intune enrollment in progress...'},
+          {icon:'download', label:'Application Workspace agent installs', detail:'Bootstrapping the orchestration layer'},
+          {icon:'user-check', label:'Identity detected', detail:'Sarah Chen — Engineering, Seattle office'},
+          {icon:'layers', label:'Persona loading', detail:'Matching deployment profile: Engineering - Seattle', apps:['Teams','VS Code','Slack','Jira','Docker']},
+          {icon:'layout-grid', label:'Workspace published', detail:'12 apps, 3 drive mappings, 2 printers configured'},
+          {icon:'check-circle', label:'Ready to work', detail:'Total elapsed: ~8 minutes'},
+        ];
+        const running = STATE.autopilotStep >= 0;
+
+        return `
+          <div class="section-card p-4 rounded-2xl">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="h-7 w-7 rounded-lg grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60]">
+                  <i data-lucide="laptop" class="w-4 h-4 text-white"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-semibold text-[#0A1C60]">Day One — Autopilot to Productive</div>
+                  <div class="text-[10px] text-slate-400">New hire laptop goes from zero to fully configured</div>
+                </div>
+              </div>
+              <button type="button" data-action="start-autopilot" class="bg-[#0070F3] text-white px-3 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">${running ? 'Playing...' : 'Play'}</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- Device mockup -->
+              <div class="device-frame" style="max-width:320px">
+                <div class="device-screen" style="padding:10px;min-height:180px">
+                  ${s < 0 ? `
+                    <div class="text-center py-8 text-slate-300">
+                      <i data-lucide="laptop" class="w-10 h-10 mx-auto mb-2"></i>
+                      <div class="text-[10px]">New device — powered off</div>
+                    </div>
+                  ` : s < 3 ? `
+                    <div class="text-center py-6">
+                      <div class="spinner mx-auto mb-2" style="width:20px;height:20px;border-width:3px"></div>
+                      <div class="text-[10px] text-[#0070F3] font-semibold">${steps[s].label}</div>
+                      <div class="text-[9px] text-slate-400">${steps[s].detail}</div>
+                    </div>
+                  ` : s === 3 ? `
+                    <div class="text-center py-4">
+                      <div class="h-10 w-10 rounded-full mx-auto mb-2 grid place-items-center text-white font-bold" style="background:#3b82f6">SC</div>
+                      <div class="text-[11px] font-semibold text-[#0A1C60]">Sarah Chen</div>
+                      <div class="text-[9px] text-slate-400">Engineering — Seattle office</div>
+                    </div>
+                  ` : s === 4 ? `
+                    <div class="px-2 py-2">
+                      <div class="text-[9px] font-semibold text-[#0A1C60] mb-2">Loading persona...</div>
+                      <div class="space-y-1">
+                        ${steps[4].apps.map((a,i) => `
+                          <div class="flex items-center gap-2 text-[9px] ${i <= 3 ? 'text-slate-700' : 'text-slate-300'}">
+                            <i data-lucide="check-circle" class="w-2.5 h-2.5 ${i <= 3 ? 'text-green-500' : 'text-slate-200'}"></i> ${a}
+                          </div>
+                        `).join('')}
+                      </div>
+                      <div class="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-full rounded-full bg-[#0070F3]" style="width:80%"></div>
+                      </div>
+                    </div>
+                  ` : `
+                    <div class="catalog-grid" style="padding:6px;gap:4px">
+                      ${['T','VS','S','Ji','D','OD','Cr','Sl','Ok','Du','Ed','Bx'].map((l,i) => `
+                        <div class="catalog-app" style="padding:3px 1px">
+                          <div class="app-icon" style="background:${['#5B53D6','#007ACC','#E01E5A','#0052CC','#2496ED','#0A5BD5','#4285F4','#E01E5A','#007DC1','#3CB371','#0C8EC5','#0061D5'][i]};width:22px;height:22px;font-size:8px">${l}</div>
+                        </div>
+                      `).join('')}
+                    </div>
+                    <div class="text-[8px] text-center text-emerald-600 font-semibold mt-1">Ready — 12 apps configured</div>
+                  `}
+                </div>
+              </div>
+
+              <!-- Timeline -->
+              <div class="space-y-0">
+                ${steps.map((st, i) => `
+                  <div class="ap-step ${i === s ? 'ap-active' : i < s ? 'ap-done' : ''}">
+                    <div class="ap-dot"></div>
+                    <div>
+                      <div class="text-[10px] font-semibold ${i <= s ? 'text-[#0A1C60]' : 'text-slate-400'}">${st.label}</div>
+                      <div class="text-[9px] ${i <= s ? 'text-slate-500' : 'text-slate-300'}">${st.detail}</div>
+                    </div>
+                    ${i === s ? '<div class="ml-auto"><div class="spinner" style="width:10px;height:10px;border-width:2px"></div></div>' : ''}
+                    ${i < s ? '<i data-lucide="check" class="w-3 h-3 text-green-500 ml-auto"></i>' : ''}
+                  </div>
+                `).join('')}
+                ${s >= steps.length - 1 ? `
+                  <div class="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-800">
+                    <div class="font-semibold mb-0.5">~8 minutes total</div>
+                    <div class="text-emerald-600">Traditional: 1–3 hours. Autopilot delivered 1 app (the agent). Application Workspace delivered the other 11.</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
         `;
       }
 
@@ -2879,7 +3296,7 @@
 
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
@@ -2935,6 +3352,20 @@
           if (action === 'start-flow') { startFlow(); return; }
           if (action === 'reset-flow') { resetFlow(); return; }
           if (action === 'pause-flow') { if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
+          if (action === 'toggle-admin-view') { STATE.showAdminView = !STATE.showAdminView; render(); return; }
+          if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; render(); return; }
+          if (action === 'start-autopilot') {
+            if (STATE.autopilotStep >= 0) return;
+            STATE.autopilotStep = 0; render();
+            let apStep = 0;
+            const apInterval = setInterval(() => {
+              apStep++;
+              if (apStep >= 7) { clearInterval(apInterval); STATE.autopilotStep = 6; render(); return; }
+              STATE.autopilotStep = apStep; render();
+            }, 1800);
+            STATE.flowTimers.intervals.push(apInterval);
+            return;
+          }
 
           if (action === 'open-currentstate-editor') {
             STATE.modalOpen = true; STATE.editTab = 'change';
