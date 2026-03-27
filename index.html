@@ -2151,17 +2151,7 @@
         capArea.classList.add('gap-element', 'chart-element');
         svg.appendChild(capArea);
 
-        // Legend
-        const legend = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        legend.classList.add('label-element', 'chart-element');
-        legend.innerHTML = `
-          <rect x="${margin.left + width - 220}" y="${margin.top - 6}" width="220" height="22" rx="6" fill="white" stroke="#e2e8f0" stroke-width="1"/>
-          <line x1="${margin.left + width - 208}" y1="${margin.top + 5}" x2="${margin.left + width - 188}" y2="${margin.top + 5}" stroke="url(#demandGradient)" stroke-width="2.5" stroke-linecap="round"/>
-          <text x="${margin.left + width - 183}" y="${margin.top + 9}" font-size="10" font-weight="600" fill="#64748b" font-family="Inter">Expectations & Requests</text>
-          <line x1="${margin.left + width - 80}" y1="${margin.top + 5}" x2="${margin.left + width - 60}" y2="${margin.top + 5}" stroke="url(#capacityGradient)" stroke-width="2.5" stroke-linecap="round"/>
-          <text x="${margin.left + width - 55}" y="${margin.top + 9}" font-size="10" font-weight="600" fill="#64748b" font-family="Inter">Resources</text>
-        `;
-        svg.appendChild(legend);
+        // Legend removed for cleaner look
 
         const gapPath = demandPoints.map(p => `L ${p.x} ${p.y}`).join(' ') +
           capacityPoints.slice().reverse().map(p => `L ${p.x} ${p.y}`).join(' ') + 'Z';
