@@ -1669,50 +1669,77 @@
               </div>
             </div>
 
-            <!-- Connector: Platform → Orchestration -->
-            <div class="layer-connector"><div class="layer-connector-line"></div></div>
+            <!-- Banner message -->
+            <div id="flowBanner" class="flow-banner mt-2 ${scenario && phase !== 'idle' ? 'visible' : ''}">
+              ${scenario ? scenario.bannerMsg : ''}
+            </div>
 
-            <!-- ===== BOTTOM: ORCHESTRATION PIPELINE ===== -->
-            <div class="flex items-center gap-3 mb-2">
-              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+            <!-- Final payoff after all scenarios -->
+            ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
+              <div id="finalPayoff" class="sub-card p-4 mt-2 text-center final-glow" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
+                <div class="text-lg font-bold text-[#0A1C60] mb-1">Click → It just works</div>
+                <div class="text-xs text-[#4A5568]">First access, backend migration, security patch — completely different scenarios. The user experience was identical every time.</div>
+                <div class="text-[10px] text-slate-500 mt-2 leading-relaxed">Application Workspace packages, delivers, configures, updates, and routes apps — across every platform, every environment, every change. Define once. Deliver everywhere. No rework.</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      /* ========== PIPELINE (rendered inside admin view) ========== */
+      function renderPipeline(){
+        const sc = STATE.flowScenarioIdx;
+        const phase = STATE.flowPhase;
+        const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
+
+        const stageState = (stagePhases) => {
+          if (!scenario) return '';
+          const idx = ['clicking','checking','routing','config','done','final'];
+          const currentIdx = idx.indexOf(phase);
+          if (currentIdx < 0) return '';
+          const lastIdx = idx.indexOf(stagePhases[stagePhases.length - 1]);
+          if (currentIdx > lastIdx) return 'reached';
+          if (stagePhases.includes(phase)) return 'active-stage';
+          return '';
+        };
+        const progressPct = !scenario ? 0 :
+          phase === 'clicking' ? 8 : phase === 'checking' ? 28 :
+          phase === 'routing' ? 48 : phase === 'config' ? 68 :
+          phase === 'done' ? 88 : phase === 'final' ? 100 : 0;
+        const checkDone = ['routing','config','done','final'].includes(phase);
+
+        return `
+          <div class="section-card p-3 rounded-2xl">
+            <div class="flex items-center gap-2 mb-2">
               <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> How It Works — Per Click</div>
               ${STATE.flowRunning ? `
-                <button type="button" data-action="pause-flow" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full border transition ${STATE.flowPaused ? 'bg-[#0070F3] text-white border-[#0070F3] hover:bg-[#005AD0]' : 'bg-white text-[#64748b] border-slate-300 hover:border-[#0070F3] hover:text-[#0070F3]'}">
+                <button type="button" data-action="pause-flow" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full border transition ${STATE.flowPaused ? 'bg-[#0070F3] text-white border-[#0070F3]' : 'bg-white text-[#64748b] border-slate-300 hover:border-[#0070F3] hover:text-[#0070F3]'}">
                   <i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i>
                   ${STATE.flowPaused ? 'Resume' : 'Pause'}
                 </button>
               ` : ''}
-              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
             </div>
-
-            <!-- ===== BOTTOM: ORCHESTRATION PIPELINE ===== -->
-            <div class="sub-card p-3 bg-gradient-to-b from-white to-slate-50" id="orchEngine">
-
+            <div class="sub-card p-3 bg-gradient-to-b from-white to-slate-50">
               ${!scenario || phase === 'idle' ? `
-                <div class="text-center py-6 text-sm text-slate-400">
-                  <i data-lucide="play-circle" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
-                  <div>Press <strong>Start</strong> to see what happens behind every click</div>
-                  <div class="text-[10px] text-slate-300 mt-1">Three scenarios prove the user always gets the same simple experience — no matter what changes behind the scenes</div>
+                <div class="text-center py-4 text-sm text-slate-400">
+                  <i data-lucide="play-circle" class="w-6 h-6 mx-auto mb-2 text-slate-300"></i>
+                  <div>Press <strong>Start</strong> to see the orchestration pipeline</div>
                 </div>
               ` : `
                 <div class="pipeline">
                   <div class="pipeline-progress" style="height:${progressPct}%"></div>
-
-                  <!-- Stage 1: Smart Icon activates -->
                   <div class="pipeline-stage ${stageState(['clicking'])}">
                     <div class="pipeline-node"><i data-lucide="zap" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
                       <div class="stage-title"><i data-lucide="workflow" class="w-3.5 h-3.5 text-[#0070F3]"></i> Smart Icon activates</div>
-                      <div class="stage-detail">The app icon is a workflow, not a shortcut. One click triggers the orchestration engine to evaluate, route, and deliver — all in real time.</div>
+                      <div class="stage-detail">One click triggers the orchestration engine to evaluate, route, and deliver.</div>
                     </div>
                   </div>
-
-                  <!-- Stage 2: Evaluate conditions -->
                   <div class="pipeline-stage ${stageState(['checking'])}">
                     <div class="pipeline-node"><i data-lucide="search" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
                       <div class="stage-title"><i data-lucide="scan-search" class="w-3.5 h-3.5 text-[#0070F3]"></i> Evaluate user context</div>
-                      <div class="stage-detail mb-1.5">The system checks the user, device, and environment instantly — no admin intervention needed.</div>
+                      <div class="stage-detail mb-1.5">Checks user, device, and environment — no admin intervention.</div>
                       <div class="flex flex-wrap gap-1.5" id="checkItems">
                         ${scenario.checks.map((c, i) => `
                           <div class="check-item ${checkDone ? 'pass' : ''}" id="check-${i}" title="${c.a}">
@@ -1724,37 +1751,30 @@
                       </div>
                     </div>
                   </div>
-
-                  <!-- Stage 3: Route to correct path -->
                   <div class="pipeline-stage ${stageState(['routing'])}">
                     <div class="pipeline-node"><i data-lucide="git-branch" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
-                      <div class="stage-title"><i data-lucide="route" class="w-3.5 h-3.5 text-[#0070F3]"></i> Route to correct delivery path</div>
-                      <div class="stage-detail mb-1.5">Based on context, one execution path activates. The rest stay dormant. No manual decision needed.</div>
+                      <div class="stage-title"><i data-lucide="route" class="w-3.5 h-3.5 text-[#0070F3]"></i> Route to delivery path</div>
+                      <div class="stage-detail mb-1.5">One path activates. The rest stay dormant.</div>
                       <div class="flex flex-wrap gap-1.5">
                         ${ALL_PATHS.map(p => {
                           const isActive = p.id === scenario.activePath && ['routing','config','done','final'].includes(phase);
                           const isInactive = p.id !== scenario.activePath && ['routing','config','done','final'].includes(phase);
-                          return `
-                            <div class="path-row ${isActive ? 'active-path' : ''} ${isInactive ? 'inactive-path' : ''}">
-                              <i data-lucide="${p.icon}" class="w-3 h-3"></i>
-                              <span>${p.id === scenario.activePath ? scenario.pathLabel : p.label}</span>
-                              ${isActive ? '<i data-lucide="check" class="w-3 h-3 text-green-500"></i>' : ''}
-                            </div>
-                          `;
+                          return `<div class="path-row ${isActive ? 'active-path' : ''} ${isInactive ? 'inactive-path' : ''}">
+                            <i data-lucide="${p.icon}" class="w-3 h-3"></i>
+                            <span>${p.id === scenario.activePath ? scenario.pathLabel : p.label}</span>
+                            ${isActive ? '<i data-lucide="check" class="w-3 h-3 text-green-500"></i>' : ''}
+                          </div>`;
                         }).join('')}
                       </div>
                     </div>
                   </div>
-
-                  <!-- Stage 4: Apply configuration — expanded bundle -->
                   <div class="pipeline-stage ${stageState(['config'])}">
                     <div class="pipeline-node"><i data-lucide="settings" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
                       <div class="stage-title"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-500"></i> Apply configuration + policy</div>
-                      <div class="stage-detail mb-1.5">Apps without configuration are useless. Workspace delivers the app ready to use — settings, policies, dependencies included.</div>
                       ${scenario.configBundle ? `
-                        <div class="space-y-1 mt-1.5">
+                        <div class="space-y-1 mt-1">
                           ${scenario.configBundle.map((c, i) => `
                             <div class="cfg-item ${['config','done','final'].includes(phase) ? 'attached' : ''}" style="transition-delay:${i * 0.15}s">
                               <i data-lucide="${c.icon}" class="w-3 h-3 text-amber-500 flex-shrink-0"></i>
@@ -1763,17 +1783,7 @@
                             </div>
                           `).join('')}
                         </div>
-                        <div class="text-[9px] text-slate-400 mt-2 italic">Configurations are context-aware — same app, different config per location and role.</div>
-                      ` : `
-                        <div class="cfg-wrap ${['config','done','final'].includes(phase) ? 'wrapped' : ''} flex items-center gap-2 mt-1">
-                          <div style="background:${scenario.appIcon?.color || '#5B53D6'};width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;color:white;flex-shrink:0">${scenario.appIcon?.letter || 'T'}</div>
-                          <span class="text-[10px] text-slate-400">+</span>
-                          <i data-lucide="settings" class="w-3 h-3 text-amber-500"></i>
-                          <span class="text-[10px] text-slate-400">=</span>
-                          <i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i>
-                          <span class="text-[10px] text-slate-500 font-medium">${scenario.configNote}</span>
-                        </div>
-                      `}
+                      ` : ''}
                       ${scenario.id === 'update' ? `
                         <div class="flex items-center gap-2 mt-2">
                           <span class="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-red-600 text-[10px]">v2.1</span>
@@ -1783,61 +1793,33 @@
                       ` : ''}
                     </div>
                   </div>
-
                   ${scenario.dtap ? `
-                  <!-- DTAP Ring-Based Deployment -->
                   <div class="pipeline-stage ${stageState(['config','done','final'])}">
                     <div class="pipeline-node"><i data-lucide="git-merge" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
-                      <div class="stage-title"><i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-500"></i> Release pipeline — validated before production</div>
-                      <div class="stage-detail mb-1">This update passed through every stage before reaching end users. Rollback is one click.</div>
+                      <div class="stage-title"><i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-500"></i> Release pipeline</div>
                       <div class="dtap-bar">
                         ${scenario.dtap.stages.map((s, i) => `
                           ${i > 0 ? '<span class="dtap-arrow">→</span>' : ''}
                           <div class="dtap-stage ${['config','done','final'].includes(phase) ? (i < scenario.dtap.current ? 'dtap-done' : i === scenario.dtap.current ? 'dtap-current' : '') : ''}">
                             ${s}
-                            ${['config','done','final'].includes(phase) ? '<div class="text-[7px]">' + (i < scenario.dtap.current ? '✓ Passed' : i === scenario.dtap.current ? scenario.dtap.version : '') + '</div>' : ''}
+                            ${['config','done','final'].includes(phase) ? '<div class="text-[7px]">' + (i < scenario.dtap.current ? '✓' : i === scenario.dtap.current ? scenario.dtap.version : '') + '</div>' : ''}
                           </div>
                         `).join('')}
                       </div>
-                      ${['done','final'].includes(phase) ? '<div class="text-[9px] text-emerald-600 mt-1.5 font-medium">Rollback available at every stage. Full audit trail.</div>' : ''}
                     </div>
                   </div>
                   ` : ''}
-
-                  <!-- Stage 5: Why this is sustainable -->
                   <div class="pipeline-stage ${stageState(['done','final'])}">
                     <div class="pipeline-node"><i data-lucide="check" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content" style="${['done','final'].includes(phase) ? 'border-color:#10b981;background:linear-gradient(135deg,#f0fdf4,#ecfdf5)' : ''}">
-                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> One definition — every environment — no rework</div>
-                      <div class="stage-detail mb-1.5">This is why it scales. The same app definition that just delivered to this user works across every platform — Laptop, VDI, Cloud PC, Browser. No rebuilds per environment. No separate packaging. IT defines it once, Workspace handles the rest.</div>
-                      <div class="flex items-center gap-2 mt-1">
-                        <div style="background:#5B53D6;width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:7px;font-weight:800;color:white;border:2px solid #0070F3;flex-shrink:0">T</div>
-                        ${['Laptop','VDI','Cloud PC','Browser'].map((env, i) => `
-                          <div class="orch-connector flex-1 ${['done','final'].includes(phase) ? 'drawn' : ''}" style="transition-delay:${i * 0.15}s"></div>
-                          <span class="text-[9px] text-slate-500 flex-shrink-0 font-medium">${env}</span>
-                        `).join('')}
-                      </div>
+                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> One definition — every environment</div>
+                      <div class="stage-detail">Same app definition works across Laptop, VDI, Cloud PC, Browser. Define once, deliver everywhere.</div>
                     </div>
                   </div>
-
                 </div>
               `}
             </div>
-
-            <!-- Banner message -->
-            <div id="flowBanner" class="flow-banner mt-2 ${scenario && phase !== 'idle' ? 'visible' : ''}">
-              ${scenario ? scenario.bannerMsg : ''}
-            </div>
-
-            <!-- Final payoff after all 3 scenarios -->
-            ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
-              <div id="finalPayoff" class="sub-card p-4 mt-2 text-center final-glow" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
-                <div class="text-lg font-bold text-[#0A1C60] mb-1">Click → It just works</div>
-                <div class="text-xs text-[#4A5568]">First access, backend migration, security patch — three completely different scenarios. The user experience was identical every time.</div>
-                <div class="text-[10px] text-slate-500 mt-2 leading-relaxed">Application Workspace is one centralized system that packages, delivers, configures, updates, and routes apps to users — across every platform, every environment, every change. Define once. Deliver everywhere. No rework.</div>
-              </div>
-            ` : ''}
           </div>
         `;
       }
@@ -2465,7 +2447,10 @@
               ${STATE.showAdminView ? `
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   <div>${renderFlow()}</div>
-                  <div>${renderAdminPanel()}</div>
+                  <div class="space-y-3">
+                    ${renderAdminPanel()}
+                    ${renderPipeline()}
+                  </div>
                 </div>
               ` : renderFlow()}
               ${!STATE.showAdminView ? `
