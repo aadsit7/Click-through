@@ -717,6 +717,96 @@
       }
       .flow-banner.visible { opacity: 1; }
 
+      /* ===========================
+         PLATFORM LAYER (middle)
+         =========================== */
+      .bts-label-platform {
+        color: #0A1C60;
+        background: linear-gradient(135deg, #eff6ff, #e0e7ff);
+        border: 1px solid #bfdbfe;
+      }
+      .platform-bar {
+        background: linear-gradient(135deg, #0A1C60 0%, #0070F3 100%);
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+      .platform-bar::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+        pointer-events: none;
+      }
+      .platform-cap {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        background: rgba(255,255,255,0.12);
+        color: rgba(255,255,255,0.9);
+        border: 1px solid rgba(255,255,255,0.15);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+      }
+      .platform-cap:hover {
+        background: rgba(255,255,255,0.2);
+      }
+      .platform-stat {
+        text-align: center;
+        padding: 6px 8px;
+        min-width: 0;
+      }
+      .platform-stat-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: white;
+        line-height: 1;
+      }
+      .platform-stat-label {
+        font-size: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255,255,255,0.6);
+        margin-top: 2px;
+      }
+      .platform-divider {
+        width: 1px;
+        height: 28px;
+        background: rgba(255,255,255,0.15);
+        flex-shrink: 0;
+      }
+      /* Connection arrow between layers */
+      .layer-connector {
+        display: flex;
+        justify-content: center;
+        padding: 4px 0;
+      }
+      .layer-connector-line {
+        width: 2px;
+        height: 16px;
+        background: linear-gradient(180deg, #0070F3, #6366f1);
+        border-radius: 2px;
+        position: relative;
+      }
+      .layer-connector-line::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: -3px;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 5px solid #6366f1;
+      }
+
       /* App window that opens inside device */
       .app-window-overlay {
         position: absolute;
@@ -735,6 +825,25 @@
         opacity: 1;
         transform: translateY(0) scale(1);
         pointer-events: auto;
+      }
+      /* Skip transition when app is already open and we're just re-rendering */
+      .app-window-overlay.open-instant {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+        transition: none !important;
+      }
+      /* Also skip transitions on chat messages during re-render */
+      .teams-msg.show-instant {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        transition: none !important;
+      }
+      /* Skip catalog-app clicked animation on re-render */
+      .catalog-app.clicked-instant {
+        background: #eff6ff;
+        transform: scale(0.95);
+        transition: none !important;
       }
       .app-window-topbar {
         display: flex;
@@ -1010,7 +1119,8 @@
         flowPhase: 'idle',
         flowPaused: false,
         flowQueue: [],
-        flowQueueIdx: 0
+        flowQueueIdx: 0,
+        flowAppOpened: false
       };
 
       STATE.recastMode = false;
@@ -1185,12 +1295,18 @@
         const sc = STATE.flowScenarioIdx;
         const phase = STATE.flowPhase;
         const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
-        const appOpen = scenario && phase !== 'idle';
+        const appOpen = STATE.flowAppOpened;
+        // Only animate the very first time Teams opens
+        const firstOpen = appOpen && phase === 'clicking' && sc === 0;
+        const appWindowClass = appOpen ? (firstOpen ? 'open' : 'open-instant') : '';
+        const msgClass = appOpen ? (firstOpen ? 'show' : 'show-instant') : '';
+        const appClickedClass = appOpen ? (firstOpen ? 'clicked' : 'clicked-instant') : '';
 
         const stageState = (stagePhases) => {
           if (!scenario) return '';
           const idx = ['clicking','checking','routing','config','done','final'];
           const currentIdx = idx.indexOf(phase);
+          if (currentIdx < 0) return ''; // idle
           const lastIdx = idx.indexOf(stagePhases[stagePhases.length - 1]);
           if (currentIdx > lastIdx) return 'reached';
           if (stagePhases.includes(phase)) return 'active-stage';
@@ -1206,6 +1322,7 @@
           phase === 'final' ? 100 : 0;
 
         const checkDone = ['routing','config','done','final'].includes(phase);
+        const pipelineActive = scenario && phase !== 'idle';
 
         return `
           <div class="section-card p-4">
@@ -1253,7 +1370,7 @@
                 </div>
                 <div class="catalog-grid" id="catalogGrid">
                   ${CATALOG_APPS.map(app => `
-                    <div class="catalog-app ${(appOpen && app.id === 'teams') ? 'clicked' : ''}" data-app="${app.id}">
+                    <div class="catalog-app ${(appOpen && app.id === 'teams') ? appClickedClass : ''}" data-app="${app.id}">
                       <div class="app-icon" style="background:${app.color}">
                         ${app.letter}
                         ${(phase === 'clicking' && app.id === 'teams') ? '<div class="click-ring"></div>' : ''}
@@ -1264,12 +1381,12 @@
                 </div>
 
                 <!-- App window opens IMMEDIATELY -->
-                <div class="app-window-overlay ${appOpen ? 'open' : ''}" id="appWindow">
+                <div class="app-window-overlay ${appWindowClass}" id="appWindow">
                   <div class="app-window-topbar">
                     <div class="aw-icon" style="background:#5B53D6">T</div>
                     <div>
                       <div class="aw-title">Microsoft Teams</div>
-                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com (SaaS)' : scenario && scenario.id === 'update' ? 'v2.2 — just updated' : 'Desktop App'}</div>
+                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com — routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 — auto-patched by Workspace' : 'Installed and configured by Workspace'}</div>
                     </div>
                   </div>
                   <div class="app-window-body" style="flex-direction:row">
@@ -1286,15 +1403,15 @@
                         General
                       </div>
                       <div class="teams-chat-body" id="teamsChatBody">
-                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.3s">
+                        <div class="teams-msg ${msgClass}" style="transition-delay:0.3s">
                           <div class="teams-msg-avatar" style="background:#3b82f6">AK</div>
                           <div class="teams-msg-bubble">Hey team, the Q3 deck is updated and ready for review</div>
                         </div>
-                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.6s">
+                        <div class="teams-msg ${msgClass}" style="transition-delay:0.6s">
                           <div class="teams-msg-avatar" style="background:#10b981">JR</div>
                           <div class="teams-msg-bubble">Perfect timing — pulling it up now</div>
                         </div>
-                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.9s">
+                        <div class="teams-msg ${msgClass}" style="transition-delay:0.9s">
                           <div class="teams-msg-bubble self">On it. Give me 5 min.</div>
                         </div>
                       </div>
@@ -1305,13 +1422,77 @@
                     </div>
                   </div>
                 </div>
+
+                ${appOpen && ['checking','routing','config'].includes(phase) ? `
+                  <div style="position:absolute;bottom:6px;right:6px;z-index:10;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9999px;background:rgba(255,255,255,0.92);border:1px solid #a7f3d0;font-size:9px;font-weight:600;color:#059669;backdrop-filter:blur(4px)">
+                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                    User is working — orchestration happens invisibly
+                  </div>
+                ` : ''}
+
               </div>
             </div>
 
-            <!-- Divider with pause control -->
-            <div class="flex items-center gap-3 my-3">
+            <!-- Connector: User → Platform -->
+            <div class="layer-connector"><div class="layer-connector-line"></div></div>
+
+            <!-- ===== MIDDLE: THE CENTRALIZED PLATFORM ===== -->
+            <div class="flex items-center gap-3 mb-2">
+              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
+              <div class="bts-label bts-label-platform"><i data-lucide="boxes" class="w-3 h-3"></i> The Centralized Platform</div>
+              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
+            </div>
+
+            <div class="platform-bar" id="platformLayer">
+              <!-- Top row: Title + key stats -->
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="layout-grid" class="w-4 h-4 text-blue-200"></i>
+                  <span class="text-sm font-bold tracking-wide">Application Workspace</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <div class="platform-stat">
+                    <div class="platform-stat-value">8,000+</div>
+                    <div class="platform-stat-label">Pre-Tested Apps</div>
+                  </div>
+                  <div class="platform-divider"></div>
+                  <div class="platform-stat">
+                    <div class="platform-stat-value">5</div>
+                    <div class="platform-stat-label">Delivery Paths</div>
+                  </div>
+                  <div class="platform-divider"></div>
+                  <div class="platform-stat">
+                    <div class="platform-stat-value">1</div>
+                    <div class="platform-stat-label">Definition</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Capability pills -->
+              <div class="flex flex-wrap gap-1.5">
+                <div class="platform-cap"><i data-lucide="package" class="w-3 h-3"></i> Custom App Packaging</div>
+                <div class="platform-cap"><i data-lucide="building-2" class="w-3 h-3"></i> Multi-Tenant</div>
+                <div class="platform-cap"><i data-lucide="monitor-smartphone" class="w-3 h-3"></i> Multi-Device</div>
+                <div class="platform-cap"><i data-lucide="bot" class="w-3 h-3"></i> Automated Patching</div>
+                <div class="platform-cap"><i data-lucide="user-check" class="w-3 h-3"></i> Identity-Based Access</div>
+                <div class="platform-cap"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Self-Service Catalog</div>
+                <div class="platform-cap"><i data-lucide="shield" class="w-3 h-3"></i> CVE Auto-Patching</div>
+                <div class="platform-cap"><i data-lucide="eye" class="w-3 h-3"></i> Central Governance</div>
+              </div>
+
+              <!-- Bottom tagline -->
+              <div class="mt-2 text-[10px] text-blue-200 tracking-wide text-center">
+                Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit — across every environment from one place
+              </div>
+            </div>
+
+            <!-- Connector: Platform → Orchestration -->
+            <div class="layer-connector"><div class="layer-connector-line"></div></div>
+
+            <!-- ===== BOTTOM: ORCHESTRATION PIPELINE ===== -->
+            <div class="flex items-center gap-3 mb-2">
               <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
-              <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> Behind the scenes</div>
+              <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> How It Works — Per Click</div>
               ${STATE.flowRunning ? `
                 <button type="button" data-action="pause-flow" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full border transition ${STATE.flowPaused ? 'bg-[#0070F3] text-white border-[#0070F3] hover:bg-[#005AD0]' : 'bg-white text-[#64748b] border-slate-300 hover:border-[#0070F3] hover:text-[#0070F3]'}">
                   <i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i>
@@ -1324,21 +1505,13 @@
             <!-- ===== BOTTOM: ORCHESTRATION PIPELINE ===== -->
             <div class="sub-card p-3 bg-gradient-to-b from-white to-slate-50" id="orchEngine">
 
-              ${!scenario ? `
+              ${!scenario || phase === 'idle' ? `
                 <div class="text-center py-6 text-sm text-slate-400">
                   <i data-lucide="play-circle" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
                   <div>Press <strong>Start</strong> to see what happens behind every click</div>
-                  <div class="text-[10px] text-slate-300 mt-1">Three scenarios show how one system handles install, backend migration, and auto-patching</div>
+                  <div class="text-[10px] text-slate-300 mt-1">Three scenarios prove the user always gets the same simple experience — no matter what changes behind the scenes</div>
                 </div>
               ` : `
-                <!-- Powered by Application Workspace -->
-                <div class="flex items-center gap-2 mb-2 px-1">
-                  <div style="background:linear-gradient(135deg,#0A1C60,#0070F3);width:18px;height:18px;border-radius:4px;display:grid;place-items:center;flex-shrink:0">
-                    <i data-lucide="boxes" class="w-2.5 h-2.5 text-white"></i>
-                  </div>
-                  <span class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide">Application Workspace — Real-Time Orchestration</span>
-                </div>
-
                 <div class="pipeline">
                   <div class="pipeline-progress" style="height:${progressPct}%"></div>
 
@@ -1415,12 +1588,12 @@
                     </div>
                   </div>
 
-                  <!-- Stage 5: Delivered — define once -->
+                  <!-- Stage 5: Why this is sustainable -->
                   <div class="pipeline-stage ${stageState(['done','final'])}">
                     <div class="pipeline-node"><i data-lucide="check" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content" style="${['done','final'].includes(phase) ? 'border-color:#10b981;background:linear-gradient(135deg,#f0fdf4,#ecfdf5)' : ''}">
-                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> Delivered — defined once, works everywhere</div>
-                      <div class="stage-detail mb-1.5">One app definition serves every environment. No repackaging per platform. No rebuilds. No rework.</div>
+                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> One definition — every environment — no rework</div>
+                      <div class="stage-detail mb-1.5">This is why it scales. The same app definition that just delivered to this user works across every platform — Laptop, VDI, Cloud PC, Browser. No rebuilds per environment. No separate packaging. IT defines it once, Workspace handles the rest.</div>
                       <div class="flex items-center gap-2 mt-1">
                         <div style="background:#5B53D6;width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:7px;font-weight:800;color:white;border:2px solid #0070F3;flex-shrink:0">T</div>
                         ${['Laptop','VDI','Cloud PC','Browser'].map((env, i) => `
@@ -1444,8 +1617,8 @@
             ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
               <div id="finalPayoff" class="sub-card p-4 mt-2 text-center final-glow" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
                 <div class="text-lg font-bold text-[#0A1C60] mb-1">Click → It just works</div>
-                <div class="text-xs text-[#4A5568]">Three different scenarios. Same simple user experience. One centralized system handling everything.</div>
-                <div class="text-[10px] text-slate-400 mt-2">No repackaging. No rework. One definition adapts across every environment.</div>
+                <div class="text-xs text-[#4A5568]">First access, backend migration, security patch — three completely different scenarios. The user experience was identical every time.</div>
+                <div class="text-[10px] text-slate-500 mt-2 leading-relaxed">Application Workspace is one centralized system that packages, delivers, configures, updates, and routes apps to users — across every platform, every environment, every change. Define once. Deliver everywhere. No rework.</div>
               </div>
             ` : ''}
           </div>
@@ -1463,11 +1636,16 @@
       }
 
       function buildFlowQueue(){
-        // Build a flat array of { delay, action } steps for all scenarios
         const queue = [];
         for (let i = 0; i < SCENARIOS.length; i++) {
           const idx = i;
-          queue.push({ delay: (i === 0 ? 600 : 800), fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; updateFlowDOM(); } });
+          if (i === 0) {
+            // First scenario: open Teams
+            queue.push({ delay: 600, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; STATE.flowAppOpened = true; updateFlowDOM(); } });
+          } else {
+            // Subsequent scenarios: Teams stays open, just switch scenario and restart pipeline
+            queue.push({ delay: 1200, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; updateFlowDOM(); } });
+          }
           queue.push({ delay: 1200, fn(){ STATE.flowPhase = 'checking'; updateFlowDOM(); animateChecks(); } });
           queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'routing'; updateFlowDOM(); } });
           queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'config'; updateFlowDOM(); } });
@@ -1550,6 +1728,7 @@
         STATE.flowPhase = 'idle';
         STATE.flowQueue = [];
         STATE.flowQueueIdx = 0;
+        STATE.flowAppOpened = false;
         render();
       }
 
@@ -2569,7 +2748,7 @@
 
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
