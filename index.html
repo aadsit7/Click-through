@@ -11,7 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://unpkg.com">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 
     <style>
       :root {
@@ -1839,44 +1839,182 @@
           if (action === 'reset-autopilot') { STATE.flowTimers.intervals.forEach(id => clearInterval(id)); STATE.flowTimers.intervals = []; STATE.autopilotStep = -1; render(); return; }
 
           if (action === 'copy-results') {
-            const el = document.getElementById('impact-results');
-            if (!el || typeof html2canvas === 'undefined') return;
-            const btn = act;
-            btn.style.pointerEvents = 'none';
-            html2canvas(el, {
-              backgroundColor: '#f9fafb',
-              scale: 2,
-              useCORS: true,
-              logging: false
-            }).then(function(canvas) {
-              canvas.toBlob(function(blob) {
-                if (!blob) { btn.style.pointerEvents = ''; return; }
-                try {
-                  navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                  ]).then(function() {
-                    STATE.copied = true; render();
-                    setTimeout(function() { STATE.copied = false; render(); }, 2500);
-                  }).catch(function(err) {
-                    console.error('Clipboard write failed:', err);
-                    // Fallback: open image in new tab
-                    const url = URL.createObjectURL(blob);
-                    const w = window.open('');
-                    if (w) { w.document.write('<img src="' + url + '" style="max-width:100%">'); w.document.title = 'Business Impact - Right-click to copy'; }
-                    btn.style.pointerEvents = '';
-                  });
-                } catch(e) {
-                  console.error('Copy failed:', e);
-                  const url = URL.createObjectURL(blob);
-                  const w = window.open('');
-                  if (w) { w.document.write('<img src="' + url + '" style="max-width:100%">'); w.document.title = 'Business Impact - Right-click to copy'; }
-                  btn.style.pointerEvents = '';
-                }
-              }, 'image/png');
-            }).catch(function(err) {
-              console.error('html2canvas failed:', err);
-              btn.style.pointerEvents = '';
-            });
+            const r = STATE.calcResult;
+            if (!r) return;
+            const a = ROI_ASSUMPTIONS[STATE.calcScenario];
+            const ci = STATE.calcInputs;
+
+            const richHTML = `<div style="font-family:Calibri,Arial,Helvetica,sans-serif;max-width:720px;color:#1e293b;">
+<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+  <tr>
+    <td style="padding:16px 12px;text-align:center;background:#f0f7ff;border:1px solid #dbeafe;border-radius:8px;vertical-align:top;width:25%;">
+      <div style="font-size:28px;font-weight:700;color:#0070F3;line-height:1;">${num(r.totalHoursYear)}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">Hours Returned / Year</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${num(r.totalHoursMonth)} / month</div>
+    </td>
+    <td style="width:8px;"></td>
+    <td style="padding:16px 12px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;vertical-align:top;width:25%;">
+      <div style="font-size:28px;font-weight:700;color:#059669;line-height:1;">${num(r.ticketsAvoided)}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">Tickets Avoided / Month</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${num(r.ticketsAvoided * 12)} / year</div>
+    </td>
+    <td style="width:8px;"></td>
+    <td style="padding:16px 12px;text-align:center;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;vertical-align:top;width:25%;">
+      <div style="font-size:28px;font-weight:700;color:#d97706;line-height:1;">${num(r.strategicHours)}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">Strategic Hours Unlocked</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">per year</div>
+    </td>
+    <td style="width:8px;"></td>
+    <td style="padding:16px 12px;text-align:center;background:#f0f7ff;border:1px solid #dbeafe;border-radius:8px;vertical-align:top;width:25%;">
+      <div style="font-size:28px;font-weight:700;color:#0070F3;line-height:1;">${r.reqsDeferred > 0 ? r.reqsDeferred : r.fteCapacity}</div>
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">${r.reqsDeferred > 0 ? 'Hires Deferred' : 'FTE Capacity Returned'}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${r.reqsDeferred > 0 ? 'open reqs addressed' : 'equivalent capacity, not headcount reduction'}</div>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
+  <tr>
+    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:33%;">
+      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F3A7; Support Burden Reduced</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;color:#475569;">
+        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Current app support hours/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${num(r.currentSupportHours)}</td></tr>
+        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Support hours returned/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#059669;">${num(r.ticketHoursReturned)}</td></tr>
+        <tr><td style="padding:5px 0;">Tickets avoided/mo</td><td style="padding:5px 0;text-align:right;font-weight:600;color:#059669;">${num(r.ticketsAvoided)}</td></tr>
+      </table>
+      <div style="margin-top:8px;background:#f0fdf4;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:#059669;display:inline-block;">${Math.round(a.ticketReduction * 100)}% reduced</div>
+    </td>
+    <td style="width:10px;"></td>
+    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:33%;">
+      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F527; Engineering Effort Reduced</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;color:#475569;">
+        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Packaging hours returned/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#0070F3;">${num(r.pkgHoursReturned)}</td></tr>
+        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Patching hours returned/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#0070F3;">${num(r.patchHoursReturned)}</td></tr>
+        <tr><td style="padding:5px 0;">Total engineering hours/mo</td><td style="padding:5px 0;text-align:right;font-weight:600;color:#0070F3;">${num(r.pkgHoursReturned + r.patchHoursReturned)}</td></tr>
+      </table>
+      <div style="margin-top:8px;display:flex;gap:6px;">
+        <span style="background:#eff6ff;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:#0070F3;display:inline-block;">Pkg -${Math.round(a.pkgReduction * 100)}%</span>
+        <span style="background:#eef2ff;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:#6366f1;display:inline-block;">Patch -${Math.round(a.patchReduction * 100)}%</span>
+      </div>
+    </td>
+    <td style="width:10px;"></td>
+    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:33%;">
+      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F680; Strategic Capacity Unlocked</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;color:#475569;">
+        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Hours redirected to initiatives</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#d97706;">${num(r.strategicHours)}/yr</td></tr>
+        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">FTE-equivalent capacity</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${r.fteCapacity}</td></tr>
+        ${r.reqsDeferred > 0 ? '<tr><td style="padding:5px 0;">Open reqs deferred</td><td style="padding:5px 0;text-align:right;font-weight:600;color:#d97706;">'+r.reqsDeferred+'</td></tr>' : ''}
+      </table>
+      <div style="margin-top:8px;font-size:10px;color:#94a3b8;font-style:italic;">Capacity equivalent — not headcount reduction.</div>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+  <tr>
+    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:50%;">
+      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x2699;&#xFE0F; Operational Simplification</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+        <tr>
+          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#f87171;">${r.complexityBefore}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">Before</div></td>
+          <td style="text-align:center;padding:8px;width:20%;font-size:18px;color:#cbd5e1;">&#x2192;</td>
+          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#10b981;">${r.complexityAfter}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">After</div></td>
+        </tr>
+      </table>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">Fewer delivery variations, consistent experience across ${ci.envs} environments.</div>
+    </td>
+    <td style="width:10px;"></td>
+    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:50%;">
+      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F6E1;&#xFE0F; Risk & Control Posture</div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+        <tr>
+          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#f87171;">${r.riskBefore}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">Before</div></td>
+          <td style="text-align:center;padding:8px;width:20%;font-size:18px;color:#cbd5e1;">&#x2192;</td>
+          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#10b981;">${r.riskAfter}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">After</div></td>
+        </tr>
+      </table>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">${ci.regulated ? 'Regulated environment — ' : ''}Better consistency, improved governance.</div>
+    </td>
+  </tr>
+</table>
+
+<div style="margin-top:12px;font-size:10px;color:#94a3b8;text-align:center;font-style:italic;">Estimated business impact based on customer inputs and configurable modeling assumptions (${ROI_ASSUMPTIONS[STATE.calcScenario].label} scenario). Generated by Recast Software Business Impact Model.</div>
+</div>`;
+
+            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)
+
+HEADLINE METRICS
+  Hours Returned / Year:      ${num(r.totalHoursYear)}  (${num(r.totalHoursMonth)} / month)
+  Tickets Avoided / Month:    ${num(r.ticketsAvoided)}  (${num(r.ticketsAvoided * 12)} / year)
+  Strategic Hours Unlocked:   ${num(r.strategicHours)} / year
+  ${r.reqsDeferred > 0 ? 'Hires Deferred:             ' + r.reqsDeferred : 'FTE Capacity Returned:      ' + r.fteCapacity}
+
+SUPPORT BURDEN REDUCED
+  Current app support hrs/mo: ${num(r.currentSupportHours)}
+  Support hours returned/mo:  ${num(r.ticketHoursReturned)}
+  Tickets avoided/mo:         ${num(r.ticketsAvoided)}
+  Reduction:                  ${Math.round(a.ticketReduction * 100)}%
+
+ENGINEERING EFFORT REDUCED
+  Packaging hours returned:   ${num(r.pkgHoursReturned)} / mo  (-${Math.round(a.pkgReduction * 100)}%)
+  Patching hours returned:    ${num(r.patchHoursReturned)} / mo  (-${Math.round(a.patchReduction * 100)}%)
+  Total engineering hours/mo: ${num(r.pkgHoursReturned + r.patchHoursReturned)}
+
+STRATEGIC CAPACITY UNLOCKED
+  Hours to initiatives:       ${num(r.strategicHours)} / year
+  FTE-equivalent capacity:    ${r.fteCapacity}
+
+OPERATIONAL SIMPLIFICATION:  ${r.complexityBefore} → ${r.complexityAfter}
+RISK & CONTROL POSTURE:      ${r.riskBefore} → ${r.riskAfter}
+
+Estimated impact. Generated by Recast Software Business Impact Model.`;
+
+            try {
+              const htmlBlob = new Blob([richHTML], { type: 'text/html' });
+              const textBlob = new Blob([plainText], { type: 'text/plain' });
+              navigator.clipboard.write([
+                new ClipboardItem({
+                  'text/html': htmlBlob,
+                  'text/plain': textBlob
+                })
+              ]).then(function() {
+                STATE.copied = true; render();
+                setTimeout(function() { STATE.copied = false; render(); }, 2500);
+              }).catch(function() {
+                // Fallback: copy plain text only
+                navigator.clipboard.writeText(plainText).then(function() {
+                  STATE.copied = true; render();
+                  setTimeout(function() { STATE.copied = false; render(); }, 2500);
+                }).catch(function() {
+                  // Last resort: textarea select+copy
+                  const ta = document.createElement('textarea');
+                  ta.value = plainText;
+                  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+                  document.body.appendChild(ta);
+                  ta.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(ta);
+                  STATE.copied = true; render();
+                  setTimeout(function() { STATE.copied = false; render(); }, 2500);
+                });
+              });
+            } catch(e) {
+              // Fallback for browsers without ClipboardItem
+              navigator.clipboard.writeText(plainText).then(function() {
+                STATE.copied = true; render();
+                setTimeout(function() { STATE.copied = false; render(); }, 2500);
+              }).catch(function() {
+                const ta = document.createElement('textarea');
+                ta.value = plainText;
+                ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                STATE.copied = true; render();
+                setTimeout(function() { STATE.copied = false; render(); }, 2500);
+              });
+            }
             return;
           }
 
