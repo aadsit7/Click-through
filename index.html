@@ -291,7 +291,6 @@
       .pipeline-stage .stage-content { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; transition: all 0.4s ease; }
       .pipeline-stage.active-stage .stage-content { border-color: #0070F3; background: #eff6ff; box-shadow: 0 0 8px rgba(0,112,243,0.08); }
       .pipeline-stage.reached .stage-content { border-color: #a7f3d0; background: #f0fdf4; }
-      .pipeline-progress { position: absolute; left: 7px; top: 0; width: 2px; background: linear-gradient(180deg, #0070F3, #10b981); z-index: 1; transition: height 0.6s ease; }
       .stage-title { font-size: 11px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
       .pipeline-stage:not(.reached):not(.active-stage) .stage-title { color: #94a3b8; }
       .stage-detail { font-size: 10px; color: #64748b; line-height: 1.4; }
@@ -391,67 +390,63 @@
         showTippingPoint: false,
         currentState: {
           change: {
-            intro: "Forrester, Gartner, and McKinsey all highlight the application layer is the #1 drag on IT delivery and modernization.",
+            intro: "Forrester, Gartner, and McKinsey are converging on the same finding — the application layer is now the primary constraint on IT execution capacity.",
             bullets: [
-              "TODAY Apps are tied to devices, not people = The same app has to be built and managed differently for Intune, SCCM, VDI, macOS, etc.",
-              "The same app gets rebuilt multiple times = Each platform needs its own version, packaging, testing, and fixes.",
-              "Change becomes risky = New platforms, migrations, or updates often break apps, so teams delay changes",
-              "Inconsistent User Experience = What works on one device doesn't always work on another. = Higher Support Tickets",
-              "Tribal Knowledge is a huge risk = Tribal knowledge (workarounds) is heavliy relying on individuals"
+              "Applications are still managed per platform — packaged, tested, and maintained separately for every environment. That model was built for a world with two delivery targets. Most organizations now have five or six.",
+              "Every new platform, migration, or security mandate multiplies that work against every existing application. The math compounds — it doesn't level off.",
+              "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling — and most teams are already pressed against it."
             ],
-            analyst: "Across industries, application delivery — not infrastructure — is now the primary bottleneck to modernization. Most transformation projects slow or fail because teams lack capacity to keep apps ready while platforms change.."
+            analyst: "The constraint isn't skill or effort — it's that the per-platform delivery model wasn't designed for this level of complexity. The organizations pulling ahead aren't adding headcount. They're changing the model."
           },
           now: {
-            intro: "The gap between what IT is ASKED to deliver and what it CAN sustain is widening fast.",
+            intro: "This has been building for a while — but 2026 is where the math stops working for most teams.",
             bullets: [
-              'Change is accelerating, not slowing down. More app updates, more security pressure, more platforms — with the same teams.',
-              'Manual app work compounds over time. Every custom or internal app adds more versions, more dependencies, and more risk with each change',
-              'Teams that should be driving innovation are stuck keeping apps alive.',
+              "Platform sprawl, AI adoption pressure, and continuous security patching are all accelerating simultaneously. Any one of these is absorbable. Together, they exceed what per-platform delivery can sustain.",
+              "The workarounds that got teams through the last few years — tribal knowledge, manual rebuilds, heroic effort — are now the risk themselves. They don't scale, they don't transfer, and they create single points of failure that leadership can't see until someone leaves.",
+              "The window to stabilize is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting — patching the model instead of replacing it."
             ],
-            analyst: "Organizations that succeed with AI, cloud, and new platforms over the next few years will be the ones that stabilize application delivery first. Everyone else hits a capacity wall where progress slows regardless of strategy"
+            analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
           },
           recast: {
             intro: "Application Workspace changes how apps are delivered — to the user, not the device.",
             bullets: [
               "Applications Are Tied to the User = Apps follow the user across platforms. Assigned by user identity, not device or location.",
               "Define Once, Deliver Everywhere = Applications are defined a single time. Delivered consistently across platforms. No repackaging or extra configuration required.",
-              "Support is Simplfied = IT uses a single support model across all delivery methods.",
-              " New platforms can be integrated without rework = Backend updates don't affect user-facing experience.",
+              "Support is Simplified = IT uses a single support model across all delivery methods.",
+              "New platforms can be integrated without rework = Backend updates don't affect user-facing experience.",
               "Consistent User Experience = Users see the same apps and interfaces every time. Reduces user confusion and support demand.",
               "Central management of application delivery = Ensures design consistency across environments. Reduces fragmentation and configuration drift."
             ],
-            analyst: "Leading IT organizations are shifting from device-centric management to user-centric delivery models to reduce operational friction and keep pace with constant platform change"
+            analyst: "Leading IT organizations are shifting from device-centric management to user-centric delivery models to reduce operational friction and keep pace with constant platform change."
           }
         },
         defaultsCurrentState() {
           return JSON.parse(JSON.stringify({
             change: {
-              intro: "Forrester, Gartner, and McKinsey all highlight the application layer is the #1 drag on IT delivery and modernization.",
+              intro: "Forrester, Gartner, and McKinsey are converging on the same finding — the application layer is now the primary constraint on IT execution capacity.",
               bullets: [
-                "TODAY Apps are tied to devices, not people = The same app has to be built and managed differently for Intune, SCCM, VDI, macOS, etc.",
-                "The same app gets rebuilt multiple times = Each platform needs its own version, packaging, testing, and fixes.",
-                "Change becomes risky = New platforms, migrations, or updates often break apps, so teams delay changes",
-                "Inconsistent User Experience = What works on one device doesn't always work on another. = Higher Support Tickets",
-                "Tribal Knowledge is a huge risk = Tribal knowledge (workarounds) is heavliy relying on individuals"
+                "Applications are still managed per platform — packaged, tested, and maintained separately for every environment. That model was built for a world with two delivery targets. Most organizations now have five or six.",
+                "Every new platform, migration, or security mandate multiplies that work against every existing application. The math compounds — it doesn't level off.",
+                "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling — and most teams are already pressed against it."
               ],
-              analyst: "Across industries, application delivery — not infrastructure — is now the primary bottleneck to modernization. Most transformation projects slow or fail because teams lack capacity to keep apps ready while platforms change.."
+              analyst: "The constraint isn't skill or effort — it's that the per-platform delivery model wasn't designed for this level of complexity. The organizations pulling ahead aren't adding headcount. They're changing the model."
             },
             now: {
-              intro: "The gap between what IT is ASKED to deliver and what it CAN sustain is widening fast.",
+              intro: "This has been building for a while — but 2026 is where the math stops working for most teams.",
               bullets: [
-                'Change is accelerating, not slowing down. More app updates, more security pressure, more platforms — with the same teams.',
-                'Manual app work compounds over time. Every custom or internal app adds more versions, more dependencies, and more risk with each change',
-                'Teams that should be driving innovation are stuck keeping apps alive.',
+                "Platform sprawl, AI adoption pressure, and continuous security patching are all accelerating simultaneously. Any one of these is absorbable. Together, they exceed what per-platform delivery can sustain.",
+                "The workarounds that got teams through the last few years — tribal knowledge, manual rebuilds, heroic effort — are now the risk themselves. They don't scale, they don't transfer, and they create single points of failure that leadership can't see until someone leaves.",
+                "The window to stabilize is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting — patching the model instead of replacing it."
               ],
-              analyst: "Organizations that succeed with AI, cloud, and new platforms over the next few years will be the ones that stabilize application delivery first. Everyone else hits a capacity wall where progress slows regardless of strategy"
+              analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
             },
             recast: {
               intro: "Application Workspace changes how apps are delivered — to the user, not the device.",
               bullets: [
                 "Applications Are Tied to the User = Apps follow the user across platforms. Assigned by user identity, not device or location.",
                 "Define Once, Deliver Everywhere = Applications are defined a single time. Delivered consistently across platforms. No repackaging or extra configuration required.",
-                "Support is Simplfied = IT uses a single support model across all delivery methods.",
-                " New platforms can be integrated without rework = Backend updates don't affect user-facing experience.",
+                "Support is Simplified = IT uses a single support model across all delivery methods.",
+                "New platforms can be integrated without rework = Backend updates don't affect user-facing experience.",
                 "Consistent User Experience = Users see the same apps and interfaces every time. Reduces user confusion and support demand.",
                 "Central management of application delivery = Ensures design consistency across environments. Reduces fragmentation and configuration drift."
               ],
@@ -1844,162 +1839,9 @@
             const a = ROI_ASSUMPTIONS[STATE.calcScenario];
             const ci = STATE.calcInputs;
 
-            const richHTML = `<div style="font-family:Calibri,Arial,Helvetica,sans-serif;max-width:720px;color:#1e293b;">
-<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
-  <tr>
-    <td style="padding:16px 12px;text-align:center;background:#f0f7ff;border:1px solid #dbeafe;border-radius:8px;vertical-align:top;width:25%;">
-      <div style="font-size:28px;font-weight:700;color:#0070F3;line-height:1;">${num(r.totalHoursYear)}</div>
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">Hours Returned / Year</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${num(r.totalHoursMonth)} / month</div>
-    </td>
-    <td style="width:8px;"></td>
-    <td style="padding:16px 12px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;vertical-align:top;width:25%;">
-      <div style="font-size:28px;font-weight:700;color:#059669;line-height:1;">${num(r.ticketsAvoided)}</div>
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">Tickets Avoided / Month</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${num(r.ticketsAvoided * 12)} / year</div>
-    </td>
-    <td style="width:8px;"></td>
-    <td style="padding:16px 12px;text-align:center;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;vertical-align:top;width:25%;">
-      <div style="font-size:28px;font-weight:700;color:#d97706;line-height:1;">${num(r.strategicHours)}</div>
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">Strategic Hours Unlocked</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">per year</div>
-    </td>
-    <td style="width:8px;"></td>
-    <td style="padding:16px 12px;text-align:center;background:#f0f7ff;border:1px solid #dbeafe;border-radius:8px;vertical-align:top;width:25%;">
-      <div style="font-size:28px;font-weight:700;color:#0070F3;line-height:1;">${r.reqsDeferred > 0 ? r.reqsDeferred : r.fteCapacity}</div>
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-top:6px;">${r.reqsDeferred > 0 ? 'Hires Deferred' : 'FTE Capacity Returned'}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${r.reqsDeferred > 0 ? 'open reqs addressed' : 'equivalent capacity, not headcount reduction'}</div>
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:16px;">
-  <tr>
-    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:33%;">
-      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F3A7; Support Burden Reduced</div>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;color:#475569;">
-        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Current app support hours/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${num(r.currentSupportHours)}</td></tr>
-        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Support hours returned/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#059669;">${num(r.ticketHoursReturned)}</td></tr>
-        <tr><td style="padding:5px 0;">Tickets avoided/mo</td><td style="padding:5px 0;text-align:right;font-weight:600;color:#059669;">${num(r.ticketsAvoided)}</td></tr>
-      </table>
-      <div style="margin-top:8px;background:#f0fdf4;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:#059669;display:inline-block;">${Math.round(a.ticketReduction * 100)}% reduced</div>
-    </td>
-    <td style="width:10px;"></td>
-    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:33%;">
-      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F527; Engineering Effort Reduced</div>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;color:#475569;">
-        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Packaging hours returned/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#0070F3;">${num(r.pkgHoursReturned)}</td></tr>
-        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Patching hours returned/mo</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#0070F3;">${num(r.patchHoursReturned)}</td></tr>
-        <tr><td style="padding:5px 0;">Total engineering hours/mo</td><td style="padding:5px 0;text-align:right;font-weight:600;color:#0070F3;">${num(r.pkgHoursReturned + r.patchHoursReturned)}</td></tr>
-      </table>
-      <div style="margin-top:8px;display:flex;gap:6px;">
-        <span style="background:#eff6ff;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:#0070F3;display:inline-block;">Pkg -${Math.round(a.pkgReduction * 100)}%</span>
-        <span style="background:#eef2ff;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:#6366f1;display:inline-block;">Patch -${Math.round(a.patchReduction * 100)}%</span>
-      </div>
-    </td>
-    <td style="width:10px;"></td>
-    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:33%;">
-      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F680; Strategic Capacity Unlocked</div>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;color:#475569;">
-        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">Hours redirected to initiatives</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;color:#d97706;">${num(r.strategicHours)}/yr</td></tr>
-        <tr><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;">FTE-equivalent capacity</td><td style="padding:5px 0;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:600;">${r.fteCapacity}</td></tr>
-        ${r.reqsDeferred > 0 ? '<tr><td style="padding:5px 0;">Open reqs deferred</td><td style="padding:5px 0;text-align:right;font-weight:600;color:#d97706;">'+r.reqsDeferred+'</td></tr>' : ''}
-      </table>
-      <div style="margin-top:8px;font-size:10px;color:#94a3b8;font-style:italic;">Capacity equivalent — not headcount reduction.</div>
-    </td>
-  </tr>
-</table>
-
-<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-  <tr>
-    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:50%;">
-      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x2699;&#xFE0F; Operational Simplification</div>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-        <tr>
-          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#f87171;">${r.complexityBefore}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">Before</div></td>
-          <td style="text-align:center;padding:8px;width:20%;font-size:18px;color:#cbd5e1;">&#x2192;</td>
-          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#10b981;">${r.complexityAfter}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">After</div></td>
-        </tr>
-      </table>
-      <div style="font-size:11px;color:#64748b;margin-top:4px;">Fewer delivery variations, consistent experience across ${ci.envs} environments.</div>
-    </td>
-    <td style="width:10px;"></td>
-    <td style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;vertical-align:top;width:50%;">
-      <div style="font-size:12px;font-weight:700;color:#0A1C60;margin-bottom:10px;">&#x1F6E1;&#xFE0F; Risk & Control Posture</div>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-        <tr>
-          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#f87171;">${r.riskBefore}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">Before</div></td>
-          <td style="text-align:center;padding:8px;width:20%;font-size:18px;color:#cbd5e1;">&#x2192;</td>
-          <td style="text-align:center;padding:8px;width:40%;"><div style="font-size:24px;font-weight:700;color:#10b981;">${r.riskAfter}</div><div style="font-size:9px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;">After</div></td>
-        </tr>
-      </table>
-      <div style="font-size:11px;color:#64748b;margin-top:4px;">${ci.regulated ? 'Regulated environment — ' : ''}Better consistency, improved governance.</div>
-    </td>
-  </tr>
-</table>
-
-<div style="margin-top:12px;font-size:10px;color:#94a3b8;text-align:center;font-style:italic;">Estimated business impact based on customer inputs and configurable modeling assumptions (${ROI_ASSUMPTIONS[STATE.calcScenario].label} scenario). Generated by Recast Software Business Impact Model.</div>
-</div>`;
-
-            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)
-
-HEADLINE METRICS
-  Hours Returned / Year:      ${num(r.totalHoursYear)}  (${num(r.totalHoursMonth)} / month)
-  Tickets Avoided / Month:    ${num(r.ticketsAvoided)}  (${num(r.ticketsAvoided * 12)} / year)
-  Strategic Hours Unlocked:   ${num(r.strategicHours)} / year
-  ${r.reqsDeferred > 0 ? 'Hires Deferred:             ' + r.reqsDeferred : 'FTE Capacity Returned:      ' + r.fteCapacity}
-
-SUPPORT BURDEN REDUCED
-  Current app support hrs/mo: ${num(r.currentSupportHours)}
-  Support hours returned/mo:  ${num(r.ticketHoursReturned)}
-  Tickets avoided/mo:         ${num(r.ticketsAvoided)}
-  Reduction:                  ${Math.round(a.ticketReduction * 100)}%
-
-ENGINEERING EFFORT REDUCED
-  Packaging hours returned:   ${num(r.pkgHoursReturned)} / mo  (-${Math.round(a.pkgReduction * 100)}%)
-  Patching hours returned:    ${num(r.patchHoursReturned)} / mo  (-${Math.round(a.patchReduction * 100)}%)
-  Total engineering hours/mo: ${num(r.pkgHoursReturned + r.patchHoursReturned)}
-
-STRATEGIC CAPACITY UNLOCKED
-  Hours to initiatives:       ${num(r.strategicHours)} / year
-  FTE-equivalent capacity:    ${r.fteCapacity}
-
-OPERATIONAL SIMPLIFICATION:  ${r.complexityBefore} → ${r.complexityAfter}
-RISK & CONTROL POSTURE:      ${r.riskBefore} → ${r.riskAfter}
-
-Estimated impact. Generated by Recast Software Business Impact Model.`;
+            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nHEADLINE METRICS\n  Hours Returned / Year:      ${num(r.totalHoursYear)}  (${num(r.totalHoursMonth)} / month)\n  Tickets Avoided / Month:    ${num(r.ticketsAvoided)}  (${num(r.ticketsAvoided * 12)} / year)\n  Strategic Hours Unlocked:   ${num(r.strategicHours)} / year\n  ${r.reqsDeferred > 0 ? 'Hires Deferred:             ' + r.reqsDeferred : 'FTE Capacity Returned:      ' + r.fteCapacity}\n\nSUPPORT BURDEN REDUCED\n  Current app support hrs/mo: ${num(r.currentSupportHours)}\n  Support hours returned/mo:  ${num(r.ticketHoursReturned)}\n  Tickets avoided/mo:         ${num(r.ticketsAvoided)}\n  Reduction:                  ${Math.round(a.ticketReduction * 100)}%\n\nENGINEERING EFFORT REDUCED\n  Packaging hours returned:   ${num(r.pkgHoursReturned)} / mo  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours returned:    ${num(r.patchHoursReturned)} / mo  (-${Math.round(a.patchReduction * 100)}%)\n  Total engineering hours/mo: ${num(r.pkgHoursReturned + r.patchHoursReturned)}\n\nSTRATEGIC CAPACITY UNLOCKED\n  Hours to initiatives:       ${num(r.strategicHours)} / year\n  FTE-equivalent capacity:    ${r.fteCapacity}\n\nOPERATIONAL SIMPLIFICATION:  ${r.complexityBefore} \u2192 ${r.complexityAfter}\nRISK & CONTROL POSTURE:      ${r.riskBefore} \u2192 ${r.riskAfter}\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
 
             try {
-              const htmlBlob = new Blob([richHTML], { type: 'text/html' });
-              const textBlob = new Blob([plainText], { type: 'text/plain' });
-              navigator.clipboard.write([
-                new ClipboardItem({
-                  'text/html': htmlBlob,
-                  'text/plain': textBlob
-                })
-              ]).then(function() {
-                STATE.copied = true; render();
-                setTimeout(function() { STATE.copied = false; render(); }, 2500);
-              }).catch(function() {
-                // Fallback: copy plain text only
-                navigator.clipboard.writeText(plainText).then(function() {
-                  STATE.copied = true; render();
-                  setTimeout(function() { STATE.copied = false; render(); }, 2500);
-                }).catch(function() {
-                  // Last resort: textarea select+copy
-                  const ta = document.createElement('textarea');
-                  ta.value = plainText;
-                  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
-                  document.body.appendChild(ta);
-                  ta.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(ta);
-                  STATE.copied = true; render();
-                  setTimeout(function() { STATE.copied = false; render(); }, 2500);
-                });
-              });
-            } catch(e) {
-              // Fallback for browsers without ClipboardItem
               navigator.clipboard.writeText(plainText).then(function() {
                 STATE.copied = true; render();
                 setTimeout(function() { STATE.copied = false; render(); }, 2500);
@@ -2014,6 +1856,16 @@ Estimated impact. Generated by Recast Software Business Impact Model.`;
                 STATE.copied = true; render();
                 setTimeout(function() { STATE.copied = false; render(); }, 2500);
               });
+            } catch(e) {
+              const ta = document.createElement('textarea');
+              ta.value = plainText;
+              ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              STATE.copied = true; render();
+              setTimeout(function() { STATE.copied = false; render(); }, 2500);
             }
             return;
           }
