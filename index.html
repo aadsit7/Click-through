@@ -249,6 +249,28 @@
       .ap-dot { width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; transition: all 0.3s; }
       .ap-step.ap-active .ap-dot { background: #0070F3; box-shadow: 0 0 0 3px rgba(0,112,243,0.2); }
       .ap-step.ap-done .ap-dot { background: #10b981; }
+
+      /* Autopilot cascade & wow */
+      .ap-cascade-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 6px; }
+      .ap-cascade-icon { display: grid; place-items: center; opacity: 0; transform: scale(0.3); transition: opacity 0.15s ease, transform 0.15s ease; transition-delay: var(--d, 0s); }
+      .ap-cascade-icon.visible { opacity: 1; transform: scale(1); }
+      .ap-cascade-icon .ap-app-sq { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; font-size: 8px; font-weight: 800; color: white; }
+      .ap-cascade-icon .ap-placeholder { width: 24px; height: 24px; border-radius: 5px; background: #e2e8f0; }
+      .ap-counter { font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700; color: #0070F3; text-align: center; line-height: 1; }
+      .ap-counter.done { color: #059669; }
+      @keyframes apWowGlow { 0% { box-shadow: 0 8px 30px rgba(0,0,0,0.18); } 50% { box-shadow: 0 8px 30px rgba(0,0,0,0.18), 0 0 40px 8px rgba(16,185,129,0.25); } 100% { box-shadow: 0 8px 30px rgba(0,0,0,0.18); } }
+      .ap-wow-glow { animation: apWowGlow 1.5s ease-in-out 2; }
+      .ap-phase-divider { display: inline-flex; align-items: center; gap: 4px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 4px; margin-bottom: 2px; margin-top: 6px; }
+      .ap-phase-divider:first-child { margin-top: 0; }
+      .ap-phase-autopilot { background: #dbeafe; color: #1e40af; }
+      .ap-phase-handoff { background: #fef3c7; color: #92400e; }
+      .ap-phase-workspace { background: #d1fae5; color: #065f46; }
+      .ap-comparison { opacity: 0; transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s ease; }
+      .ap-comparison.visible { opacity: 1; transform: translateY(0); }
+      .ap-device-header { padding: 4px 8px; font-size: 9px; font-weight: 600; color: white; display: flex; align-items: center; gap: 4px; border-radius: 4px 4px 0 0; }
+      .ap-device-header.autopilot { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+      .ap-device-header.workspace { background: linear-gradient(135deg, #0A1C60, #0070F3); }
+
       .catalog-browse { padding: 8px; }
       .catalog-search { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; font-size: 10px; color: #94a3b8; margin-bottom: 8px; }
       .catalog-featured { background: linear-gradient(135deg, #eff6ff, #e0e7ff); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
@@ -514,7 +536,8 @@
         flowAppOpened: false,
         showAdminView: false,
         showAutopilot: false,
-        autopilotStep: -1
+        autopilotStep: -1,
+        autopilotAppCount: 0
       };
 
       STATE.recastMode = false;
@@ -1136,6 +1159,37 @@
         render();
       }
 
+      function startAppCascade(){
+        STATE.autopilotAppCount = 0;
+        let count = 0;
+        const cascadeInterval = setInterval(() => {
+          count++;
+          STATE.autopilotAppCount = count;
+          // Targeted DOM updates — no full re-render during rapid cascade
+          const counterEl = document.getElementById('ap-app-counter');
+          if (counterEl) counterEl.textContent = count + '/' + AP_APPS.length;
+          const stepCounter = document.getElementById('ap-step-counter');
+          if (stepCounter) stepCounter.textContent = count;
+          const grid = document.getElementById('ap-cascade-grid');
+          if (grid) {
+            const icon = grid.children[count - 1];
+            if (icon) {
+              icon.classList.add('visible');
+              // Replace placeholder with colored icon
+              const app = AP_APPS[count - 1];
+              icon.innerHTML = '<div class="ap-app-sq" style="background:' + app.c + '">' + app.l + '</div>';
+            }
+          }
+          if (count >= AP_APPS.length) {
+            clearInterval(cascadeInterval);
+            if (counterEl) { counterEl.classList.add('done'); }
+            const frame = document.getElementById('ap-device-frame');
+            if (frame) frame.classList.add('ap-wow-glow');
+          }
+        }, 40);
+        STATE.flowTimers.intervals.push(cascadeInterval);
+      }
+
       function render(){
         const root=document.getElementById('app');
         root.innerHTML = `
@@ -1523,17 +1577,120 @@
         `;
       }
 
+      const AP_APPS = [
+        {l:'T',c:'#5B53D6'},{l:'VS',c:'#007ACC'},{l:'S',c:'#E01E5A'},{l:'Ji',c:'#0052CC'},
+        {l:'D',c:'#2496ED'},{l:'OD',c:'#0A5BD5'},{l:'Cr',c:'#4285F4'},{l:'W',c:'#185ABD'},
+        {l:'X',c:'#107C41'},{l:'P',c:'#D24726'},{l:'O',c:'#106EBE'},{l:'Z',c:'#0B5CFF'},
+        {l:'SF',c:'#00A1E0'},{l:'A',c:'#ED2224'},{l:'SN',c:'#81B29A'},{l:'Ok',c:'#007DC1'},
+        {l:'Du',c:'#3CB371'},{l:'E',c:'#0C8EC5'},{l:'WD',c:'#1F5BFF'},{l:'CS',c:'#D61F26'},
+        {l:'BX',c:'#0061D5'},{l:'MD',c:'#0067B8'},{l:'SAP',c:'#0A6ED1'},{l:'Pr',c:'#E01E5A'},
+        {l:'VN',c:'#007DC1'}
+      ];
+
       function renderAutopilot(){
         const s = STATE.autopilotStep;
+        const ac = STATE.autopilotAppCount;
         const steps = [
-          {icon:'power', label:'Laptop powers on', detail:'Windows boot sequence'},
-          {icon:'cloud-cog', label:'Autopilot enrolls device', detail:'Intune enrollment in progress...'},
-          {icon:'download', label:'Application Workspace agent installs', detail:'Bootstrapping the orchestration layer'},
-          {icon:'user-check', label:'Identity detected', detail:'Sarah Chen \u2014 Engineering, Seattle office'},
-          {icon:'layers', label:'Persona loading', detail:'Matching deployment profile: Engineering - Seattle', apps:['Teams','VS Code','Slack','Jira','Docker']},
-          {icon:'layout-grid', label:'Workspace published', detail:'12 apps, 3 drive mappings, 2 printers configured'},
-          {icon:'check-circle', label:'Ready to work', detail:'Total elapsed: ~8 minutes'},
+          {icon:'power', label:'Laptop powers on', detail:'Windows boot sequence', phase:'autopilot'},
+          {icon:'cloud-cog', label:'Autopilot enrolls device', detail:'Intune enrollment in progress...', phase:'autopilot'},
+          {icon:'shield-check', label:'Device compliant', detail:'Policies applied, device registered', phase:'autopilot'},
+          {icon:'download', label:'Workspace agent activates', detail:'Autopilot hands off to Application Workspace', phase:'handoff'},
+          {icon:'user-check', label:'Identity detected', detail:'Sarah Chen \u2014 Engineering, Seattle office', phase:'workspace'},
+          {icon:'layers', label:'Persona matched', detail:'25 apps, 3 drive mappings, 2 printers', phase:'workspace'},
+          {icon:'zap', label:'Delivering all apps', detail:'25 apps delivered at once', phase:'workspace'},
+          {icon:'check-circle', label:'Ready to work', detail:'Total elapsed: ~8 minutes', phase:'done'},
         ];
+
+        // Device screen content per step
+        let deviceScreen = '';
+        if (s < 0) {
+          deviceScreen = `<div class="text-center py-8 text-slate-300"><i data-lucide="laptop" class="w-10 h-10 mx-auto mb-2"></i><div class="text-[10px]">New device \u2014 powered off</div></div>`;
+        } else if (s <= 2) {
+          deviceScreen = `
+            <div class="ap-device-header autopilot"><i data-lucide="cloud-cog" class="w-3 h-3"></i> Windows Autopilot</div>
+            <div class="text-center py-5">
+              <div class="spinner mx-auto mb-2" style="width:20px;height:20px;border-width:3px"></div>
+              <div class="text-[10px] text-[#1e40af] font-semibold">${steps[s].label}</div>
+              <div class="text-[9px] text-slate-400 mt-0.5">${steps[s].detail}</div>
+              <div class="mt-3 mx-4 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-[#3b82f6]" style="width:${s === 0 ? '20' : s === 1 ? '55' : '90'}%;transition:width 0.6s ease"></div></div>
+            </div>`;
+        } else if (s === 3) {
+          deviceScreen = `
+            <div class="ap-device-header workspace"><i data-lucide="boxes" class="w-3 h-3"></i> Application Workspace</div>
+            <div class="text-center py-4">
+              <div class="spinner mx-auto mb-2" style="width:20px;height:20px;border-width:3px"></div>
+              <div class="text-[10px] text-[#0070F3] font-semibold">Workspace agent activating...</div>
+              <div class="text-[9px] text-slate-400 mt-0.5">Autopilot \u2192 Application Workspace</div>
+              <div class="mt-3 mx-4 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-[#3b82f6] to-[#0070F3]" style="width:100%;transition:width 0.6s ease"></div></div>
+            </div>`;
+        } else if (s === 4) {
+          deviceScreen = `
+            <div class="ap-device-header workspace"><i data-lucide="boxes" class="w-3 h-3"></i> Application Workspace</div>
+            <div class="text-center py-3">
+              <div class="h-10 w-10 rounded-full mx-auto mb-2 grid place-items-center text-white font-bold" style="background:#3b82f6">SC</div>
+              <div class="text-[11px] font-semibold text-[#0A1C60]">Sarah Chen</div>
+              <div class="text-[9px] text-slate-400">Engineering \u2014 Seattle office</div>
+            </div>`;
+        } else if (s === 5) {
+          deviceScreen = `
+            <div class="ap-device-header workspace"><i data-lucide="boxes" class="w-3 h-3"></i> Application Workspace</div>
+            <div class="text-center py-3">
+              <div class="text-[11px] font-semibold text-[#0A1C60] mb-2">Persona: Engineering \u2014 Seattle</div>
+              <div class="flex justify-center gap-4 text-[9px] text-slate-500 mb-3">
+                <span><strong class="text-[#0A1C60]">25</strong> apps</span>
+                <span><strong class="text-[#0A1C60]">3</strong> drive maps</span>
+                <span><strong class="text-[#0A1C60]">2</strong> printers</span>
+              </div>
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-[9px] font-semibold text-[#0070F3]"><i data-lucide="zap" class="w-3 h-3"></i> Ready to deliver</div>
+            </div>`;
+        } else if (s === 6) {
+          deviceScreen = `
+            <div class="ap-device-header workspace"><i data-lucide="boxes" class="w-3 h-3"></i> Application Workspace</div>
+            <div class="px-1 pt-1">
+              <div class="ap-counter ${ac >= 25 ? 'done' : ''}" id="ap-app-counter">${ac}/${AP_APPS.length}</div>
+              <div class="ap-cascade-grid" id="ap-cascade-grid">
+                ${AP_APPS.map((app, i) => `
+                  <div class="ap-cascade-icon ${i < ac ? 'visible' : ''}" style="--d:${i * 0.04}s">
+                    ${i < ac ? `<div class="ap-app-sq" style="background:${app.c}">${app.l}</div>` : `<div class="ap-placeholder"></div>`}
+                  </div>
+                `).join('')}
+              </div>
+              ${ac >= 25 ? '<div class="text-[9px] text-center text-emerald-600 font-semibold mt-1"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> All 25 apps delivered</div>' : '<div class="text-[9px] text-center text-[#0070F3] font-semibold mt-1">Delivering apps...</div>'}
+            </div>`;
+        } else {
+          deviceScreen = `
+            <div class="ap-device-header workspace" style="background:linear-gradient(135deg,#059669,#10b981)"><i data-lucide="check-circle" class="w-3 h-3"></i> Ready to work</div>
+            <div class="px-1 pt-1">
+              <div class="ap-cascade-grid">
+                ${AP_APPS.map(app => `
+                  <div class="ap-cascade-icon visible" style="--d:0s">
+                    <div class="ap-app-sq" style="background:${app.c}">${app.l}</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="text-[9px] text-center text-emerald-600 font-semibold mt-1"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> 25 apps \u00b7 3 drives \u00b7 2 printers \u2014 ready</div>
+            </div>`;
+        }
+
+        // Step tracker with phase dividers
+        const phaseBreaks = { 0: 'autopilot', 3: 'handoff', 4: 'workspace' };
+        const phaseLabels = { autopilot: 'Autopilot', handoff: 'Handoff', workspace: 'Application Workspace' };
+        const phaseCss = { autopilot: 'ap-phase-autopilot', handoff: 'ap-phase-handoff', workspace: 'ap-phase-workspace' };
+
+        let stepTrackerHtml = '';
+        steps.forEach((st, i) => {
+          if (phaseBreaks[i] !== undefined) {
+            const p = phaseBreaks[i];
+            stepTrackerHtml += `<div class="ap-phase-divider ${phaseCss[p]}">${phaseLabels[p]}</div>`;
+          }
+          const cls = i === s ? 'ap-active' : i < s ? 'ap-done' : '';
+          const showSpinner = i === s && s < 7;
+          const showCheck = i < s;
+          // Special: step 6 shows live counter when active
+          const detail6 = (i === 6 && s === 6) ? `Delivering... <span id="ap-step-counter">${ac}</span>/25` : st.detail;
+          stepTrackerHtml += `<div class="ap-step ${cls}"><div class="ap-dot"></div><div><div class="text-[10px] font-semibold ${i <= s ? 'text-[#0A1C60]' : 'text-slate-400'}">${st.label}</div><div class="text-[9px] ${i <= s ? 'text-slate-500' : 'text-slate-300'}">${i === 6 && s === 6 ? detail6 : st.detail}</div></div>${showSpinner ? '<div class="ml-auto"><div class="spinner" style="width:10px;height:10px;border-width:2px"></div></div>' : ''}${showCheck ? '<i data-lucide="check" class="w-3 h-3 text-green-500 ml-auto flex-shrink-0"></i>' : ''}</div>`;
+        });
+
         return `
           <div class="section-card p-4 rounded-2xl">
             <div class="flex items-center justify-between mb-3">
@@ -1542,20 +1699,47 @@
                 <div><div class="text-sm font-semibold text-[#0A1C60]">Day One \u2014 Autopilot to Productive</div><div class="text-[10px] text-slate-400">New hire laptop goes from zero to fully configured</div></div>
               </div>
               <div class="flex items-center gap-2">
-                ${s >= 6 ? `<button type="button" data-action="reset-autopilot" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-3 py-1 text-[11px] font-semibold rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>` : `<button type="button" data-action="start-autopilot" class="bg-[#0070F3] text-white px-3 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">${s >= 0 && s < 6 ? 'Playing...' : 'Play'}</button>`}
+                ${s >= 7 ? `<button type="button" data-action="reset-autopilot" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-3 py-1 text-[11px] font-semibold rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>` : `<button type="button" data-action="start-autopilot" class="bg-[#0070F3] text-white px-3 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${s >= 0 && s < 7 ? 'loader' : 'play'}" class="w-3 h-3"></i> ${s >= 0 && s < 7 ? 'Playing...' : 'Play'}</button>`}
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div class="device-frame" style="max-width:320px">
-                <div class="device-screen" style="padding:10px;min-height:180px">
-                  ${s < 0 ? `<div class="text-center py-8 text-slate-300"><i data-lucide="laptop" class="w-10 h-10 mx-auto mb-2"></i><div class="text-[10px]">New device \u2014 powered off</div></div>` : s < 3 ? `<div class="text-center py-6"><div class="spinner mx-auto mb-2" style="width:20px;height:20px;border-width:3px"></div><div class="text-[10px] text-[#0070F3] font-semibold">${steps[s].label}</div><div class="text-[9px] text-slate-400">${steps[s].detail}</div></div>` : s === 3 ? `<div class="text-center py-4"><div class="h-10 w-10 rounded-full mx-auto mb-2 grid place-items-center text-white font-bold" style="background:#3b82f6">SC</div><div class="text-[11px] font-semibold text-[#0A1C60]">Sarah Chen</div><div class="text-[9px] text-slate-400">Engineering \u2014 Seattle office</div></div>` : s === 4 ? `<div class="px-2 py-2"><div class="text-[9px] font-semibold text-[#0A1C60] mb-2">Loading persona...</div><div class="space-y-1">${steps[4].apps.map((a,i) => `<div class="flex items-center gap-2 text-[9px] ${i <= 3 ? 'text-slate-700' : 'text-slate-300'}"><i data-lucide="check-circle" class="w-2.5 h-2.5 ${i <= 3 ? 'text-green-500' : 'text-slate-200'}"></i> ${a}</div>`).join('')}</div><div class="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-[#0070F3]" style="width:80%"></div></div></div>` : `<div class="catalog-grid" style="padding:6px;gap:4px">${['T','VS','S','Ji','D','OD','Cr','Sl','Ok','Du','Ed','Bx'].map((l,i) => `<div class="catalog-app" style="padding:3px 1px"><div class="app-icon" style="background:${['#5B53D6','#007ACC','#E01E5A','#0052CC','#2496ED','#0A5BD5','#4285F4','#E01E5A','#007DC1','#3CB371','#0C8EC5','#0061D5'][i]};width:22px;height:22px;font-size:8px">${l}</div></div>`).join('')}</div><div class="text-[8px] text-center text-emerald-600 font-semibold mt-1">Ready \u2014 12 apps configured</div>`}
+              <div class="device-frame ${s >= 6 ? 'ap-wow-glow' : ''}" id="ap-device-frame">
+                <div class="device-screen" style="min-height:220px">
+                  ${deviceScreen}
                 </div>
               </div>
               <div class="space-y-0">
-                ${steps.map((st, i) => `<div class="ap-step ${i === s ? 'ap-active' : i < s ? 'ap-done' : ''}"><div class="ap-dot"></div><div><div class="text-[10px] font-semibold ${i <= s ? 'text-[#0A1C60]' : 'text-slate-400'}">${st.label}</div><div class="text-[9px] ${i <= s ? 'text-slate-500' : 'text-slate-300'}">${st.detail}</div></div>${i === s ? '<div class="ml-auto"><div class="spinner" style="width:10px;height:10px;border-width:2px"></div></div>' : ''}${i < s ? '<i data-lucide="check" class="w-3 h-3 text-green-500 ml-auto"></i>' : ''}</div>`).join('')}
-                ${s >= steps.length - 1 ? `<div class="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-800"><div class="font-semibold mb-0.5">~8 minutes total</div><div class="text-emerald-600">Traditional: 1\u20133 hours. Autopilot delivered 1 app (the agent). Application Workspace delivered the other 11.</div></div>` : ''}
+                ${stepTrackerHtml}
               </div>
             </div>
+            ${s >= 7 ? `
+              <div class="ap-comparison visible mt-3">
+                <div class="text-center mb-3">
+                  <div class="text-xl font-bold text-emerald-600">25 apps in ~8 minutes</div>
+                  <div class="text-[11px] text-slate-400">From power-on to fully productive</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+                    <div class="text-[9px] font-semibold text-red-400 uppercase tracking-wide mb-1.5">Without Workspace</div>
+                    <div class="text-lg font-bold text-red-600 mb-1">1\u20133 hours</div>
+                    <div class="text-[9px] text-red-500 space-y-0.5">
+                      <div>Apps install one by one</div>
+                      <div>Multiple reboots needed</div>
+                      <div>IT tickets for missing apps</div>
+                    </div>
+                  </div>
+                  <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <div class="text-[9px] font-semibold text-emerald-500 uppercase tracking-wide mb-1.5">With Application Workspace</div>
+                    <div class="text-lg font-bold text-emerald-600 mb-1">~8 minutes</div>
+                    <div class="text-[9px] text-emerald-600 space-y-0.5">
+                      <div>25 apps delivered at once</div>
+                      <div>Zero interruptions</div>
+                      <div>Zero tickets created</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
           </div>
         `;
       }
@@ -1861,7 +2045,7 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
@@ -1896,15 +2080,30 @@
           if (action === 'reset-flow') { resetFlow(); return; }
           if (action === 'pause-flow') { if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
           if (action === 'toggle-admin-view') { STATE.showAdminView = !STATE.showAdminView; render(); return; }
-          if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; STATE.flowTimers.intervals.forEach(id => clearInterval(id)); STATE.flowTimers.intervals = []; render(); return; }
+          if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
           if (action === 'start-autopilot') {
             if (STATE.autopilotStep >= 0) return;
-            STATE.autopilotStep = 0; render();
-            let apStep = 0;
-            const apInterval = setInterval(() => { apStep++; if (apStep >= 7) { clearInterval(apInterval); STATE.autopilotStep = 6; render(); return; } STATE.autopilotStep = apStep; render(); }, 1800);
-            STATE.flowTimers.intervals.push(apInterval); return;
+            STATE.autopilotStep = 0; STATE.autopilotAppCount = 0; render();
+            const apQueue = [
+              { delay: 1800, fn(){ STATE.autopilotStep = 1; render(); } },
+              { delay: 1800, fn(){ STATE.autopilotStep = 2; render(); } },
+              { delay: 1800, fn(){ STATE.autopilotStep = 3; render(); } },
+              { delay: 1800, fn(){ STATE.autopilotStep = 4; render(); } },
+              { delay: 1800, fn(){ STATE.autopilotStep = 5; render(); } },
+              { delay: 1800, fn(){ STATE.autopilotStep = 6; render(); startAppCascade(); } },
+              { delay: 2500, fn(){ STATE.autopilotStep = 7; render(); } },
+            ];
+            let qIdx = 0;
+            function runApQueue(){
+              if (qIdx >= apQueue.length) return;
+              const step = apQueue[qIdx];
+              const tid = setTimeout(() => { step.fn(); qIdx++; runApQueue(); }, step.delay);
+              STATE.flowTimers.timeouts.push(tid);
+            }
+            runApQueue();
+            return;
           }
-          if (action === 'reset-autopilot') { STATE.flowTimers.intervals.forEach(id => clearInterval(id)); STATE.flowTimers.intervals = []; STATE.autopilotStep = -1; render(); return; }
+          if (action === 'reset-autopilot') { clearFlowTimers(); STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; render(); return; }
 
           if (action === 'copy-results') {
             const r = STATE.calcResult;
