@@ -127,18 +127,6 @@
       .marker-element { animation-delay: 0.9s; }
       .label-element { animation-delay: 1.2s; }
 
-      /* Chart draw animation */
-      @keyframes drawLine { to { stroke-dashoffset: 0; } }
-      @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-      .chart-draw { opacity: 1; animation: drawLine var(--draw-dur, 2s) ease-in-out var(--draw-delay, 0s) forwards; }
-      .chart-marker-draw { opacity: 0; animation: fadeSlideUp 0.4s ease forwards var(--marker-delay, 0.9s); }
-      .chart-gap-draw { opacity: 0; animation: fadeIn 0.8s ease forwards 1.5s; }
-      .chart-label-draw { opacity: 0; animation: fadeIn 0.5s ease forwards var(--label-delay, 1.8s); }
-      .chart-no-anim { opacity: 1 !important; animation: none !important; }
-      .curve-label { font-size: 11px; font-weight: 700; font-family: Inter, system-ui, sans-serif; }
-      .today-marker-line { stroke-dasharray: 4 3; }
-      @media (prefers-reduced-motion: reduce) { .chart-draw, .chart-marker-draw, .chart-gap-draw, .chart-label-draw { opacity: 1 !important; animation: none !important; } }
-
       :root{
         --bg-main:
           radial-gradient(1200px 700px at 18% 0%, rgba(37,99,235,0.10), transparent 58%),
@@ -239,6 +227,17 @@
       .scenario-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: all 0.3s ease; }
       .scenario-pill.active-scenario { border-color: #0070F3; background: #eff6ff; color: #0070F3; }
       .scenario-pill.done-scenario { border-color: #10b981; background: #ecfdf5; color: #059669; }
+      /* View toggle pills */
+      .view-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; transition: all 0.2s ease; }
+      .view-toggle.active { border-color: #0070F3; background: #eff6ff; color: #0070F3; }
+      .view-toggle:hover:not(.active) { border-color: #94a3b8; }
+      /* Admin console rows */
+      .admin-row { padding: 8px 10px; border-radius: 8px; border: 1px solid #e5e7eb; background: white; transition: all 0.4s ease; opacity: 0.3; }
+      .admin-row.row-active { opacity: 1; border-color: #0070F3; background: #eff6ff; }
+      .admin-row.row-done { opacity: 1; border-color: #a7f3d0; background: #f0fdf4; }
+      .admin-row.row-idle { opacity: 0.5; }
+      /* Phase status label */
+      .phase-status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; transition: all 0.3s ease; }
       @keyframes finalGlow { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
       .final-glow { animation: finalGlow 2s ease-in-out; }
       .cfg-item { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; font-size: 10px; color: #475569; background: white; border: 1px solid #e2e8f0; transition: all 0.3s ease; opacity: 0; transform: translateX(-6px); }
@@ -402,6 +401,9 @@
         packHrs: 8, configHrs: 2, currentHrs: 24,
         roiInputs: { users: 5000, ticketsPerUserPerMonth: 0.035, avgHandleMins: 18 },
         copied: false,
+        visitedTabs: [],
+        solutionViewUser: true,
+        solutionViewAdmin: false,
         showLabels: false,
         showSolutionCards: true,
         openWhy: null,
@@ -432,7 +434,7 @@
         chartConfig: {
           yAxis: "Expectations & Requests",
           xAxis: "Time",
-          center: "The Growing Gap",
+          center: "Resources & Appreciation",
           footer: "",
           tipping: ""
         },
@@ -441,7 +443,6 @@
         currentCapacitySlope: 0,
         targetCapacitySlope: 0,
         showTippingPoint: false,
-        chartHasAnimated: false,
         currentState: {
           change: {
             intro: "Forrester, Gartner, and McKinsey are converging on the same finding — the application layer is now the primary constraint on IT execution capacity.",
@@ -512,7 +513,7 @@
           return JSON.parse(JSON.stringify({
             yAxis: "Expectations & Requests",
             xAxis: "Time",
-            center: "The Growing Gap",
+            center: "Resources & Appreciation",
             footer: "",
             tipping: "Operational breaking point"
           }));
@@ -1306,10 +1307,6 @@
         const width = 700, height = 310, margin = {left: 55, bottom: 50, top: 40, right: 50};
         const xScale = t => margin.left + t * width;
         const yScale = v => margin.top + height - v * height;
-        const isFirstDraw = !STATE.chartHasAnimated;
-        const noAnim = STATE.chartHasAnimated ? 'chart-no-anim' : '';
-
-        // Defs
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
         defs.innerHTML = `
           <linearGradient id="demandGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
@@ -1318,34 +1315,17 @@
           <linearGradient id="capFillGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(10,28,96,0.08)"/><stop offset="100%" stop-color="rgba(10,28,96,0.02)"/></linearGradient>
         `;
         svg.appendChild(defs);
-
-        // Grid
         const gridG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         for (let i = 0; i <= 4; i++) { const y = margin.top + (height / 4) * i; gridG.innerHTML += '<line x1="' + margin.left + '" y1="' + y + '" x2="' + (margin.left + width) + '" y2="' + y + '" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4 4"/>'; }
         svg.appendChild(gridG);
-
-        // Axes
         const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         xAxis.classList.add('axis-element', 'chart-element');
-        if (noAnim) xAxis.classList.add(noAnim);
-        xAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top + height}" x2="${margin.left + width}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left + width / 2}" y="${margin.top + height + 38}" text-anchor="middle" class="chart-axis-label">${STATE.chartConfig.xAxis}</text>${STATE.years.map((year, i) => { const x = xScale(i / 3); return `<line x1="${x}" y1="${margin.top + height}" x2="${x}" y2="${margin.top + height + 6}" class="chart-axis"/><text x="${x}" y="${margin.top + height + 22}" text-anchor="middle" class="chart-year-label ${noAnim || 'chart-element'}">${year}</text>`; }).join('')}`;
+        xAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top + height}" x2="${margin.left + width}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left + width / 2}" y="${margin.top + height + 38}" text-anchor="middle" class="chart-axis-label">${STATE.chartConfig.xAxis}</text>${STATE.years.map((year, i) => { const x = xScale(i / 3); return `<line x1="${x}" y1="${margin.top + height}" x2="${x}" y2="${margin.top + height + 6}" class="chart-axis"/><text x="${x}" y="${margin.top + height + 22}" text-anchor="middle" class="chart-year-label chart-element">${year}</text>`; }).join('')}`;
         svg.appendChild(xAxis);
         const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         yAxis.classList.add('axis-element', 'chart-element');
-        if (noAnim) yAxis.classList.add(noAnim);
         yAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left - 14}" y="${margin.top + height / 2}" text-anchor="middle" class="chart-axis-label" transform="rotate(-90, ${margin.left - 14}, ${margin.top + height / 2})">${STATE.chartConfig.yAxis}</text>`;
         svg.appendChild(yAxis);
-
-        // "Today" marker
-        const todayT = (2026 - 2025) / 3;
-        const todayX = xScale(todayT);
-        const todayG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        if (isFirstDraw) { todayG.classList.add('chart-label-draw'); todayG.style.setProperty('--label-delay', '0.3s'); }
-        else todayG.classList.add('chart-no-anim');
-        todayG.innerHTML = `<line x1="${todayX}" y1="${yScale(0)}" x2="${todayX}" y2="${yScale(0.95)}" stroke="#0A1C60" stroke-width="1.5" class="today-marker-line" opacity="0.4"/><text x="${todayX + 6}" y="${yScale(0.95) - 2}" font-size="11" font-weight="700" fill="#0A1C60" font-family="Inter, system-ui, sans-serif">Today</text>`;
-        svg.appendChild(todayG);
-
-        // Compute curves
         const exp = STATE.currentDemandExponent;
         const slope = STATE.currentCapacitySlope;
         let demandPath = `M ${xScale(0)} ${yScale(0)}`;
@@ -1353,86 +1333,34 @@
         const demandPoints = [];
         const capacityPoints = [];
         for (let i = 0; i <= 100; i++) { const t = i / 100; const dem = Math.pow(t, exp); const cap = 0.3 + slope * t; demandPath += ` L ${xScale(t)} ${yScale(dem)}`; capacityPath += ` L ${xScale(t)} ${yScale(cap)}`; demandPoints.push({x: xScale(t), y: yScale(dem)}); capacityPoints.push({x: xScale(t), y: yScale(cap)}); }
-
-        // Capacity halo (white outline for prominence)
-        const capHalo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capHalo.setAttribute('d', capacityPath); capHalo.setAttribute('stroke', 'white'); capHalo.setAttribute('stroke-width', '8'); capHalo.setAttribute('fill', 'none'); capHalo.setAttribute('opacity', '0.7'); capHalo.setAttribute('stroke-linecap', 'round');
-        if (isFirstDraw) { capHalo.classList.add('chart-draw'); capHalo.style.setProperty('--draw-dur', '1.5s'); capHalo.style.setProperty('--draw-delay', '0.3s'); }
-        else capHalo.classList.add('chart-no-anim');
-        svg.appendChild(capHalo);
-
-        // Capacity line
-        const capacityLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capacityLine.setAttribute('d', capacityPath); capacityLine.setAttribute('stroke', 'url(#capacityGradient)'); capacityLine.setAttribute('fill', 'none'); capacityLine.setAttribute('stroke-width', '3.5'); capacityLine.setAttribute('stroke-linecap', 'round');
-        capacityLine.classList.add('capacity-line');
-        if (isFirstDraw) { capacityLine.classList.add('chart-draw'); capacityLine.style.setProperty('--draw-dur', '1.5s'); capacityLine.style.setProperty('--draw-delay', '0.3s'); }
-        else capacityLine.classList.add('chart-no-anim');
-        svg.appendChild(capacityLine);
-
-        // Demand line
         const demandLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        demandLine.setAttribute('d', demandPath); demandLine.setAttribute('stroke', 'url(#demandGradient)'); demandLine.setAttribute('fill', 'none');
-        demandLine.classList.add('demand-line');
-        if (isFirstDraw) { demandLine.classList.add('chart-draw'); demandLine.style.setProperty('--draw-dur', '2s'); demandLine.style.setProperty('--draw-delay', '0.5s'); }
-        else demandLine.classList.add('chart-no-anim');
-        svg.appendChild(demandLine);
-
-        // Capacity area fill
+        demandLine.setAttribute('d', demandPath); demandLine.setAttribute('stroke', 'url(#demandGradient)'); demandLine.setAttribute('fill', 'none'); demandLine.classList.add('demand-line', 'line-element', 'chart-element'); svg.appendChild(demandLine);
+        const capacityLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        capacityLine.setAttribute('d', capacityPath); capacityLine.setAttribute('stroke', 'url(#capacityGradient)'); capacityLine.setAttribute('fill', 'none'); capacityLine.classList.add('capacity-line', 'line-element', 'chart-element'); svg.appendChild(capacityLine);
         const capAreaPath = capacityPath + ` L ${xScale(1)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`;
         const capArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capArea.setAttribute('d', capAreaPath); capArea.setAttribute('fill', 'url(#capFillGrad)');
-        if (isFirstDraw) capArea.classList.add('chart-gap-draw');
-        else capArea.classList.add('chart-no-anim');
-        svg.appendChild(capArea);
-
-        // Gap fill
+        capArea.setAttribute('d', capAreaPath); capArea.setAttribute('fill', 'url(#capFillGrad)'); capArea.classList.add('gap-element', 'chart-element'); svg.appendChild(capArea);
         const gapPath = demandPoints.map(p => `L ${p.x} ${p.y}`).join(' ') + capacityPoints.slice().reverse().map(p => `L ${p.x} ${p.y}`).join(' ') + 'Z';
         const gap = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        gap.setAttribute('d', `M ${demandPoints[0].x} ${demandPoints[0].y} ` + gapPath); gap.setAttribute('fill', 'url(#gapGradient)');
-        gap.classList.add('gap-fill');
-        if (isFirstDraw) gap.classList.add('chart-gap-draw');
-        else gap.classList.add('chart-no-anim');
-        svg.appendChild(gap);
-
-        // Gap label — "The Growing Gap"
-        const gapLabelG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        if (isFirstDraw) { gapLabelG.classList.add('chart-label-draw'); gapLabelG.style.setProperty('--label-delay', '1.6s'); }
-        else gapLabelG.classList.add('chart-no-anim');
-        gapLabelG.innerHTML = `<text x="${xScale(0.55)}" y="${yScale(0.48)}" text-anchor="middle" font-size="13" font-weight="700" fill="#ef4444" font-family="Inter, system-ui, sans-serif">${STATE.chartConfig.center}</text><text x="${xScale(0.55)}" y="${yScale(0.48) + 14}" text-anchor="middle" font-size="10" font-weight="500" fill="#94a3b8" font-family="Inter, system-ui, sans-serif">between demand and IT capacity</text>`;
-        svg.appendChild(gapLabelG);
-
-        // Inline curve labels
-        const demLabelT = 0.82; const demLabelY = yScale(Math.pow(demLabelT, exp));
-        const capLabelT = 0.82; const capLabelY = yScale(0.3 + slope * capLabelT);
-        const curveLabelG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        if (isFirstDraw) { curveLabelG.classList.add('chart-label-draw'); curveLabelG.style.setProperty('--label-delay', '2.0s'); }
-        else curveLabelG.classList.add('chart-no-anim');
-        curveLabelG.innerHTML = `<text x="${xScale(demLabelT)}" y="${demLabelY - 14}" text-anchor="middle" class="curve-label" fill="#dc2626" style="text-shadow:0 0 4px white, 0 0 4px white">IT Demand</text><text x="${xScale(capLabelT)}" y="${capLabelY + 20}" text-anchor="middle" class="curve-label" fill="#0A1C60" style="text-shadow:0 0 4px white, 0 0 4px white">IT Capacity</text>`;
-        svg.appendChild(curveLabelG);
-
-        // Data point markers — always visible (muted when off, red when active)
+        gap.setAttribute('d', `M ${demandPoints[0].x} ${demandPoints[0].y} ` + gapPath); gap.setAttribute('fill', 'url(#gapGradient)'); gap.classList.add('gap-fill', 'gap-element', 'chart-element'); svg.appendChild(gap);
+        const gapLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        gapLabel.setAttribute('x', xScale(0.5)); gapLabel.setAttribute('y', yScale(0.5)); gapLabel.setAttribute('text-anchor', 'middle'); gapLabel.classList.add('chart-annotation', 'label-element', 'chart-element'); gapLabel.textContent = STATE.chartConfig.center; svg.appendChild(gapLabel);
         STATE.drivers.forEach(d => {
-          if (d.markerYear) {
+          if (d.markerYear && (d.state === 'normal' || d.state === 'accelerating')) {
             const t = (d.markerYear - 2025) / 3; const dem = Math.pow(t, exp); const x = xScale(t); const y = yScale(dem);
-            const isActive = d.state === 'normal' || d.state === 'accelerating';
             const isHot = d.id && STATE.highlightDriverId === d.id;
-            const emphasis = isHot ? 7 : (isActive ? (d.state === 'accelerating' ? 6 : 5) : 4);
-            const dotColor = isActive ? '#ef4444' : '#94a3b8';
-            const labelColor = isActive ? '#334155' : '#94a3b8';
+            const emphasis = isHot ? 7 : (d.state === 'accelerating' ? 6 : 5);
+            const dotColor = d.state === 'accelerating' ? '#ef4444' : '#ef4444';
             const dotFilter = isHot ? 'filter: drop-shadow(0 3px 8px rgba(239,68,68,0.35));' : '';
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.classList.add('marker-group');
-            if (isFirstDraw) { g.classList.add('chart-marker-draw'); g.style.setProperty('--marker-delay', (0.7 + t * 2) + 's'); }
-            else g.classList.add('chart-no-anim');
+            g.classList.add('marker-group', 'marker-element', 'chart-element');
             g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', `Learn more about ${d.label}`);
-            g.innerHTML = `<title>${d.short}</title><circle cx="${x}" cy="${y}" r="18" fill="transparent" stroke="none"/><circle cx="${x}" cy="${y}" r="${emphasis}" fill="${dotColor}" stroke="white" stroke-width="2" style="${dotFilter}transition:all 0.4s ease;"/><text x="${x + 10}" y="${y - 2}" font-size="11" font-weight="700" fill="${labelColor}" font-family="Inter, system-ui, sans-serif" style="transition:fill 0.4s ease;text-shadow:0 0 3px white, 0 0 3px white">${d.label}</text>`;
+            g.innerHTML = `<title>${d.short}</title><circle cx="${x}" cy="${y}" r="18" fill="transparent" stroke="none"/><circle cx="${x}" cy="${y}" r="${emphasis}" fill="${dotColor}" stroke="white" stroke-width="2" style="${dotFilter}"/><text x="${x + 10}" y="${y - 2}" class="chart-text label-element chart-element" font-size="11" font-weight="700" fill="#334155">${d.label}</text>`;
             g.addEventListener('click', () => openInsight(d));
             g.addEventListener('keydown', e => { if (e.key === 'Enter') openInsight(d); });
             svg.appendChild(g);
           }
         });
-
-        // Tipping point
         if (STATE.showTippingPoint) {
           const t = (STATE.tippingPointYear - 2025) / 3; const x = xScale(t);
           const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1451,18 +1379,6 @@
           hit.addEventListener('click', () => openInsight(STATE.tippingPoint));
           hit.addEventListener('keydown', e => { if (e.key === 'Enter') openInsight(STATE.tippingPoint); });
           svg.appendChild(hit);
-        }
-
-        // Apply stroke-dashoffset for draw animation (must be after DOM append)
-        if (isFirstDraw) {
-          requestAnimationFrame(() => {
-            [capHalo, capacityLine, demandLine].forEach(el => {
-              const len = el.getTotalLength();
-              el.style.strokeDasharray = len;
-              el.style.strokeDashoffset = len;
-            });
-          });
-          STATE.chartHasAnimated = true;
         }
       }
 
@@ -1604,30 +1520,341 @@
         `;
       }
 
-      function renderSolution(){
+      /* ========== USER EXPERIENCE VIEW ========== */
+      function renderUserView(){
+        const sc = STATE.flowScenarioIdx;
+        const phase = STATE.flowPhase;
+        const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
+        const appOpen = scenario && !['idle','catalog'].includes(phase);
+
+        const phaseLabel = !scenario ? 'Ready' :
+          phase === 'idle' ? 'Waiting...' :
+          phase === 'clicking' ? 'User clicks app...' :
+          phase === 'checking' ? 'Verifying identity & context...' :
+          phase === 'routing' ? 'Selecting delivery path...' :
+          phase === 'config' ? 'Applying configuration...' :
+          phase === 'done' ? 'App delivered' :
+          phase === 'final' ? 'Complete' : '';
+
+        const phaseColor = !scenario || phase === 'idle' ? 'bg-slate-100 text-slate-400' :
+          ['done','final'].includes(phase) ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+          'bg-blue-50 text-[#0070F3] border border-blue-200';
+
         return `
-          <section id="panel-solution" class="space-y-3">
-            <div class="flex items-center gap-2 flex-wrap">
-              <button type="button" data-action="toggle-admin-view" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition ${STATE.showAdminView ? 'bg-[#0A1C60] text-white border-[#0A1C60]' : 'bg-white text-[#64748b] border-slate-200 hover:border-[#0070F3] hover:text-[#0070F3]'}"><i data-lucide="${STATE.showAdminView ? 'eye-off' : 'settings-2'}" class="w-3.5 h-3.5"></i>${STATE.showAdminView ? 'Hide Admin View' : 'Show Admin View'}</button>
-              <button type="button" data-action="toggle-autopilot" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-lg border transition ${STATE.showAutopilot ? 'bg-[#0A1C60] text-white border-[#0A1C60]' : 'bg-white text-[#64748b] border-slate-200 hover:border-[#0070F3] hover:text-[#0070F3]'}"><i data-lucide="${STATE.showAutopilot ? 'eye-off' : 'laptop'}" class="w-3.5 h-3.5"></i>${STATE.showAutopilot ? 'Hide Day One' : 'Day One Experience'}</button>
+          <div class="section-card p-4">
+            <!-- The Centralized Platform (top) -->
+            <div class="flex items-center gap-3 mb-2">
+              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
+              <div class="bts-label bts-label-platform"><i data-lucide="boxes" class="w-3 h-3"></i> The Centralized Platform</div>
+              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
             </div>
-            ${STATE.showAutopilot ? renderAutopilot() : ''}
-            <div class="grid grid-cols-1 gap-3 ${STATE.showAdminView ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}">
-              ${STATE.showAdminView ? `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3"><div>${renderFlow()}</div><div class="space-y-3">${renderAdminPanel()}${renderPipeline()}</div></div>
-              ` : renderFlow()}
-              ${!STATE.showAdminView ? `
-              <div class="flex flex-col gap-3 relative">
-                <div class="sticky top-0 z-10 bg-white/60 backdrop-blur-lg py-2 shadow-sm rounded-xl px-2"><div class="flex justify-between items-center text-sm"><span class="font-semibold">Recast Approach</span><span class="text-[#4A5568]">${STATE.visitedCards.length} of 3 explored</span></div></div>
-                <button type="button" class="md:hidden bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] py-2 text-sm rounded hover:text-[#0070F3] hover:border-[#0070F3]" data-action="expand-all">Expand All</button>
-                ${NEW_CARDS.map(card => popoutCard(card)).join('')}
-                <div class="sticky bottom-0 bg-white/70 backdrop-blur-lg py-3 shadow-lg mt-3 rounded-xl px-2 border border-slate-200">
-                  <button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
+
+            <div class="platform-bar" style="padding:10px 14px">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="layout-grid" class="w-4 h-4 text-blue-200"></i>
+                  <span class="text-sm font-bold tracking-wide">Application Workspace</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <div class="platform-stat"><div class="platform-stat-value">8,000+</div><div class="platform-stat-label">Pre-Tested Apps</div></div>
+                  <div class="platform-divider"></div>
+                  <div class="platform-stat"><div class="platform-stat-value">5</div><div class="platform-stat-label">Delivery Paths</div></div>
+                  <div class="platform-divider"></div>
+                  <div class="platform-stat"><div class="platform-stat-value">1</div><div class="platform-stat-label">Definition</div></div>
                 </div>
               </div>
-              ` : `
-              <div class="flex justify-start mt-2"><button type="button" class="bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold rounded hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button></div>
-              `}
+              <div class="flex flex-wrap gap-1.5">
+                <div class="platform-cap"><i data-lucide="package" class="w-3 h-3"></i> Custom App Packaging</div>
+                <div class="platform-cap"><i data-lucide="building-2" class="w-3 h-3"></i> Multi-Tenant</div>
+                <div class="platform-cap"><i data-lucide="monitor-smartphone" class="w-3 h-3"></i> Multi-Device</div>
+                <div class="platform-cap"><i data-lucide="bot" class="w-3 h-3"></i> Automated Patching</div>
+                <div class="platform-cap"><i data-lucide="user-check" class="w-3 h-3"></i> Identity-Based Access</div>
+                <div class="platform-cap"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Self-Service Catalog</div>
+                <div class="platform-cap"><i data-lucide="shield" class="w-3 h-3"></i> CVE Auto-Patching</div>
+                <div class="platform-cap"><i data-lucide="eye" class="w-3 h-3"></i> Central Governance</div>
+              </div>
+              <div class="mt-2 text-[10px] text-blue-200 tracking-wide text-center">
+                Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit — across every environment from one place
+              </div>
+            </div>
+
+            <!-- Connector: Platform → User -->
+            <div class="flex justify-center py-1"><div style="width:2px;height:16px;background:linear-gradient(180deg,#0070F3,#6366f1);border-radius:2px;position:relative"><div style="position:absolute;bottom:-3px;left:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #6366f1"></div></div></div>
+
+            <!-- What the user sees -->
+            <div class="flex items-center gap-2 mb-3">
+              <div class="bts-label bts-label-user"><i data-lucide="user" class="w-3 h-3"></i> What the user sees</div>
+              <div class="phase-status ${phaseColor}">${['done','final'].includes(phase) ? '<i data-lucide="check-circle" class="w-3 h-3"></i>' : phase === 'idle' || !scenario ? '' : '<div class="spinner" style="width:10px;height:10px;border-width:2px"></div>'} ${phaseLabel}</div>
+            </div>
+
+            <div class="device-frame" id="deviceFrame">
+              <div class="device-screen" style="position:relative">
+                <div class="device-titlebar">
+                  <div class="device-dot device-dot-r"></div>
+                  <div class="device-dot device-dot-y"></div>
+                  <div class="device-dot device-dot-g"></div>
+                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : 'Application Workspace'}</span>
+                </div>
+                <div class="catalog-grid" id="catalogGrid">
+                  ${CATALOG_APPS.map(app => `
+                    <div class="catalog-app ${(appOpen && app.id === 'teams') ? 'clicked' : ''}" data-app="${app.id}">
+                      <div class="app-icon" style="background:${app.color}">
+                        ${app.letter}
+                        ${(phase === 'clicking' && app.id === 'teams') ? '<div class="click-ring"></div>' : ''}
+                      </div>
+                      <span class="app-name">${app.name}</span>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="app-window-overlay ${appOpen ? 'open' : ''}" id="appWindow">
+                  <div class="app-window-topbar">
+                    <div class="aw-icon" style="background:#5B53D6">T</div>
+                    <div>
+                      <div class="aw-title">Microsoft Teams</div>
+                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com — routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 — auto-patched by Workspace' : 'Installed and configured by Workspace'}</div>
+                    </div>
+                  </div>
+                  <div class="app-window-body" style="flex-direction:row">
+                    <div class="teams-sidebar">
+                      <div class="teams-sidebar-dot active"><i data-lucide="message-square" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="users" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="calendar" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="phone" class="w-3 h-3"></i></div>
+                      <div class="teams-sidebar-dot"><i data-lucide="file" class="w-3 h-3"></i></div>
+                    </div>
+                    <div class="teams-chat-area">
+                      <div class="teams-chat-header"><i data-lucide="hash" class="w-3 h-3 text-slate-400"></i> General</div>
+                      <div class="teams-chat-body">
+                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.3s">
+                          <div class="teams-msg-avatar" style="background:#3b82f6">AK</div>
+                          <div class="teams-msg-bubble">Hey team, the Q3 deck is updated and ready for review</div>
+                        </div>
+                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.6s">
+                          <div class="teams-msg-avatar" style="background:#10b981">JR</div>
+                          <div class="teams-msg-bubble">Perfect timing — pulling it up now</div>
+                        </div>
+                        <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.9s">
+                          <div class="teams-msg-bubble self">On it. Give me 5 min.</div>
+                        </div>
+                      </div>
+                      <div class="teams-chat-input">
+                        <div class="teams-chat-input-box">Type a message...</div>
+                        <i data-lucide="send" class="w-3 h-3 text-slate-300"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                ${appOpen && ['checking','routing','config'].includes(phase) ? `
+                  <div style="position:absolute;bottom:6px;right:6px;z-index:10;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9999px;background:rgba(255,255,255,0.92);border:1px solid #a7f3d0;font-size:9px;font-weight:600;color:#059669;backdrop-filter:blur(4px)">
+                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                    User is working — orchestration happens invisibly
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            ${scenario && !['idle'].includes(phase) ? `
+              <div class="text-[10px] text-center mt-2 text-slate-400">${scenario.bannerMsg}</div>
+            ` : ''}
+
+            ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
+              <div class="sub-card p-3 mt-2 text-center" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
+                <div class="text-sm font-bold text-[#0A1C60] mb-0.5">Click → It just works</div>
+                <div class="text-[10px] text-[#4A5568]">Three different scenarios. The user experience was identical every time.</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      /* ========== ADMIN CONSOLE VIEW ========== */
+      function renderAdminConsole(){
+        const sc = STATE.flowScenarioIdx;
+        const phase = STATE.flowPhase;
+        const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
+        const checkDone = ['routing','config','done','final'].includes(phase);
+        const routingDone = ['config','done','final'].includes(phase);
+        const configDone = ['done','final'].includes(phase);
+
+        const rowState = (phases) => {
+          if (!scenario) return 'row-idle';
+          const idx = ['clicking','checking','routing','config','done','final'];
+          const cur = idx.indexOf(phase);
+          const last = idx.indexOf(phases[phases.length - 1]);
+          if (cur < 0) return 'row-idle';
+          if (cur > last) return 'row-done';
+          if (phases.includes(phase)) return 'row-active';
+          return '';
+        };
+
+        return `
+          <div class="section-card p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="bts-label bts-label-engine"><i data-lucide="settings-2" class="w-3 h-3"></i> Admin Console</div>
+            </div>
+
+            ${!scenario ? `
+              <div class="text-center py-8 text-sm text-slate-400">
+                <i data-lucide="monitor-cog" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                <div>Press <strong>Start</strong> or <strong>Step</strong> to see the admin perspective</div>
+              </div>
+            ` : `
+              <!-- Platform stats strip -->
+              <div class="platform-bar mb-3" style="padding:8px 12px">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-blue-200"></i>
+                    <span class="text-xs font-bold tracking-wide">Application Workspace</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <div class="platform-stat" style="padding:3px 6px"><div class="platform-stat-value" style="font-size:13px">8,000+</div><div class="platform-stat-label">Apps</div></div>
+                    <div class="platform-divider" style="height:20px"></div>
+                    <div class="platform-stat" style="padding:3px 6px"><div class="platform-stat-value" style="font-size:13px">5</div><div class="platform-stat-label">Paths</div></div>
+                    <div class="platform-divider" style="height:20px"></div>
+                    <div class="platform-stat" style="padding:3px 6px"><div class="platform-stat-value" style="font-size:13px">1</div><div class="platform-stat-label">Definition</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Context checks -->
+              <div class="admin-row ${rowState(['checking'])} mb-2">
+                <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                  <i data-lucide="scan-search" class="w-3 h-3 text-[#0070F3]"></i> User Context
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  ${scenario.checks.map((c, i) => `
+                    <div class="check-item ${checkDone ? 'pass' : ''}" id="admin-check-${i}" title="${c.a}">
+                      <i data-lucide="${checkDone ? 'check-circle' : 'circle'}" class="w-3 h-3"></i>
+                      <span>${c.q}</span>
+                      ${checkDone ? '<span style="color:#059669;font-weight:600;margin-left:2px">' + c.a + '</span>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Delivery routing -->
+              <div class="admin-row ${rowState(['routing'])} mb-2">
+                <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                  <i data-lucide="route" class="w-3 h-3 text-[#0070F3]"></i> Delivery Routing
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  ${ALL_PATHS.map(p => {
+                    const isActive = p.id === scenario.activePath && routingDone;
+                    const isInactive = p.id !== scenario.activePath && routingDone;
+                    return `
+                      <div class="path-row ${isActive ? 'active-path' : ''} ${isInactive ? 'inactive-path' : ''}">
+                        <i data-lucide="${p.icon}" class="w-3 h-3"></i>
+                        <span>${p.id === scenario.activePath ? scenario.pathLabel : p.label}</span>
+                        ${isActive ? '<i data-lucide="check" class="w-3 h-3 text-green-500"></i>' : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- Configuration -->
+              <div class="admin-row ${rowState(['config'])} mb-2">
+                <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                  <i data-lucide="shield-check" class="w-3 h-3 text-amber-500"></i> Configuration & Policy
+                </div>
+                <div class="cfg-wrap ${configDone ? 'wrapped' : ''} flex items-center gap-2">
+                  <div style="background:#5B53D6;width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font-size:8px;font-weight:800;color:white;flex-shrink:0">T</div>
+                  <span class="text-[10px] text-slate-400">+</span>
+                  <i data-lucide="settings" class="w-3 h-3 text-amber-500"></i>
+                  <span class="text-[10px] text-slate-400">=</span>
+                  <i data-lucide="check-circle" class="w-3 h-3 ${configDone ? 'text-green-500' : 'text-slate-300'}"></i>
+                  <span class="text-[10px] ${configDone ? 'text-slate-600 font-medium' : 'text-slate-300'}">${scenario.configNote}</span>
+                </div>
+                ${scenario.id === 'update' ? `
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-red-600 text-[10px]">v2.1</span>
+                    <div class="flex-1"><div class="upd-bar ${configDone ? 'filling' : ''}"></div></div>
+                    <span class="px-1.5 py-0.5 rounded ${configDone ? 'bg-green-50 border border-green-200 text-green-600' : 'bg-slate-50 border border-slate-200 text-slate-400'} text-[10px]">v2.2</span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Environment distribution -->
+              <div class="admin-row ${rowState(['done','final'])}">
+                <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                  <i data-lucide="rocket" class="w-3 h-3 text-green-500"></i> One Definition → Every Environment
+                </div>
+                <div class="flex items-center gap-2">
+                  <div style="background:#5B53D6;width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:7px;font-weight:800;color:white;border:2px solid #0070F3;flex-shrink:0">T</div>
+                  ${['Laptop','VDI','Cloud PC','Browser'].map((env, i) => `
+                    <div class="orch-connector flex-1 ${['done','final'].includes(phase) ? 'drawn' : ''}" style="transition-delay:${i * 0.15}s"></div>
+                    <span class="text-[9px] text-slate-500 flex-shrink-0 font-medium">${env}</span>
+                  `).join('')}
+                </div>
+              </div>
+            `}
+          </div>
+        `;
+      }
+
+      /* ========== SOLUTION TAB (3-zone layout) ========== */
+      function renderSolution(){
+        const sc = STATE.flowScenarioIdx;
+        const phase = STATE.flowPhase;
+        const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
+        const bothActive = STATE.solutionViewUser && STATE.solutionViewAdmin;
+
+        return `
+          <section id="panel-solution" class="space-y-3">
+
+            <!-- ZONE A: Control strip -->
+            <div class="section-card p-3">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <!-- View toggles -->
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">View:</span>
+                  <button type="button" data-action="toggle-solution-view" data-view="user" class="view-toggle ${STATE.solutionViewUser ? 'active' : ''}"><i data-lucide="monitor-smartphone" class="w-3.5 h-3.5"></i> User Experience</button>
+                  <button type="button" data-action="toggle-solution-view" data-view="admin" class="view-toggle ${STATE.solutionViewAdmin ? 'active' : ''}"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console</button>
+                </div>
+                <!-- Flow controls -->
+                <div class="flex items-center gap-2 text-[12px]">
+                  ${STATE.flowRunning ? `
+                    <button type="button" data-action="pause-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i> ${STATE.flowPaused ? 'Resume' : 'Pause'}</button>
+                  ` : `
+                    <button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Auto</button>
+                    <button type="button" data-action="step-flow" class="bg-white text-[#0070F3] border border-[#0070F3] px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#eff6ff] inline-flex items-center gap-1"><i data-lucide="skip-forward" class="w-3 h-3"></i> Step</button>
+                  `}
+                  <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+                </div>
+              </div>
+
+              <!-- Scenario pills -->
+              <div class="flex flex-wrap gap-2 mt-2">
+                ${SCENARIOS.map((s, i) => `
+                  <div class="scenario-pill ${i === sc ? 'active-scenario' : (i < sc ? 'done-scenario' : '')}">
+                    ${i < sc ? '<i data-lucide="check" class="w-3 h-3"></i>' : '<span class="w-3 h-3 grid place-items-center" style="font-size:9px">' + (i+1) + '</span>'}
+                    <span>${s.label}</span>
+                  </div>
+                `).join('')}
+              </div>
+
+              ${scenario ? `
+                <div class="text-xs text-[#475569] mt-2 px-1 leading-relaxed" style="border-left:3px solid #0070F3;padding-left:10px">
+                  <strong>${scenario.subtitle}:</strong> ${scenario.scenarioDesc}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- ZONE B: Main content (dynamic columns) -->
+            <div class="grid grid-cols-1 ${bothActive ? 'lg:grid-cols-2' : ''} gap-3">
+              ${STATE.solutionViewUser ? renderUserView() : ''}
+              ${STATE.solutionViewAdmin ? renderAdminConsole() : ''}
+            </div>
+
+            <!-- ZONE C: Solution cards (horizontal) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" style="align-items:start">
+              ${NEW_CARDS.map(card => compactCard(card)).join('')}
+            </div>
+
+            <div class="text-center mt-2">
+              <button type="button" class="bg-[#0070F3] text-white px-5 py-2.5 text-sm font-semibold rounded-full hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
             </div>
           </section>
         `;
@@ -1838,6 +2065,39 @@
                 </div>
               </div>
             ` : ''}
+          </div>
+        `;
+      }
+
+      function compactCard(card){
+        const expanded = STATE.openCards[card.id];
+        const visited = STATE.visitedCards.includes(card.id);
+        const contentId = `compact-content-${card.id}`;
+        return `
+          <div class="section-card overflow-hidden flex flex-col" style="border-radius:12px">
+            <button type="button" data-action="toggle-card" data-card="${card.id}"
+              class="accordion-header w-full text-left focus-ring transition"
+              aria-expanded="${expanded}" aria-controls="${contentId}">
+              <div class="px-4 py-3 flex items-center gap-3">
+                <div class="h-9 w-9 rounded-lg grid place-items-center flex-shrink-0" style="background:linear-gradient(135deg,#0A1C60,#0070F3)">
+                  <i data-lucide="${card.icon}" class="w-4 h-4 text-white" aria-hidden="true"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-[#0A1C60] leading-tight">${card.title}</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5 truncate">${card.closer}</div>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}" aria-hidden="true"></i>
+              </div>
+            </button>
+            <div id="${contentId}" class="overflow-hidden" style="max-height:${expanded?'1000px':'0'};opacity:${expanded?'1':'0'};transition:max-height 250ms cubic-bezier(.2,.8,.2,1),opacity 200ms ease">
+              <div class="px-4 pb-4 pt-1 border-t border-slate-100">
+                <ul class="list-none space-y-2 text-[13px] leading-[1.5] text-[#4A5568]">
+                  ${card.bullets.map(b=>`<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#0070F3] flex-shrink-0 mt-0.5"></i><span>${b}</span></li>`).join('')}
+                </ul>
+                ${card.timeline && onboardingMiniTimelineEnabled && expanded ? renderMiniTimeline() : ''}
+                <p class="mt-3 text-[12px] italic text-[#64748b] border-l-2 border-[#0070F3] pl-3">${card.closer}</p>
+              </div>
+            </div>
           </div>
         `;
       }
@@ -2143,8 +2403,18 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.chartHasAnimated = false; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
+          if (action === 'toggle-solution-view') {
+            const view = act.getAttribute('data-view');
+            if (view === 'user') STATE.solutionViewUser = !STATE.solutionViewUser;
+            if (view === 'admin') STATE.solutionViewAdmin = !STATE.solutionViewAdmin;
+            if (!STATE.solutionViewUser && !STATE.solutionViewAdmin) {
+              if (view === 'user') STATE.solutionViewUser = true;
+              else STATE.solutionViewAdmin = true;
+            }
+            render(); return;
+          }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
           if (action === 'close-insight-modal') { STATE.insightContent = null; STATE.highlightDriverId = null; render(); return; }
