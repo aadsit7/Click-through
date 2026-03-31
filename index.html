@@ -127,6 +127,18 @@
       .marker-element { animation-delay: 0.9s; }
       .label-element { animation-delay: 1.2s; }
 
+      /* Chart draw animation */
+      @keyframes drawLine { to { stroke-dashoffset: 0; } }
+      @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+      .chart-draw { opacity: 1; animation: drawLine var(--draw-dur, 2s) ease-in-out var(--draw-delay, 0s) forwards; }
+      .chart-marker-draw { opacity: 0; animation: fadeSlideUp 0.4s ease forwards var(--marker-delay, 0.9s); }
+      .chart-gap-draw { opacity: 0; animation: fadeIn 0.8s ease forwards 1.5s; }
+      .chart-label-draw { opacity: 0; animation: fadeIn 0.5s ease forwards var(--label-delay, 1.8s); }
+      .chart-no-anim { opacity: 1 !important; animation: none !important; }
+      .curve-label { font-size: 11px; font-weight: 700; font-family: Inter, system-ui, sans-serif; }
+      .today-marker-line { stroke-dasharray: 4 3; }
+      @media (prefers-reduced-motion: reduce) { .chart-draw, .chart-marker-draw, .chart-gap-draw, .chart-label-draw { opacity: 1 !important; animation: none !important; } }
+
       :root{
         --bg-main:
           radial-gradient(1200px 700px at 18% 0%, rgba(37,99,235,0.10), transparent 58%),
@@ -420,7 +432,7 @@
         chartConfig: {
           yAxis: "Expectations & Requests",
           xAxis: "Time",
-          center: "Resources & Appreciation",
+          center: "The Growing Gap",
           footer: "",
           tipping: ""
         },
@@ -429,6 +441,7 @@
         currentCapacitySlope: 0,
         targetCapacitySlope: 0,
         showTippingPoint: false,
+        chartHasAnimated: false,
         currentState: {
           change: {
             intro: "Forrester, Gartner, and McKinsey are converging on the same finding — the application layer is now the primary constraint on IT execution capacity.",
@@ -499,7 +512,7 @@
           return JSON.parse(JSON.stringify({
             yAxis: "Expectations & Requests",
             xAxis: "Time",
-            center: "Resources & Appreciation",
+            center: "The Growing Gap",
             footer: "",
             tipping: "Operational breaking point"
           }));
@@ -1293,6 +1306,10 @@
         const width = 700, height = 310, margin = {left: 55, bottom: 50, top: 40, right: 50};
         const xScale = t => margin.left + t * width;
         const yScale = v => margin.top + height - v * height;
+        const isFirstDraw = !STATE.chartHasAnimated;
+        const noAnim = STATE.chartHasAnimated ? 'chart-no-anim' : '';
+
+        // Defs
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
         defs.innerHTML = `
           <linearGradient id="demandGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
@@ -1301,17 +1318,34 @@
           <linearGradient id="capFillGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(10,28,96,0.08)"/><stop offset="100%" stop-color="rgba(10,28,96,0.02)"/></linearGradient>
         `;
         svg.appendChild(defs);
+
+        // Grid
         const gridG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         for (let i = 0; i <= 4; i++) { const y = margin.top + (height / 4) * i; gridG.innerHTML += '<line x1="' + margin.left + '" y1="' + y + '" x2="' + (margin.left + width) + '" y2="' + y + '" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4 4"/>'; }
         svg.appendChild(gridG);
+
+        // Axes
         const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         xAxis.classList.add('axis-element', 'chart-element');
-        xAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top + height}" x2="${margin.left + width}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left + width / 2}" y="${margin.top + height + 38}" text-anchor="middle" class="chart-axis-label">${STATE.chartConfig.xAxis}</text>${STATE.years.map((year, i) => { const x = xScale(i / 3); return `<line x1="${x}" y1="${margin.top + height}" x2="${x}" y2="${margin.top + height + 6}" class="chart-axis"/><text x="${x}" y="${margin.top + height + 22}" text-anchor="middle" class="chart-year-label chart-element">${year}</text>`; }).join('')}`;
+        if (noAnim) xAxis.classList.add(noAnim);
+        xAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top + height}" x2="${margin.left + width}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left + width / 2}" y="${margin.top + height + 38}" text-anchor="middle" class="chart-axis-label">${STATE.chartConfig.xAxis}</text>${STATE.years.map((year, i) => { const x = xScale(i / 3); return `<line x1="${x}" y1="${margin.top + height}" x2="${x}" y2="${margin.top + height + 6}" class="chart-axis"/><text x="${x}" y="${margin.top + height + 22}" text-anchor="middle" class="chart-year-label ${noAnim || 'chart-element'}">${year}</text>`; }).join('')}`;
         svg.appendChild(xAxis);
         const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         yAxis.classList.add('axis-element', 'chart-element');
+        if (noAnim) yAxis.classList.add(noAnim);
         yAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left - 14}" y="${margin.top + height / 2}" text-anchor="middle" class="chart-axis-label" transform="rotate(-90, ${margin.left - 14}, ${margin.top + height / 2})">${STATE.chartConfig.yAxis}</text>`;
         svg.appendChild(yAxis);
+
+        // "Today" marker
+        const todayT = (2026 - 2025) / 3;
+        const todayX = xScale(todayT);
+        const todayG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        if (isFirstDraw) { todayG.classList.add('chart-label-draw'); todayG.style.setProperty('--label-delay', '0.3s'); }
+        else todayG.classList.add('chart-no-anim');
+        todayG.innerHTML = `<line x1="${todayX}" y1="${yScale(0)}" x2="${todayX}" y2="${yScale(0.95)}" stroke="#0A1C60" stroke-width="1.5" class="today-marker-line" opacity="0.4"/><text x="${todayX + 6}" y="${yScale(0.95) - 2}" font-size="11" font-weight="700" fill="#0A1C60" font-family="Inter, system-ui, sans-serif">Today</text>`;
+        svg.appendChild(todayG);
+
+        // Compute curves
         const exp = STATE.currentDemandExponent;
         const slope = STATE.currentCapacitySlope;
         let demandPath = `M ${xScale(0)} ${yScale(0)}`;
@@ -1319,34 +1353,86 @@
         const demandPoints = [];
         const capacityPoints = [];
         for (let i = 0; i <= 100; i++) { const t = i / 100; const dem = Math.pow(t, exp); const cap = 0.3 + slope * t; demandPath += ` L ${xScale(t)} ${yScale(dem)}`; capacityPath += ` L ${xScale(t)} ${yScale(cap)}`; demandPoints.push({x: xScale(t), y: yScale(dem)}); capacityPoints.push({x: xScale(t), y: yScale(cap)}); }
-        const demandLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        demandLine.setAttribute('d', demandPath); demandLine.setAttribute('stroke', 'url(#demandGradient)'); demandLine.setAttribute('fill', 'none'); demandLine.classList.add('demand-line', 'line-element', 'chart-element'); svg.appendChild(demandLine);
+
+        // Capacity halo (white outline for prominence)
+        const capHalo = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        capHalo.setAttribute('d', capacityPath); capHalo.setAttribute('stroke', 'white'); capHalo.setAttribute('stroke-width', '8'); capHalo.setAttribute('fill', 'none'); capHalo.setAttribute('opacity', '0.7'); capHalo.setAttribute('stroke-linecap', 'round');
+        if (isFirstDraw) { capHalo.classList.add('chart-draw'); capHalo.style.setProperty('--draw-dur', '1.5s'); capHalo.style.setProperty('--draw-delay', '0.3s'); }
+        else capHalo.classList.add('chart-no-anim');
+        svg.appendChild(capHalo);
+
+        // Capacity line
         const capacityLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capacityLine.setAttribute('d', capacityPath); capacityLine.setAttribute('stroke', 'url(#capacityGradient)'); capacityLine.setAttribute('fill', 'none'); capacityLine.classList.add('capacity-line', 'line-element', 'chart-element'); svg.appendChild(capacityLine);
+        capacityLine.setAttribute('d', capacityPath); capacityLine.setAttribute('stroke', 'url(#capacityGradient)'); capacityLine.setAttribute('fill', 'none'); capacityLine.setAttribute('stroke-width', '3.5'); capacityLine.setAttribute('stroke-linecap', 'round');
+        capacityLine.classList.add('capacity-line');
+        if (isFirstDraw) { capacityLine.classList.add('chart-draw'); capacityLine.style.setProperty('--draw-dur', '1.5s'); capacityLine.style.setProperty('--draw-delay', '0.3s'); }
+        else capacityLine.classList.add('chart-no-anim');
+        svg.appendChild(capacityLine);
+
+        // Demand line
+        const demandLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        demandLine.setAttribute('d', demandPath); demandLine.setAttribute('stroke', 'url(#demandGradient)'); demandLine.setAttribute('fill', 'none');
+        demandLine.classList.add('demand-line');
+        if (isFirstDraw) { demandLine.classList.add('chart-draw'); demandLine.style.setProperty('--draw-dur', '2s'); demandLine.style.setProperty('--draw-delay', '0.5s'); }
+        else demandLine.classList.add('chart-no-anim');
+        svg.appendChild(demandLine);
+
+        // Capacity area fill
         const capAreaPath = capacityPath + ` L ${xScale(1)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`;
         const capArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capArea.setAttribute('d', capAreaPath); capArea.setAttribute('fill', 'url(#capFillGrad)'); capArea.classList.add('gap-element', 'chart-element'); svg.appendChild(capArea);
+        capArea.setAttribute('d', capAreaPath); capArea.setAttribute('fill', 'url(#capFillGrad)');
+        if (isFirstDraw) capArea.classList.add('chart-gap-draw');
+        else capArea.classList.add('chart-no-anim');
+        svg.appendChild(capArea);
+
+        // Gap fill
         const gapPath = demandPoints.map(p => `L ${p.x} ${p.y}`).join(' ') + capacityPoints.slice().reverse().map(p => `L ${p.x} ${p.y}`).join(' ') + 'Z';
         const gap = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        gap.setAttribute('d', `M ${demandPoints[0].x} ${demandPoints[0].y} ` + gapPath); gap.setAttribute('fill', 'url(#gapGradient)'); gap.classList.add('gap-fill', 'gap-element', 'chart-element'); svg.appendChild(gap);
-        const gapLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        gapLabel.setAttribute('x', xScale(0.5)); gapLabel.setAttribute('y', yScale(0.5)); gapLabel.setAttribute('text-anchor', 'middle'); gapLabel.classList.add('chart-annotation', 'label-element', 'chart-element'); gapLabel.textContent = STATE.chartConfig.center; svg.appendChild(gapLabel);
+        gap.setAttribute('d', `M ${demandPoints[0].x} ${demandPoints[0].y} ` + gapPath); gap.setAttribute('fill', 'url(#gapGradient)');
+        gap.classList.add('gap-fill');
+        if (isFirstDraw) gap.classList.add('chart-gap-draw');
+        else gap.classList.add('chart-no-anim');
+        svg.appendChild(gap);
+
+        // Gap label — "The Growing Gap"
+        const gapLabelG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        if (isFirstDraw) { gapLabelG.classList.add('chart-label-draw'); gapLabelG.style.setProperty('--label-delay', '1.6s'); }
+        else gapLabelG.classList.add('chart-no-anim');
+        gapLabelG.innerHTML = `<text x="${xScale(0.55)}" y="${yScale(0.48)}" text-anchor="middle" font-size="13" font-weight="700" fill="#ef4444" font-family="Inter, system-ui, sans-serif">${STATE.chartConfig.center}</text><text x="${xScale(0.55)}" y="${yScale(0.48) + 14}" text-anchor="middle" font-size="10" font-weight="500" fill="#94a3b8" font-family="Inter, system-ui, sans-serif">between demand and IT capacity</text>`;
+        svg.appendChild(gapLabelG);
+
+        // Inline curve labels
+        const demLabelT = 0.82; const demLabelY = yScale(Math.pow(demLabelT, exp));
+        const capLabelT = 0.82; const capLabelY = yScale(0.3 + slope * capLabelT);
+        const curveLabelG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        if (isFirstDraw) { curveLabelG.classList.add('chart-label-draw'); curveLabelG.style.setProperty('--label-delay', '2.0s'); }
+        else curveLabelG.classList.add('chart-no-anim');
+        curveLabelG.innerHTML = `<text x="${xScale(demLabelT)}" y="${demLabelY - 14}" text-anchor="middle" class="curve-label" fill="#dc2626" style="text-shadow:0 0 4px white, 0 0 4px white">IT Demand</text><text x="${xScale(capLabelT)}" y="${capLabelY + 20}" text-anchor="middle" class="curve-label" fill="#0A1C60" style="text-shadow:0 0 4px white, 0 0 4px white">IT Capacity</text>`;
+        svg.appendChild(curveLabelG);
+
+        // Data point markers — always visible (muted when off, red when active)
         STATE.drivers.forEach(d => {
-          if (d.markerYear && (d.state === 'normal' || d.state === 'accelerating')) {
+          if (d.markerYear) {
             const t = (d.markerYear - 2025) / 3; const dem = Math.pow(t, exp); const x = xScale(t); const y = yScale(dem);
+            const isActive = d.state === 'normal' || d.state === 'accelerating';
             const isHot = d.id && STATE.highlightDriverId === d.id;
-            const emphasis = isHot ? 7 : (d.state === 'accelerating' ? 6 : 5);
-            const dotColor = d.state === 'accelerating' ? '#ef4444' : '#ef4444';
+            const emphasis = isHot ? 7 : (isActive ? (d.state === 'accelerating' ? 6 : 5) : 4);
+            const dotColor = isActive ? '#ef4444' : '#94a3b8';
+            const labelColor = isActive ? '#334155' : '#94a3b8';
             const dotFilter = isHot ? 'filter: drop-shadow(0 3px 8px rgba(239,68,68,0.35));' : '';
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.classList.add('marker-group', 'marker-element', 'chart-element');
+            g.classList.add('marker-group');
+            if (isFirstDraw) { g.classList.add('chart-marker-draw'); g.style.setProperty('--marker-delay', (0.7 + t * 2) + 's'); }
+            else g.classList.add('chart-no-anim');
             g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', `Learn more about ${d.label}`);
-            g.innerHTML = `<title>${d.short}</title><circle cx="${x}" cy="${y}" r="18" fill="transparent" stroke="none"/><circle cx="${x}" cy="${y}" r="${emphasis}" fill="${dotColor}" stroke="white" stroke-width="2" style="${dotFilter}"/><text x="${x + 10}" y="${y - 2}" class="chart-text label-element chart-element" font-size="11" font-weight="700" fill="#334155">${d.label}</text>`;
+            g.innerHTML = `<title>${d.short}</title><circle cx="${x}" cy="${y}" r="18" fill="transparent" stroke="none"/><circle cx="${x}" cy="${y}" r="${emphasis}" fill="${dotColor}" stroke="white" stroke-width="2" style="${dotFilter}transition:all 0.4s ease;"/><text x="${x + 10}" y="${y - 2}" font-size="11" font-weight="700" fill="${labelColor}" font-family="Inter, system-ui, sans-serif" style="transition:fill 0.4s ease;text-shadow:0 0 3px white, 0 0 3px white">${d.label}</text>`;
             g.addEventListener('click', () => openInsight(d));
             g.addEventListener('keydown', e => { if (e.key === 'Enter') openInsight(d); });
             svg.appendChild(g);
           }
         });
+
+        // Tipping point
         if (STATE.showTippingPoint) {
           const t = (STATE.tippingPointYear - 2025) / 3; const x = xScale(t);
           const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1365,6 +1451,18 @@
           hit.addEventListener('click', () => openInsight(STATE.tippingPoint));
           hit.addEventListener('keydown', e => { if (e.key === 'Enter') openInsight(STATE.tippingPoint); });
           svg.appendChild(hit);
+        }
+
+        // Apply stroke-dashoffset for draw animation (must be after DOM append)
+        if (isFirstDraw) {
+          requestAnimationFrame(() => {
+            [capHalo, capacityLine, demandLine].forEach(el => {
+              const len = el.getTotalLength();
+              el.style.strokeDasharray = len;
+              el.style.strokeDashoffset = len;
+            });
+          });
+          STATE.chartHasAnimated = true;
         }
       }
 
@@ -2045,7 +2143,7 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.chartHasAnimated = false; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
