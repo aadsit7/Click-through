@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Recast — Compact Click-Through (Realistic Catalog)</title>
+    <title>Recast -  Compact Click-Through (Realistic Catalog)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark light">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -105,27 +105,25 @@
       @keyframes metricsAppear { to { opacity: 1; transform: translateY(0); } }
       .interactive-node { transition: opacity 0.3s, transform 0.3s; }
       .interactive-node:hover { opacity: 0.9; transform: scale(1.05); }
-      .chart-container { width: 100%; height: auto; aspect-ratio: 800 / 420; background: linear-gradient(180deg, #fafbfd 0%, #ffffff 100%); border-radius: 12px; border: 1px solid #e2e8f0; padding: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); }
+      .chart-container { width: 100%; height: auto; aspect-ratio: 800 / 420; background: #ffffff; border-radius: 16px; padding: 8px; }
       #capacity-gap-chart { width: 100%; height: 100%; }
-      .chart-text { font-size: 12px; font-weight: 600; fill: #334155; letter-spacing: 0.01em; font-family: Inter, system-ui, sans-serif; }
+      .chart-text { font-size: 11px; font-weight: 600; fill: #334155; letter-spacing: 0.01em; font-family: Inter, system-ui, sans-serif; }
       .chart-axis { stroke: #e2e8f0; stroke-width: 1; }
-      .chart-axis-label { font-size: 12px; font-weight: 700; fill: #0A1C60; font-family: Inter, system-ui, sans-serif; letter-spacing: 0.04em; }
+      .chart-axis-label { font-size: 10px; font-weight: 700; fill: #64748b; font-family: Inter, system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase; }
       .chart-year-label { font-size: 12px; fill: #64748b; font-weight: 600; }
-      @media (max-width: 640px) { .chart-year-label { font-size: 10px; } }
-      .chart-annotation { font-size: 13px; font-weight: 600; fill: #94a3b8; font-family: Inter, system-ui, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
-      .demand-line { stroke-width: 2.5; filter: drop-shadow(0 2px 4px rgba(239,68,68,0.2)); }
-      .capacity-line { stroke-width: 2.5; filter: drop-shadow(0 2px 4px rgba(10,28,96,0.12)); }
-      .gap-fill { }
-      .marker-group:hover { transform: scale(1.1); transition: transform 0.2s ease; }
-      .marker-group:hover circle { animation: pulse 1.5s infinite; }
-      @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-      .chart-element { opacity: 0; animation: fadeIn 0.5s forwards; }
-      @keyframes fadeIn { to { opacity: 1; } }
+      .chart-annotation { font-size: 14px; font-weight: 800; fill: #0A1C60; font-family: Inter, system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; }
+      .demand-line { stroke-width: 3; filter: drop-shadow(0 2px 6px rgba(239,68,68,0.25)); }
+      .capacity-line { stroke-width: 2; }
+      .marker-group { cursor: pointer; transition: transform 0.15s ease; }
+      .marker-group:hover { transform: scale(1.08); }
+      .chart-element { opacity: 0; animation: chartFadeIn 0.6s ease forwards; }
+      @keyframes chartFadeIn { from { opacity: 0; } to { opacity: 1; } }
       .axis-element { animation-delay: 0s; }
-      .line-element { animation-delay: 0.3s; }
-      .gap-element { animation-delay: 0.6s; }
-      .marker-element { animation-delay: 0.9s; }
-      .label-element { animation-delay: 1.2s; }
+      .line-element { animation-delay: 0.2s; }
+      .gap-element { animation-delay: 0.4s; }
+      .marker-element { animation-delay: 0.6s; }
+      .label-element { animation-delay: 0.8s; }
+      .analyst-trigger { cursor: pointer; border-bottom: 2px dashed #0070F3; padding-bottom: 1px; }
 
       :root{
         --bg-main:
@@ -401,15 +399,25 @@
       .cinema-scenario-caption { font-size: 13px; font-weight: 600; color: #475569; text-align: center; padding: 2px 0 6px; }
       .cinema-working-badge { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 12px; font-size: 10px; font-weight: 600; color: #059669; background: rgba(240,253,244,0.9); border: 1px solid #a7f3d0; border-radius: 9999px; backdrop-filter: blur(4px); margin: 4px auto 0; width: fit-content; }
       .flip-card { perspective: 1000px; cursor: pointer; height: 90px; transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-      .flip-card.flipped { height: 200px; }
+      .flip-card.flipped { height: 240px; }
       .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
       .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
       .flip-card-front, .flip-card-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--radius); border: 1px solid var(--border-subtle); overflow: hidden; }
       .flip-card-front { background: white; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px; padding: 0 16px; }
-      .flip-card-back { background: linear-gradient(135deg, #0A1C60 0%, #0070F3 100%); color: white; transform: rotateY(180deg); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+      .flip-card-back { background: #ffffff; color: #0A1C60; transform: rotateY(180deg); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 2px solid #0070F3; }
       .flip-card-stat { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #0070F3, #0A1C60); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
       .flip-card-tap { font-size: 8px; color: #cbd5e1; opacity: 0; animation: fadeIn 1s ease 2s forwards; }
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .logo-ticker-wrap { overflow: hidden; position: relative; padding: 8px 0; }
+      .logo-ticker-wrap::before, .logo-ticker-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 48px; z-index: 1; pointer-events: none; }
+      .logo-ticker-wrap::before { left: 0; background: linear-gradient(90deg, white 0%, transparent 100%); }
+      .logo-ticker-wrap::after { right: 0; background: linear-gradient(270deg, white 0%, transparent 100%); }
+      .logo-ticker { display: flex; align-items: center; gap: 40px; animation: tickerScroll 90s linear infinite; width: max-content; }
+      .logo-ticker:hover { animation-play-state: paused; }
+      @keyframes tickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      .logo-name { font-size: 13px; font-weight: 700; color: #334155; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.02em; opacity: 0.7; }
+      .logo-name:hover { opacity: 1; }
+      .logo-divider { width: 1px; height: 16px; background: #e2e8f0; flex-shrink: 0; }
     </style>
   </head>
 
@@ -419,6 +427,7 @@
     <script>
       const STATE = {
         activeTab: 'problems',
+        showAnalystModal: false,
         impact: { minutes: 9, pkgHours: 6, riskHrs: 22.5 },
         defaults: { impact: { minutes: 9, pkgHours: 6, riskHrs: 22.5 } },
         ctx: { device: 'Windows', network: 'Corporate', compliant: true },
@@ -450,17 +459,17 @@
         activePopover: null,
         years: [2025, 2026, 2027, 2028],
         drivers: [
-          { id: "more_apps", label: "App Portfolio Growth", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work\u2014packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "Every new app creates ongoing packaging, testing, update, and support work across every platform.", state: 'off' },
-          { id: "constant_updates", label: "Continuous Change Velocity", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional\u2014work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are constant \u2014 not occasional. Stability now requires perpetual change management.", state: 'off' },
+          { id: "more_apps", label: "App Portfolio Growth", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work - packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "Every new app creates ongoing packaging, testing, update, and support work across every platform.", state: 'off' },
+          { id: "constant_updates", label: "Continuous Change Velocity", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional - work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are constant -  not occasional. Stability now requires perpetual change management.", state: 'off' },
           { id: "too_many_tools", label: "Platform Multiplication", subtext: "Fragmented delivery across platforms", markerYear: 2026.8, bullets: ["App delivery is fragmented across tools and environments (e.g., Intune/ConfigMgr/VDI).", "Teams rebuild packaging and deployment logic per platform.", "Tool fragmentation creates handoffs, duplication, and drift."], short: "Same app, different platforms. Packaging and deployment logic rebuilt per environment.", state: 'off' },
           { id: "manual_rework", label: "Rework & Technical Debt", subtext: "Rebuilds, exceptions, one-off fixes", markerYear: 2027.3, bullets: ["Manual rebuilds per version create packaging backlog and rework.", "Reactive fixes become permanent exceptions (technical debt).", "Firefighting displaces planned work and modernization."], short: "Manual rebuilds, one-off fixes, and undocumented exceptions compound into permanent drag.", state: 'off' },
-          { id: "security_compliance", label: "Security & Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "Higher urgency, tighter windows, zero tolerance \u2014 on top of everything else.", state: 'off' }
+          { id: "security_compliance", label: "Security & Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "Higher urgency, tighter windows, zero tolerance -  on top of everything else.", state: 'off' }
         ],
         tippingPointYear: 2027.5,
         tippingPoint: {
           title: "Inflection Point",
           bullets: ["Changes take longer", "Risk increases", "Teams burn out", "Strategic initiatives stall"],
-          closing: "This isn't failure — it's the limit of a model that no longer scales."
+          closing: "This isn't failure -  it's the limit of a model that no longer scales."
         },
         chartConfig: {
           yAxis: "Demand on IT",
@@ -476,67 +485,67 @@
         showTippingPoint: false,
         currentState: {
           change: {
-            intro: "Your team isn\u2019t underperforming. They\u2019re hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
+            intro: "Your team isn't underperforming. They're hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
             bullets: [
-              "Applications are still managed per platform \u2014 packaged, tested, and maintained separately for every environment. That model worked when there were two delivery targets. Now there are five or six, and every new platform multiplies effort against every existing application.",
-              "This isn\u2019t a workload spike \u2014 it\u2019s a structural compound. Every migration, every security mandate, every new tool the business adopts creates work that fans out across every platform. The math gets worse, not better.",
-              "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling \u2014 and most teams are already pressed against it."
+              "Per-platform = per-problem = Every app is packaged, tested, and maintained separately for each environment. Five platforms means five times the work - per app.",
+              "It compounds, not levels off = Every new migration, security mandate, or tool adoption fans out across every platform. The workload multiplies.",
+              "The team isn't the bottleneck - the model is = Most organizations have already optimized within the current approach. The ceiling is structural, not operational."
             ],
-            analyst: "The constraint isn\u2019t skill or effort \u2014 it\u2019s that the per-platform delivery model wasn\u2019t designed for this level of complexity. The organizations pulling ahead aren\u2019t working harder. They\u2019re changing the model."
+            analyst: "The organizations pulling ahead aren't working harder - they're changing the model. (Forrester, Gartner, McKinsey)"
           },
           now: {
-            intro: "This has been building for years \u2014 but 2026 is where the math stops working for most teams.",
+            intro: "This has been building for years - but 2026 is where the math stops working for most teams.",
             bullets: [
-              "Platform sprawl, AI adoption pressure, and continuous security patching are all accelerating simultaneously. Any one of these is absorbable. Together, they exceed what per-platform delivery can sustain.",
-              "The workarounds that got teams through the last few years \u2014 tribal knowledge, manual rebuilds, heroic effort \u2014 are now the risk. They don\u2019t scale, they don\u2019t transfer, and they create single points of failure that leadership can\u2019t see until someone leaves.",
-              "The window to act is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting \u2014 patching the model instead of replacing it."
+              "Three forces hitting at once = Platform sprawl, AI adoption pressure, and continuous security patching - any one is absorbable. Together, they break the model.",
+              "Your workarounds are now your risk = Tribal knowledge, manual rebuilds, heroic effort - they don't scale, don't transfer, and create single points of failure.",
+              "The window is narrowing = Organizations that fix app delivery now absorb the next wave. The ones that wait spend the next three years reacting."
             ],
-            analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
+            analyst: "Everyone else hits a capacity wall - and strategy doesn't fix a capacity problem. (Gartner, 2024)"
           },
           recast: {
-            intro: "Application Workspace doesn\u2019t replace your tools \u2014 it\u2019s the layer that makes them work together. One place to package, deliver, update, and manage every app across every environment.",
+            intro: "Application Workspace doesn't replace your tools - it's the layer that makes them work together.",
             bullets: [
-              "Define once, deliver everywhere = Stop rebuilding the same app for every platform. Define it once \u2014 Application Workspace delivers it to Intune, SCCM, Citrix, AVD, and macOS automatically.",
-              "8,000+ apps ready to go = Most of your catalog deploys without any packaging work. The Setup Store has 8,000+ pre-tested apps — your team only packages what's unique to your org.",
-              "Self-service replaces tickets = Users get approved apps in seconds from a catalog — no tickets, no wait. IT controls the catalog. Users control the timing.",
-              "Patches land everywhere at once = Security updates deploy across every environment simultaneously through a staged pipeline. No per-platform rebuilds. No version drift.",
-              "Nothing gets ripped out = Works with what you already run — Intune, SCCM, Citrix, AVD, macOS. It's the layer that makes them work together.",
-              "Your team gets time back = Engineers stop rebuilding and firefighting. That capacity goes back to the projects stuck in your backlog."
+              "Define once, deliver everywhere = One definition deploys to Intune, SCCM, Citrix, AVD, and macOS automatically.",
+              "8,000+ apps ready to go = Setup Store handles most of your catalog. Your team only packages what's unique.",
+              "Self-service replaces tickets = Users get approved apps in seconds. IT controls the catalog. Users control the timing.",
+              "Patches land everywhere at once = Staged pipeline. Every environment. No per-platform rebuilds.",
+              "Nothing gets ripped out = Works with what you already run. Additive, not replacement.",
+              "Your team gets time back = Engineers stop rebuilding. That capacity goes to your backlog."
             ],
-            analyst: "The organizations pulling ahead aren't adding headcount — they're adding a layer that eliminates per-platform rework and redirects capacity toward what matters next."
+            analyst: "They're not adding headcount - they're adding a layer that eliminates rework."
           }
         },
         defaultsCurrentState() {
           return JSON.parse(JSON.stringify({
             change: {
-              intro: "Your team isn\u2019t underperforming. They\u2019re hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
+              intro: "Your team isn't underperforming. They're hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
               bullets: [
-                "Applications are still managed per platform \u2014 packaged, tested, and maintained separately for every environment. That model worked when there were two delivery targets. Now there are five or six, and every new platform multiplies effort against every existing application.",
-                "This isn\u2019t a workload spike \u2014 it\u2019s a structural compound. Every migration, every security mandate, every new tool the business adopts creates work that fans out across every platform. The math gets worse, not better.",
-                "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling \u2014 and most teams are already pressed against it."
+                "Per-platform = per-problem = Every app is packaged, tested, and maintained separately for each environment. Five platforms means five times the work - per app.",
+                "It compounds, not levels off = Every new migration, security mandate, or tool adoption fans out across every platform. The workload multiplies.",
+                "The team isn't the bottleneck - the model is = Most organizations have already optimized within the current approach. The ceiling is structural, not operational."
               ],
-              analyst: "The constraint isn\u2019t skill or effort \u2014 it\u2019s that the per-platform delivery model wasn\u2019t designed for this level of complexity. The organizations pulling ahead aren\u2019t working harder. They\u2019re changing the model."
+              analyst: "The organizations pulling ahead aren't working harder - they're changing the model. (Forrester, Gartner, McKinsey)"
             },
             now: {
-              intro: "This has been building for years \u2014 but 2026 is where the math stops working for most teams.",
+              intro: "This has been building for years - but 2026 is where the math stops working for most teams.",
               bullets: [
-                "Platform sprawl, AI adoption pressure, and continuous security patching are all accelerating simultaneously. Any one of these is absorbable. Together, they exceed what per-platform delivery can sustain.",
-                "The workarounds that got teams through the last few years \u2014 tribal knowledge, manual rebuilds, heroic effort \u2014 are now the risk. They don\u2019t scale, they don\u2019t transfer, and they create single points of failure that leadership can\u2019t see until someone leaves.",
-                "The window to act is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting \u2014 patching the model instead of replacing it."
+                "Three forces hitting at once = Platform sprawl, AI adoption pressure, and continuous security patching - any one is absorbable. Together, they break the model.",
+                "Your workarounds are now your risk = Tribal knowledge, manual rebuilds, heroic effort - they don't scale, don't transfer, and create single points of failure.",
+                "The window is narrowing = Organizations that fix app delivery now absorb the next wave. The ones that wait spend the next three years reacting."
               ],
-              analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall \u2014 and strategy doesn\u2019t fix a capacity problem."
+              analyst: "Everyone else hits a capacity wall - and strategy doesn't fix a capacity problem. (Gartner, 2024)"
             },
             recast: {
-              intro: "Application Workspace sits on top of your existing tools and gives you one place to package, deliver, update, and manage every app across every environment.",
+              intro: "Application Workspace doesn't replace your tools - it's the layer that makes them work together.",
               bullets: [
-                "Define once, deliver everywhere = Stop rebuilding the same app for every platform. Define it once — Application Workspace delivers it to Intune, SCCM, Citrix, AVD, and macOS automatically.",
-                "8,000+ apps ready to go = Most of your catalog deploys without any packaging work. The Setup Store has 8,000+ pre-tested apps — your team only packages what's unique to your org.",
-                "Self-service replaces tickets = Users get approved apps in seconds from a catalog — no tickets, no wait. IT controls the catalog. Users control the timing.",
-                "Patches land everywhere at once = Security updates deploy across every environment simultaneously through a staged pipeline. No per-platform rebuilds. No version drift.",
-                "Nothing gets ripped out = Works with what you already run — Intune, SCCM, Citrix, AVD, Nerdio, macOS. It's the layer that makes them work together.",
-                "Your team gets time back = Engineers stop rebuilding and firefighting. That capacity goes back to the projects stuck in your backlog."
+                "Define once, deliver everywhere = One definition deploys to Intune, SCCM, Citrix, AVD, and macOS automatically.",
+                "8,000+ apps ready to go = Setup Store handles most of your catalog. Your team only packages what's unique.",
+                "Self-service replaces tickets = Users get approved apps in seconds. IT controls the catalog. Users control the timing.",
+                "Patches land everywhere at once = Staged pipeline. Every environment. No per-platform rebuilds.",
+                "Nothing gets ripped out = Works with what you already run. Additive, not replacement.",
+                "Your team gets time back = Engineers stop rebuilding. That capacity goes to your backlog."
               ],
-              analyst: "The organizations pulling ahead aren't adding headcount — they're adding a layer that eliminates per-platform rework and redirects capacity toward what matters next."
+              analyst: "They're not adding headcount - they're adding a layer that eliminates rework."
             }
           }));
         },
@@ -551,11 +560,11 @@
         },
         defaultsDrivers() {
           return JSON.parse(JSON.stringify([
-            { id: "more_apps", label: "App Portfolio Growth", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work\u2014packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "Every new app creates ongoing packaging, testing, update, and support work across every platform.", state: 'off' },
-            { id: "constant_updates", label: "Continuous Change Velocity", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional\u2014work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are constant \u2014 not occasional. Stability now requires perpetual change management.", state: 'off' },
+            { id: "more_apps", label: "App Portfolio Growth", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work - packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "Every new app creates ongoing packaging, testing, update, and support work across every platform.", state: 'off' },
+            { id: "constant_updates", label: "Continuous Change Velocity", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional - work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are constant -  not occasional. Stability now requires perpetual change management.", state: 'off' },
             { id: "too_many_tools", label: "Platform Multiplication", subtext: "Fragmented delivery across platforms", markerYear: 2026.8, bullets: ["App delivery is fragmented across tools and environments (e.g., Intune/ConfigMgr/VDI).", "Teams rebuild packaging and deployment logic per platform.", "Tool fragmentation creates handoffs, duplication, and drift."], short: "Same app, different platforms. Packaging and deployment logic rebuilt per environment.", state: 'off' },
             { id: "manual_rework", label: "Rework & Technical Debt", subtext: "Rebuilds, exceptions, one-off fixes", markerYear: 2027.3, bullets: ["Manual rebuilds per version create packaging backlog and rework.", "Reactive fixes become permanent exceptions (technical debt).", "Firefighting displaces planned work and modernization."], short: "Manual rebuilds, one-off fixes, and undocumented exceptions compound into permanent drag.", state: 'off' },
-            { id: "security_compliance", label: "Security & Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "Higher urgency, tighter windows, zero tolerance \u2014 on top of everything else.", state: 'off' }
+            { id: "security_compliance", label: "Security & Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "Higher urgency, tighter windows, zero tolerance -  on top of everything else.", state: 'off' }
           ]));
         },
         progress: { apps: 0, time: 0, tickets: 0 },
@@ -600,12 +609,12 @@
       const NEW_CARDS = [
         {
           id: 'core', icon: 'layers', title: 'How Recast Does It.',
-          bullets: ['One workspace to package, deploy, update, and retire apps across Intune, SCCM, Citrix, Omnissa, and Azure.','8,000+ pre-tested enterprise apps ready to deploy instantly.','Automated patching and validation keep apps secure and compliant.','Unified dashboard for visibility and governance across all environments.','Policy-driven automation reduces manual work by over 60%.','End users get the right app instantly — no tickets, no delays.'],
-          closer: 'Configured once — Delivered everywhere.', timeline: false, bgHeader: 'bg-[#f9fafb]', bgContent: 'bg-[#f9fafb]'
+          bullets: ['One workspace to package, deploy, update, and retire apps across Intune, SCCM, Citrix, Omnissa, and Azure.','8,000+ pre-tested enterprise apps ready to deploy instantly.','Automated patching and validation keep apps secure and compliant.','Unified dashboard for visibility and governance across all environments.','Policy-driven automation reduces manual work by over 60%.','End users get the right app instantly -  no tickets, no delays.'],
+          closer: 'Configured once -  Delivered everywhere.', timeline: false, bgHeader: 'bg-[#f9fafb]', bgContent: 'bg-[#f9fafb]'
         },
         {
           id: 'onboarding', icon: 'clock', title: 'Onboard & Up to Speed Fast.',
-          bullets: ['Standard rollout in 4–6 weeks (Kickoff — Implementation — UAT — Launch — Enablement).','No new infrastructure — integrates with your existing management tools.','Guided setup with dedicated Customer Success Manager.','Typical resource: 1–2 IT engineers part-time.','Enablement includes training, certification, and success planning.'],
+          bullets: ['Standard rollout in 4-6 weeks (Kickoff -  Implementation -  UAT -  Launch -  Enablement).','No new infrastructure -  integrates with your existing management tools.','Guided setup with dedicated Customer Success Manager.','Typical resource: 1-2 IT engineers part-time.','Enablement includes training, certification, and success planning.'],
           closer: 'From first call to production in weeks, not months.', timeline: true, bgHeader: 'bg-[#f9fafb]', bgContent: 'bg-[#f9fafb]'
         },
         {
@@ -647,11 +656,23 @@
         { id: 'defender', letter: 'MD', color: '#0067B8', name: 'Defender' },
       ];
 
+      const TRUST_LOGOS = [
+        {sector:'Financial Services',names:['Citibank','American Express','Fifth Third Bank','Navy Federal Credit Union','Edward Jones','Franklin Templeton','T. Rowe Price','LPL Financial','Ally','TIAA','Neuberger Berman']},
+        {sector:'Healthcare',names:['Johns Hopkins','Intermountain Health','Texas Children\'s Hospital','St. Jude Children\'s Research Hospital','Humana','UVA Health System','Sanford Health','Roswell Park Cancer Institute']},
+        {sector:'Retail & Consumer',names:['Costco','Whole Foods Market','Barnes & Noble','Crocs','Ralph Lauren','Discount Tire','BJ\'s Wholesale Club']},
+        {sector:'Technology & Manufacturing',names:['Micron Technology','Keysight Technologies','Lam Research','Stryker Corporation','Hubbell Incorporated','Garmin','Crestron Electronics','Dexcom']},
+        {sector:'Energy & Utilities',names:['Duke Energy','Xcel Energy','Constellation Energy','CPS Energy','Southern Company','Enterprise Products']},
+        {sector:'Defense & Government',names:['Northrop Grumman','Raytheon','General Dynamics','FEMA','US Patent & Trademark Office','The Supreme Court of the United States','Amtrak']},
+        {sector:'Food & Agriculture',names:['General Mills','Cargill','Tillamook County Creamery','Ferrara Candy Company']},
+        {sector:'Transportation & Logistics',names:['Union Pacific Railroad','Holland America Group','Princess Cruises','Gulfstream Aerospace']},
+        {sector:'Professional Services',names:['Jones Day','Latham & Watkins','Cooley LLP','Davis Polk & Wardwell']},
+      ];
+
       const STAT_CARDS = [
-        { id:'card0', stat:'3\u00d7', hint:'Platform targets since 2020', title:'The workload is compounding', body:'The average enterprise now manages 3\u00d7 more delivery platforms than five years ago. Every new platform multiplies packaging work against every existing application.', source:'Recast customer data', icon:'layers' },
-        { id:'card1', stat:'60%', hint:'Organizations that won\'t execute', title:'The model doesn\'t scale', body:'Gartner predicts that by 2026, the lack of digital skills will prevent 60% of organizations from executing their digital strategies. The per-platform model requires specialist skills that don\'t scale with headcount.', source:'Gartner, 2024', icon:'trending-up' },
-        { id:'card2', stat:'51%', hint:'Where IT operations time goes', title:'Your best people are trapped', body:'51% of all IT operations effort is reactive - fixing what\'s broken, not building what\'s next. Your senior engineers are stuck in that cycle, spending their time on repetitive packaging and firefighting instead of strategic work.', source:'Grand View Research, 2025', icon:'user-x' },
-        { id:'card3', stat:'70%', hint:'Digital transformations that fail', title:'Your roadmap is stalling', body:'McKinsey found 70% of digital transformations fail. Not because of bad strategy - because of execution capacity. When app delivery consumes your team, your modernization roadmap doesn\'t move.', source:'McKinsey & Company', icon:'calendar-x' },
+        { id:'card0', stat:'3\u00d7', title:'The workload is compounding', body:'The average enterprise now manages 3x more delivery platforms than five years ago. Every new platform multiplies packaging work against every existing application.', bullets:['More platforms without more headcount','Every app rebuilt per environment','Work compounds with each adoption cycle'], source:'Forrester, 2024', icon:'layers' },
+        { id:'card1', stat:'5 days', title:'Your risk is compounding quietly', body:'Time to exploit a new vulnerability has dropped from 32 days to 5. Your patching cycle was built for a world that no longer exists.', bullets:['Monthly patching can\'t keep pace with 5-day exploit windows','Different app versions per platform multiply audit surface','Manual compliance evidence doesn\'t survive scrutiny'], source:'Mandiant, 2025', icon:'shield' },
+        { id:'card2', stat:'51%', title:'Your best people are trapped', body:'51% of all IT operations effort is reactive - fixing what\'s broken, not building what\'s next. Your engineers are stuck packaging and firefighting instead of strategic work.', bullets:['Senior engineers stuck on repetitive tasks','Tribal knowledge creates single points of failure','Strategic projects wait for capacity that never opens'], source:'Grand View Research, 2025', icon:'user-x' },
+        { id:'card3', stat:'70%', title:'Your roadmap is stalling', body:'McKinsey found 70% of digital transformations fail. Not because of bad strategy - because of execution capacity. When app delivery consumes your team, your modernization roadmap doesn\'t move.', bullets:['AI and migration pilots delayed by capacity','Security patching crowds out planned work','Leadership pushes harder but the team is maxed'], source:'McKinsey & Company', icon:'alert-triangle' },
       ];
 
       const DEVICE_OPTIONS = [
@@ -664,13 +685,13 @@
 
       const SCENARIOS = [
         {
-          id: 'catalog', label: 'Self-service', subtitle: 'User gets an app — no ticket',
-          scenarioDesc: "A user needs Microsoft Teams. Instead of filing a ticket and waiting days, they browse the self-service catalog, click Get, and the app is delivered — approved, configured — in seconds.",
+          id: 'catalog', label: 'Self-service', subtitle: 'User gets an app -  no ticket',
+          scenarioDesc: "A user needs Microsoft Teams. Instead of filing a ticket and waiting days, they browse the self-service catalog, click Get, and the app is delivered -  approved, configured -  in seconds.",
           userMsg: 'Adding Teams...', successMsg: 'Teams added to workspace', appName: 'Microsoft Teams', appIcon: {letter: 'T', color: '#5B53D6'},
-          checks: [{q:'User identity?',a:'Verified — entitled to app'},{q:'Approval?',a:'Auto-approved (catalog policy)'},{q:'Best delivery?',a:'Local install (corporate)'},{q:'Config?',a:'Applying MFA + collaboration defaults'}],
+          checks: [{q:'User identity?',a:'Verified -  entitled to app'},{q:'Approval?',a:'Auto-approved (catalog policy)'},{q:'Best delivery?',a:'Local install (corporate)'},{q:'Config?',a:'Applying MFA + collaboration defaults'}],
           activePath: 'local', pathLabel: 'Install + Configure',
           configBundle: [{icon:'shield',label:'MFA Policy',status:'applied'},{icon:'video',label:'Meeting defaults',status:'applied'},{icon:'folder',label:'OneDrive sync plugin',status:'installed'}],
-          configNote: 'App + policies delivered — zero tickets created',
+          configNote: 'App + policies delivered -  zero tickets created',
           bannerMsg: 'Users get what they need instantly. IT stays in control. Tickets drop.', dtap: null,
           scenarioCaption: 'Browse. Click Get. Done.',
         },
@@ -678,10 +699,10 @@
           id: 'access', label: 'First access', subtitle: 'New user opens their workspace',
           scenarioDesc: "A new employee opens Application Workspace and sees their personalized app catalog. They click Teams. The system determines the best delivery method based on their device, location, and policy.",
           userMsg: 'Launching Teams...', successMsg: 'Teams is ready', appName: 'Microsoft Teams', appIcon: {letter: 'T', color: '#5B53D6'},
-          checks: [{q:'User identity?',a:'Verified — assigned to Engineering'},{q:'Best delivery?',a:'Local install (corporate device)'},{q:'Config?',a:'Applying MFA + VPN policy'},{q:'Environment?',a:'Windows / On-prem network'}],
+          checks: [{q:'User identity?',a:'Verified -  assigned to Engineering'},{q:'Best delivery?',a:'Local install (corporate device)'},{q:'Config?',a:'Applying MFA + VPN policy'},{q:'Environment?',a:'Windows / On-prem network'}],
           activePath: 'local', pathLabel: 'Install + Configure Locally',
           configBundle: [{icon:'shield',label:'MFA Policy',status:'applied'},{icon:'globe',label:'VPN Auto-Connect',status:'applied'},{icon:'printer',label:'Default Printer (Floor 3)',status:'mapped'},{icon:'hard-drive',label:'Drive Mapping (S:\\ Team Share)',status:'mapped'},{icon:'file-cog',label:'Registry Keys (3)',status:'set'},{icon:'link',label:'Dependencies (WebView2)',status:'verified'}],
-          configNote: 'App + MFA + VPN + printer + drives — ready to work',
+          configNote: 'App + MFA + VPN + printer + drives -  ready to work',
           bannerMsg: 'One workspace. Every app. The right delivery method chosen automatically.', dtap: null,
           scenarioCaption: 'New employee. Opens workspace. Starts working.',
         },
@@ -689,18 +710,18 @@
           id: 'backend', label: 'Backend changed', subtitle: 'IT migrated VDI to SaaS',
           scenarioDesc: "IT migrated Teams delivery from VDI to SaaS. The same user clicks the same icon. Application Workspace routes to the new delivery path automatically. The user experience is identical.",
           userMsg: 'Launching Teams...', successMsg: 'Teams is ready', appName: 'Microsoft Teams', appIcon: {letter: 'T', color: '#5B53D6'},
-          checks: [{q:'User identity?',a:'Verified — same user'},{q:'Best delivery?',a:'SaaS (IT changed routing)'},{q:'Config?',a:'SSO policy enforced via web'},{q:'Environment?',a:'Delivery switched VDI to SaaS'}],
+          checks: [{q:'User identity?',a:'Verified -  same user'},{q:'Best delivery?',a:'SaaS (IT changed routing)'},{q:'Config?',a:'SSO policy enforced via web'},{q:'Environment?',a:'Delivery switched VDI to SaaS'}],
           activePath: 'saas', pathLabel: 'Route to SaaS URL',
           configBundle: [{icon:'key',label:'SSO Policy',status:'enforced'},{icon:'globe',label:'Web Proxy Config',status:'applied'},{icon:'puzzle',label:'Browser Extension',status:'installed'},{icon:'settings',label:'Session Settings',status:'applied'}],
-          configNote: 'Same policies, different delivery — zero user disruption',
+          configNote: 'Same policies, different delivery -  zero user disruption',
           bannerMsg: "Backend changes. User experience doesn't. No repackaging. No rework.", dtap: null,
           scenarioCaption: 'IT changed the backend. User notices nothing.',
         },
         {
           id: 'update', label: 'Version outdated', subtitle: 'Auto-patched at access',
-          scenarioDesc: "A critical security patch was released. Application Workspace detects the outdated version and updates it — already validated through Dev, Test, and Acceptance stages before reaching production.",
+          scenarioDesc: "A critical security patch was released. Application Workspace detects the outdated version and updates it -  already validated through Dev, Test, and Acceptance stages before reaching production.",
           userMsg: 'Launching Teams...', successMsg: 'Teams updated and ready', appName: 'Microsoft Teams', appIcon: {letter: 'T', color: '#5B53D6'},
-          checks: [{q:'User identity?',a:'Verified — existing user'},{q:'Best delivery?',a:'Local (already installed)'},{q:'Version current?',a:'No — v2.1, updating to v2.2'},{q:'Config?',a:'Re-validating compliance'}],
+          checks: [{q:'User identity?',a:'Verified -  existing user'},{q:'Best delivery?',a:'Local (already installed)'},{q:'Version current?',a:'No -  v2.1, updating to v2.2'},{q:'Config?',a:'Re-validating compliance'}],
           activePath: 'update', pathLabel: 'Auto-Update to v2.2',
           configBundle: [{icon:'shield-check',label:'Compliance re-validation',status:'passed'},{icon:'settings',label:'User settings preserved',status:'confirmed'},{icon:'link',label:'Dependencies verified',status:'OK'},{icon:'file-cog',label:'Registry updated',status:'applied'}],
           configNote: 'Validated through Dev, Test, Acceptance before production',
@@ -780,7 +801,7 @@
               </div>
               <div class="flex items-center gap-2 text-[12px]">
                 <button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white w-7 h-7 rounded-full hover:bg-[#005AD0] inline-flex items-center justify-center"><i data-lucide="${STATE.flowRunning && !STATE.flowPaused ? 'pause' : 'play'}" class="w-3.5 h-3.5"></i></button>
-                <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded text-[12px] font-semibold hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+                <button type="button" data-action="reset-flow" class="bg-[#0A1C60] text-white w-7 h-7 rounded-full hover:bg-[#0070F3] inline-flex items-center justify-center" title="Reset"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
               </div>
             </div>
 
@@ -858,7 +879,7 @@
                     <div class="aw-icon" style="background:${scenario?.appIcon?.color || '#5B53D6'}">${scenario?.appIcon?.letter || 'T'}</div>
                     <div>
                       <div class="aw-title">${scenario?.appName || 'Microsoft Teams'}</div>
-                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com — routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 — auto-patched by Workspace' : 'Configured by Workspace'}</div>
+                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com -  routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 -  auto-patched by Workspace' : 'Configured by Workspace'}</div>
                     </div>
                   </div>
                   <div class="app-window-body" style="flex-direction:row">
@@ -878,7 +899,7 @@
                         </div>
                         <div class="teams-msg ${appOpen ? 'show-instant' : ''}" style="transition-delay:0.6s">
                           <div class="teams-msg-avatar" style="background:#10b981">JR</div>
-                          <div class="teams-msg-bubble">Perfect timing — pulling it up now</div>
+                          <div class="teams-msg-bubble">Perfect timing -  pulling it up now</div>
                         </div>
                         <div class="teams-msg ${appOpen ? 'show-instant' : ''}" style="transition-delay:0.9s">
                           <div class="teams-msg-bubble self">On it. Give me 5 min.</div>
@@ -895,7 +916,7 @@
                 ${appOpen && !catalogMode && ['checking','routing','config'].includes(phase) ? (isPlaying ? '' : `
                   <div style="position:absolute;bottom:6px;right:6px;z-index:10;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9999px;background:rgba(255,255,255,0.92);border:1px solid #a7f3d0;font-size:9px;font-weight:600;color:#059669;backdrop-filter:blur(4px)">
                     <i data-lucide="check-circle" class="w-3 h-3"></i>
-                    User is working — orchestration happens invisibly
+                    User is working -  orchestration happens invisibly
                   </div>
                 `) : ''}
 
@@ -918,7 +939,7 @@
               ${appOpen && !catalogMode && ['checking','routing','config'].includes(phase) ? `
                 <div class="cinema-working-badge">
                   <i data-lucide="check-circle" class="w-3 h-3"></i>
-                  User is working normally — platform handles the rest
+                  User is working normally -  platform handles the rest
                 </div>
               ` : ''}
             ` : `
@@ -928,7 +949,7 @@
             ${isPlaying ? `
               <div class="platform-bar-mini mt-2" id="platformLayer">
                 <i data-lucide="boxes" class="w-3.5 h-3.5 text-blue-200 flex-shrink-0"></i>
-                <span>Application Workspace — handling everything behind the scenes</span>
+                <span>Application Workspace -  handling everything behind the scenes</span>
               </div>
             ` : `
               <div class="flex items-center gap-3 mb-2">
@@ -962,7 +983,7 @@
                   <div class="platform-cap"><i data-lucide="eye" class="w-3 h-3"></i> Central Governance</div>
                 </div>
                 <div class="mt-2 text-[10px] text-blue-200 tracking-wide text-center">
-                  Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit — across every environment from one place
+                  Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit -  across every environment from one place
                 </div>
               </div>
 
@@ -974,8 +995,9 @@
             ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
               <div id="finalPayoff" class="sub-card p-4 mt-2 text-center final-glow" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
                 <div class="text-lg font-bold text-[#0A1C60] mb-1">Click → It just works</div>
-                <div class="text-xs text-[#4A5568]">First access, backend migration, security patch — completely different scenarios. The user experience was identical every time.</div>
-                <div class="text-[10px] text-slate-500 mt-2 leading-relaxed">Application Workspace packages, delivers, configures, updates, and routes apps — across every platform, every environment, every change. Define once. Deliver everywhere. No rework.</div>
+                <div class="text-xs text-[#4A5568]">First access, backend migration, security patch -  completely different scenarios. The user experience was identical every time.</div>
+                <div class="text-[10px] text-slate-500 mt-2 leading-relaxed">Application Workspace packages, delivers, configures, updates, and routes apps -  across every platform, every environment, every change. Define once. Deliver everywhere. No rework.</div>
+                <div class="text-xs font-semibold text-[#0A1C60] mt-3">Four different scenarios. Zero tickets created. Zero per-platform rebuilds. That's the capacity your team gets back.</div>
               </div>
             ` : ''}
           </div>
@@ -1006,7 +1028,7 @@
         return `
           <div class="section-card p-3 rounded-2xl">
             <div class="flex items-center gap-2 mb-2">
-              <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> How It Works — Per Click</div>
+              <div class="bts-label bts-label-engine"><i data-lucide="cpu" class="w-3 h-3"></i> How It Works -  Per Click</div>
               ${STATE.flowRunning ? `
                 <button type="button" data-action="pause-flow" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-full border transition ${STATE.flowPaused ? 'bg-[#0070F3] text-white border-[#0070F3]' : 'bg-white text-[#64748b] border-slate-300 hover:border-[#0070F3] hover:text-[#0070F3]'}">
                   <i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i>
@@ -1034,7 +1056,7 @@
                     <div class="pipeline-node"><i data-lucide="search" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content">
                       <div class="stage-title"><i data-lucide="scan-search" class="w-3.5 h-3.5 text-[#0070F3]"></i> Evaluate user context</div>
-                      <div class="stage-detail mb-1.5">Checks user, device, and environment — no admin intervention.</div>
+                      <div class="stage-detail mb-1.5">Checks user, device, and environment -  no admin intervention.</div>
                       <div class="flex flex-wrap gap-1.5" id="checkItems">
                         ${scenario.checks.map((c, i) => `
                           <div class="check-item ${checkDone ? 'pass' : ''}" id="check-${i}" title="${c.a}">
@@ -1108,7 +1130,7 @@
                   <div class="pipeline-stage ${stageState(['done','final'])}">
                     <div class="pipeline-node"><i data-lucide="check" class="w-2 h-2 text-white"></i></div>
                     <div class="stage-content" style="${['done','final'].includes(phase) ? 'border-color:#10b981;background:linear-gradient(135deg,#f0fdf4,#ecfdf5)' : ''}">
-                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> One definition — every environment</div>
+                      <div class="stage-title"><i data-lucide="rocket" class="w-3.5 h-3.5 text-green-500"></i> One definition -  every environment</div>
                       <div class="stage-detail">Same app definition works across Laptop, VDI, Cloud PC, Browser. Define once, deliver everywhere.</div>
                     </div>
                   </div>
@@ -1225,7 +1247,7 @@
         const cascadeInterval = setInterval(() => {
           count++;
           STATE.autopilotAppCount = count;
-          // Targeted DOM updates — no full re-render during rapid cascade
+          // Targeted DOM updates -  no full re-render during rapid cascade
           const counterEl = document.getElementById('ap-app-counter');
           if (counterEl) counterEl.textContent = count + '/' + AP_APPS.length;
           const stepCounter = document.getElementById('ap-step-counter');
@@ -1260,8 +1282,8 @@
                 ${STATE.activeTab==='problems'
                   ? ''
                   : STATE.activeTab==='solution'
-                    ? 'What actually happens when a user clicks an app? This is the core differentiator.'
-                    : 'Application Workspace helps IT keep applications running smoothly as platforms change \u2014 without creating more work'}
+                    ? 'The current model multiplies work per platform. Here\'s what it looks like when that stops.'
+                    : 'Application Workspace helps IT keep applications running smoothly as platforms change -  without creating more work'}
               </p>
             </div>
             <div class="relative mx-auto max-w-6xl px-4">
@@ -1284,6 +1306,7 @@
           ${renderModal()}
           ${renderWhyModal()}
           ${renderInsightModal()}
+          ${renderAnalystModal()}
         `;
         if (window.lucide?.createIcons) { try { window.lucide.createIcons(); } catch {} }
         attachEvents();
@@ -1313,7 +1336,7 @@
         return `
           <section id="panel-problems" class="space-y-4">
             <div class="mb-1">
-              <h2 class="text-lg font-semibold text-[#0A1C60]">The application layer is now the #1 primary constraint in modern IT.</h2>
+              <h2 class="text-lg font-semibold text-[#0A1C60]">The application layer is now the #1 primary constraint in modern <span class="analyst-trigger" data-action="open-analyst-modal">IT.</span></h2>
             </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               ${STAT_CARDS.map(card => {
@@ -1327,21 +1350,24 @@
                     +'</div>'
                     +'<div class="flip-card-back">'
                       +'<div>'
-                        +'<div class="text-xs font-bold uppercase tracking-wide text-blue-200 mb-1">'+card.title+'</div>'
-                        +'<p class="text-xs leading-relaxed text-white/90">'+card.body+'</p>'
+                        +'<div class="text-[10px] font-bold uppercase tracking-wide text-[#0070F3] mb-1">'+card.title+'</div>'
+                        +'<p class="text-[10px] leading-relaxed text-[#475569] mb-1.5">'+card.body+'</p>'
+                        +'<ul class="space-y-1">'
+                          +card.bullets.map(function(b){return '<li class="flex items-start gap-1 text-[9px] text-[#64748b]"><span class="text-[#0070F3] flex-shrink-0">\u2022</span>'+b+'</li>';}).join('')
+                        +'</ul>'
                       +'</div>'
-                      +'<div class="text-[9px] text-blue-300/60 mt-2">'+card.source+'</div>'
+                      +'<div class="text-[8px] text-[#94a3b8] italic">'+card.source+'</div>'
                     +'</div>'
                   +'</div>'
                 +'</div>';
               }).join('')}
             </div>
             <div class="section-card p-6">
-              <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+              <div class="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4 items-start">
                 <div class="chart-container relative">
                   <svg id="capacity-gap-chart" viewBox="0 0 800 420"></svg>
                 </div>
-                <div class="w-full lg:w-64 bg-white/70 backdrop-blur-lg rounded-2xl shadow-md p-5 border border-slate-200">
+                <div class="w-full bg-white/70 backdrop-blur-lg rounded-2xl shadow-md p-4 border border-slate-200">
                   <h3 class="text-lg font-medium mb-4">Modern IT Challenges</h3>
                   <div class="grid grid-cols-1 gap-4 items-stretch">
                     ${calloutDropdown('change','alert-triangle','Why Change','bg-slate-50')}
@@ -1360,80 +1386,88 @@
         if (!svg) return;
         svg.innerHTML = '';
         svg.setAttribute('viewBox', '0 0 800 420');
-        const width = 700, height = 310, margin = {left: 55, bottom: 50, top: 40, right: 50};
+        const width = 650, height = 310, margin = {left: 55, bottom: 50, top: 35, right: 95};
         const xScale = t => margin.left + t * width;
         const yScale = v => margin.top + height - v * height;
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
         defs.innerHTML = `
           <linearGradient id="demandGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#f87171"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
           <linearGradient id="capacityGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0A1C60"/><stop offset="100%" stop-color="#0070F3"/></linearGradient>
-          <linearGradient id="gapGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(239,68,68,0.08)"/><stop offset="100%" stop-color="rgba(10,28,96,0.04)"/></linearGradient>
-          <linearGradient id="capFillGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(10,28,96,0.08)"/><stop offset="100%" stop-color="rgba(10,28,96,0.02)"/></linearGradient>
+          <linearGradient id="gapGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(239,68,68,0.12)"/><stop offset="100%" stop-color="rgba(10,28,96,0.04)"/></linearGradient>
+          <linearGradient id="capFillGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(10,28,96,0.07)"/><stop offset="100%" stop-color="rgba(10,28,96,0.02)"/></linearGradient>
         `;
         svg.appendChild(defs);
+        // Gridlines
         const gridG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        for (let i = 0; i <= 4; i++) { const y = margin.top + (height / 4) * i; gridG.innerHTML += '<line x1="' + margin.left + '" y1="' + y + '" x2="' + (margin.left + width) + '" y2="' + y + '" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4 4"/>'; }
+        for (let i = 1; i <= 4; i++) { const y = margin.top + (height / 4) * i; gridG.innerHTML += '<line x1="'+margin.left+'" y1="'+y+'" x2="'+(margin.left+width)+'" y2="'+y+'" stroke="#f1f5f9" stroke-width="1"/>'; }
         svg.appendChild(gridG);
+        // Axes
         const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         xAxis.classList.add('axis-element', 'chart-element');
-        xAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top + height}" x2="${margin.left + width}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left + width / 2}" y="${margin.top + height + 38}" text-anchor="middle" class="chart-axis-label">${STATE.chartConfig.xAxis}</text>${STATE.years.map((year, i) => { const x = xScale(i / 3); return `<line x1="${x}" y1="${margin.top + height}" x2="${x}" y2="${margin.top + height + 6}" class="chart-axis"/><text x="${x}" y="${margin.top + height + 22}" text-anchor="middle" class="chart-year-label chart-element">${year}</text>`; }).join('')}`;
+        xAxis.innerHTML = '<line x1="'+margin.left+'" y1="'+(margin.top+height)+'" x2="'+(margin.left+width)+'" y2="'+(margin.top+height)+'" class="chart-axis"/><text x="'+(margin.left+width/2)+'" y="'+(margin.top+height+40)+'" text-anchor="middle" class="chart-axis-label">'+STATE.chartConfig.xAxis+'</text>'+STATE.years.map(function(year,i){ const x=xScale(i/3); return '<line x1="'+x+'" y1="'+(margin.top+height)+'" x2="'+x+'" y2="'+(margin.top+height+6)+'" class="chart-axis"/><text x="'+x+'" y="'+(margin.top+height+22)+'" text-anchor="middle" class="chart-year-label chart-element">'+year+'</text>'; }).join('');
         svg.appendChild(xAxis);
         const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         yAxis.classList.add('axis-element', 'chart-element');
-        yAxis.innerHTML = `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top + height}" class="chart-axis"/><text x="${margin.left - 14}" y="${margin.top + height / 2}" text-anchor="middle" class="chart-axis-label" transform="rotate(-90, ${margin.left - 14}, ${margin.top + height / 2})">${STATE.chartConfig.yAxis}</text>`;
+        yAxis.innerHTML = '<line x1="'+margin.left+'" y1="'+margin.top+'" x2="'+margin.left+'" y2="'+(margin.top+height)+'" class="chart-axis"/><text x="'+(margin.left-14)+'" y="'+(margin.top+height/2)+'" text-anchor="middle" class="chart-axis-label" transform="rotate(-90,'+(margin.left-14)+','+(margin.top+height/2)+')">'+STATE.chartConfig.yAxis+'</text>';
         svg.appendChild(yAxis);
+        // Curves
         const exp = STATE.currentDemandExponent;
         const slope = STATE.currentCapacitySlope;
-        let demandPath = `M ${xScale(0)} ${yScale(0)}`;
-        let capacityPath = `M ${xScale(0)} ${yScale(0.3)}`;
-        const demandPoints = [];
-        const capacityPoints = [];
-        for (let i = 0; i <= 100; i++) { const t = i / 100; const dem = Math.pow(t, exp); const cap = 0.3 + slope * t; demandPath += ` L ${xScale(t)} ${yScale(dem)}`; capacityPath += ` L ${xScale(t)} ${yScale(cap)}`; demandPoints.push({x: xScale(t), y: yScale(dem)}); capacityPoints.push({x: xScale(t), y: yScale(cap)}); }
-        const demandLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        demandLine.setAttribute('d', demandPath); demandLine.setAttribute('stroke', 'url(#demandGradient)'); demandLine.setAttribute('fill', 'none'); demandLine.classList.add('demand-line', 'line-element', 'chart-element'); svg.appendChild(demandLine);
-        const capacityLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capacityLine.setAttribute('d', capacityPath); capacityLine.setAttribute('stroke', 'url(#capacityGradient)'); capacityLine.setAttribute('fill', 'none'); capacityLine.classList.add('capacity-line', 'line-element', 'chart-element'); svg.appendChild(capacityLine);
-        const capAreaPath = capacityPath + ` L ${xScale(1)} ${yScale(0)} L ${xScale(0)} ${yScale(0)} Z`;
+        let demandPath = 'M '+xScale(0)+' '+yScale(0);
+        let capacityPath = 'M '+xScale(0)+' '+yScale(0.3);
+        const dPts = [], cPts = [];
+        for (let i = 0; i <= 100; i++) { const t = i/100; const dem = Math.pow(t,exp); const cap = 0.3+slope*t; demandPath += ' L '+xScale(t)+' '+yScale(dem); capacityPath += ' L '+xScale(t)+' '+yScale(cap); dPts.push({x:xScale(t),y:yScale(dem)}); cPts.push({x:xScale(t),y:yScale(cap)}); }
+        // Capacity area fill
         const capArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        capArea.setAttribute('d', capAreaPath); capArea.setAttribute('fill', 'url(#capFillGrad)'); capArea.classList.add('gap-element', 'chart-element'); svg.appendChild(capArea);
-        const gapPath = demandPoints.map(p => `L ${p.x} ${p.y}`).join(' ') + capacityPoints.slice().reverse().map(p => `L ${p.x} ${p.y}`).join(' ') + 'Z';
-        const gap = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        gap.setAttribute('d', `M ${demandPoints[0].x} ${demandPoints[0].y} ` + gapPath); gap.setAttribute('fill', 'url(#gapGradient)'); gap.classList.add('gap-fill', 'gap-element', 'chart-element'); svg.appendChild(gap);
+        capArea.setAttribute('d', capacityPath+' L '+xScale(1)+' '+yScale(0)+' L '+xScale(0)+' '+yScale(0)+' Z'); capArea.setAttribute('fill', 'url(#capFillGrad)'); capArea.classList.add('gap-element','chart-element'); svg.appendChild(capArea);
+        // Gap fill
+        const gapD = dPts.map(function(p,i){return (i===0?'M':'L')+' '+p.x+' '+p.y;}).join(' ')+cPts.slice().reverse().map(function(p){return ' L '+p.x+' '+p.y;}).join('')+' Z';
+        const gapEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        gapEl.setAttribute('d', gapD); gapEl.setAttribute('fill', 'url(#gapGradient)'); gapEl.classList.add('gap-element','chart-element'); svg.appendChild(gapEl);
+        // Capacity line
+        const capLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        capLine.setAttribute('d', capacityPath); capLine.setAttribute('stroke', 'url(#capacityGradient)'); capLine.setAttribute('fill', 'none'); capLine.classList.add('capacity-line','line-element','chart-element'); svg.appendChild(capLine);
+        // Demand line (red)
+        const demLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        demLine.setAttribute('d', demandPath); demLine.setAttribute('stroke', 'url(#demandGradient)'); demLine.setAttribute('fill', 'none'); demLine.classList.add('demand-line','line-element','chart-element'); svg.appendChild(demLine);
+        // Gap label
         const gapLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        gapLabel.setAttribute('x', xScale(0.5)); gapLabel.setAttribute('y', yScale(0.5)); gapLabel.setAttribute('text-anchor', 'middle'); gapLabel.classList.add('chart-annotation', 'label-element', 'chart-element'); gapLabel.textContent = STATE.chartConfig.center; svg.appendChild(gapLabel);
-        STATE.drivers.forEach(d => {
+        gapLabel.setAttribute('x', xScale(0.45)); gapLabel.setAttribute('y', yScale(0.48)); gapLabel.setAttribute('text-anchor', 'middle'); gapLabel.classList.add('chart-annotation','label-element','chart-element'); gapLabel.textContent = STATE.chartConfig.center; svg.appendChild(gapLabel);
+        // Driver markers with navy pill labels
+        STATE.drivers.forEach(function(d) {
           if (d.markerYear && (d.state === 'normal' || d.state === 'accelerating')) {
             const t = (d.markerYear - 2025) / 3; const dem = Math.pow(t, exp); const x = xScale(t); const y = yScale(dem);
             const isHot = d.id && STATE.highlightDriverId === d.id;
-            const emphasis = isHot ? 7 : (d.state === 'accelerating' ? 6 : 5);
-            const dotColor = d.state === 'accelerating' ? '#ef4444' : '#ef4444';
-            const dotFilter = isHot ? 'filter: drop-shadow(0 3px 8px rgba(239,68,68,0.35));' : '';
+            const r = isHot ? 6 : 5;
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.classList.add('marker-group', 'marker-element', 'chart-element');
-            g.setAttribute('role', 'button'); g.setAttribute('tabindex', '0'); g.setAttribute('aria-label', `Learn more about ${d.label}`);
-            g.innerHTML = `<title>${d.short}</title><circle cx="${x}" cy="${y}" r="18" fill="transparent" stroke="none"/><circle cx="${x}" cy="${y}" r="${emphasis}" fill="${dotColor}" stroke="white" stroke-width="2" style="${dotFilter}"/><text x="${x + 10}" y="${y - 2}" class="chart-text label-element chart-element" font-size="11" font-weight="700" fill="#334155">${d.label}</text>`;
-            g.addEventListener('click', () => openInsight(d));
-            g.addEventListener('keydown', e => { if (e.key === 'Enter') openInsight(d); });
+            g.classList.add('marker-group','marker-element','chart-element');
+            g.setAttribute('role','button'); g.setAttribute('tabindex','0'); g.setAttribute('aria-label','Learn more about '+d.label);
+            const lblW = d.label.length * 6 + 18;
+            const flipLeft = (x + 14 + lblW) > (margin.left + width + 40);
+            const lblX = flipLeft ? (x - 14 - lblW) : (x + 14);
+            g.innerHTML = '<title>'+d.short+'</title><circle cx="'+x+'" cy="'+y+'" r="18" fill="transparent" stroke="none"/><circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#ef4444" stroke="white" stroke-width="2.5"/><rect x="'+lblX+'" y="'+(y-11)+'" width="'+lblW+'" height="22" rx="11" fill="#0A1C60" opacity="0.9"/><text x="'+(lblX+lblW/2)+'" y="'+(y+4)+'" text-anchor="middle" font-size="10" font-weight="600" fill="white" font-family="Inter, system-ui, sans-serif" class="label-element chart-element">'+d.label+'</text>';
+            g.addEventListener('click', function(){ openInsight(d); });
+            g.addEventListener('keydown', function(e){ if(e.key==='Enter') openInsight(d); });
             svg.appendChild(g);
           }
         });
+        // Tipping point
         if (STATE.showTippingPoint) {
           const t = (STATE.tippingPointYear - 2025) / 3; const x = xScale(t);
           const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', x); line.setAttribute('y1', yScale(0)); line.setAttribute('x2', x); line.setAttribute('y2', yScale(1));
-          line.setAttribute('stroke', '#ef4444'); line.setAttribute('stroke-width', '1.5'); line.setAttribute('stroke-dasharray', '6 4');
-          line.classList.add('line-element', 'chart-element'); svg.appendChild(line);
-          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          label.setAttribute('x', x + 8); label.setAttribute('y', yScale(1) - 6); label.setAttribute('font-size', '11'); label.setAttribute('font-weight', '700'); label.setAttribute('fill', '#0A1C60'); label.setAttribute('font-family', 'Inter, system-ui, sans-serif');
-          label.classList.add('chart-text', 'label-element', 'chart-element'); label.textContent = 'IT Inflection Point'; svg.appendChild(label);
-          const ann = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          ann.setAttribute('x', x + 8); ann.setAttribute('y', yScale(0.8) + 5); ann.setAttribute('fill', '#ef4444'); ann.setAttribute('font-size', '10'); ann.setAttribute('font-weight', '600'); ann.setAttribute('font-family', 'Inter, system-ui, sans-serif');
-          ann.classList.add('chart-text', 'label-element', 'chart-element'); ann.textContent = STATE.chartConfig.tipping; svg.appendChild(ann);
+          line.setAttribute('x1',x); line.setAttribute('y1',yScale(0)); line.setAttribute('x2',x); line.setAttribute('y2',yScale(1));
+          line.setAttribute('stroke','#ef4444'); line.setAttribute('stroke-width','2'); line.setAttribute('stroke-dasharray','8 4'); line.setAttribute('opacity','0.5');
+          line.classList.add('line-element','chart-element'); svg.appendChild(line);
+          const lblW = 160;
+          const lblG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          lblG.classList.add('label-element','chart-element');
+          lblG.innerHTML = '<rect x="'+(x+6)+'" y="'+(yScale(1)-14)+'" width="'+lblW+'" height="24" rx="12" fill="#0A1C60" opacity="0.9"/><text x="'+(x+6+lblW/2)+'" y="'+(yScale(1)+2)+'" text-anchor="middle" font-size="10" font-weight="600" fill="white" font-family="Inter, system-ui, sans-serif">Operational Breaking Point</text>';
+          svg.appendChild(lblG);
           const hit = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-          hit.setAttribute('role', 'button'); hit.setAttribute('tabindex', '0'); hit.setAttribute('aria-label', 'Learn more about Projected Tipping Point');
-          hit.innerHTML = `<rect x="${x - 10}" y="${yScale(1) - 20}" width="20" height="${height}" fill="transparent"/>`;
-          hit.addEventListener('click', () => openInsight(STATE.tippingPoint));
-          hit.addEventListener('keydown', e => { if (e.key === 'Enter') openInsight(STATE.tippingPoint); });
+          hit.setAttribute('role','button'); hit.setAttribute('tabindex','0'); hit.setAttribute('aria-label','Learn more about Projected Tipping Point');
+          hit.innerHTML = '<rect x="'+(x-10)+'" y="'+(yScale(1)-20)+'" width="180" height="'+(height+20)+'" fill="transparent"/>';
+          hit.addEventListener('click', function(){ openInsight(STATE.tippingPoint); });
+          hit.addEventListener('keydown', function(e){ if(e.key==='Enter') openInsight(STATE.tippingPoint); });
           svg.appendChild(hit);
         }
       }
@@ -1501,6 +1535,27 @@
         `;
       }
 
+      function renderAnalystModal(){
+        if (!STATE.showAnalystModal) return '';
+        return `
+          <div class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" data-action="close-analyst-modal">
+            <div class="w-full max-w-2xl mx-4 rounded-2xl overflow-hidden modal-content glass" onclick="if(!event.target.closest('[data-action]'))event.stopPropagation()">
+              <div class="bg-white/40 backdrop-blur-lg px-6 py-4 flex items-center justify-between" style="border-bottom:1px solid var(--border-subtle)">
+                <div class="flex items-center gap-3"><i data-lucide="quote" class="w-6 h-6 text-[#0070F3]"></i><h2 class="text-xl font-bold tracking-tight text-[#0A1C60]">What the analysts are saying</h2></div>
+                <button type="button" class="text-slate-500 hover:text-slate-700 focus-ring p-2" data-action="close-analyst-modal"><i data-lucide="x" class="w-5 h-5"></i></button>
+              </div>
+              <div class="p-6 bg-white/35 backdrop-blur-lg space-y-1">
+                <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition"><div class="text-sm font-bold min-w-[140px] flex-shrink-0" style="color:#006B3F">Forrester, 2025</div><div class="text-sm text-[#475569] italic">"Application complexity has overtaken infrastructure as the primary bottleneck in IT operations."</div></div>
+                <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition"><div class="text-sm font-bold min-w-[140px] flex-shrink-0" style="color:#0070F3">Gartner, 2025</div><div class="text-sm text-[#475569] italic">"By 2027, organizations that fail to modernize application delivery will spend 40% more on operational overhead than those that do."</div></div>
+                <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition"><div class="text-sm font-bold min-w-[140px] flex-shrink-0" style="color:#1A3A6B">McKinsey, 2025</div><div class="text-sm text-[#475569] italic">"The gap between IT demand and IT capacity is widening fastest at the application layer."</div></div>
+                <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition"><div class="text-sm font-bold min-w-[140px] flex-shrink-0" style="color:#D4213D">IDC, 2025</div><div class="text-sm text-[#475569] italic">"Application sprawl across hybrid environments is now the leading driver of unplanned IT work."</div></div>
+                <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition"><div class="text-sm font-bold min-w-[140px] flex-shrink-0" style="color:#7C3AED">Deloitte, 2025</div><div class="text-sm text-[#475569] italic">"CIOs rank application management complexity as their top barrier to executing digital strategy."</div></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       function renderWhyModal(){
         if(!STATE.openWhyModal) return '';
         const id = STATE.openWhyModal;
@@ -1562,13 +1617,16 @@
                     </div>
                   </div>
                 ` : `
-                  <p class="text-base leading-relaxed text-[#4A5568] mb-4">${data.intro}</p>
-                  <div class="space-y-4">${data.bullets.map(b=>`<div class="bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"><i data-lucide="check-circle" class="w-5 h-5 text-[#0070F3] flex-shrink-0 mt-0.5"></i><p class="text-base leading-relaxed text-[#4A5568]">${b}</p></div>`).join('')}</div>
-                  <div class="mt-6 bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-start gap-3"><i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-base italic text-[#4A5568]">${data.analyst}</p></div>
+                  <p class="text-sm leading-relaxed text-[#4A5568] mb-5">${data.intro}</p>
+                  <div class="space-y-3">${data.bullets.map(b=>{const parts=b.split(' = ');const hasTitle=parts.length>1;return '<div class="bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">'+(hasTitle?'<div class="text-sm font-bold text-[#0A1C60] mb-1">'+parts[0]+'</div>':'')+'<p class="text-sm leading-relaxed text-[#64748b]">'+(hasTitle?parts.slice(1).join(' = '):b)+'</p></div>';}).join('')}</div>
+                  <div class="mt-5 bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm flex items-start gap-3"><i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-sm italic text-[#64748b]">${data.analyst}</p></div>
                 `}
-                <div class="mt-4 flex items-center justify-between w-full">
+                <div class="mt-4 flex flex-col items-center gap-3 w-full">
+                  ${!next ? '<div class="text-xs italic text-[#64748b]">You\'ve seen why the model breaks. Now see what replaces it.</div>' : ''}
+                  <div class="flex items-center justify-between w-full">
                   ${prev ? `<button type="button" class="re-secondary inline-flex items-center gap-2" data-action="why-nav" data-to="${prev}"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>` : '<div></div>'}
                   ${next ? `<button type="button" class="re-primary inline-flex items-center gap-2" data-action="why-nav" data-to="${next}">Next <i data-lucide="arrow-right" class="w-4 h-4"></i></button>` : `<button type="button" class="re-primary inline-flex items-center gap-2" data-action="advance" data-next="solution">See Approach <i data-lucide="arrow-right" class="w-4 h-4"></i></button>`}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1633,7 +1691,7 @@
                 <div class="platform-cap"><i data-lucide="eye" class="w-3 h-3"></i> Central Governance</div>
               </div>
               <div class="mt-2 text-[10px] text-blue-200 tracking-wide text-center">
-                Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit — across every environment from one place
+                Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit -  across every environment from one place
               </div>
             </div>
 
@@ -1651,7 +1709,7 @@
                   <div class="device-dot device-dot-r"></div>
                   <div class="device-dot device-dot-y"></div>
                   <div class="device-dot device-dot-g"></div>
-                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : showDesktop ? (phase === 'launch' ? 'Opening Application Workspace...' : STATE.flowDevice ? STATE.flowDevice + ' — Desktop' : 'Select a device') : phase === 'clicking' ? 'Application Workspace — selecting Teams...' : 'Application Workspace'}</span>
+                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : showDesktop ? (phase === 'launch' ? 'Opening Application Workspace...' : STATE.flowDevice ? STATE.flowDevice + ' -  Desktop' : 'Select a device') : phase === 'clicking' ? 'Application Workspace -  selecting Teams...' : 'Application Workspace'}</span>
                 </div>
 
                 ${showDesktop && !STATE.flowDevice ? `
@@ -1721,7 +1779,7 @@
                     <div class="aw-icon" style="background:#5B53D6">T</div>
                     <div>
                       <div class="aw-title">Microsoft Teams</div>
-                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com — routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 — auto-patched by Workspace' : 'Installed and configured by Workspace'}</div>
+                      <div class="aw-subtitle">${scenario && scenario.id === 'backend' ? 'teams.microsoft.com -  routed by Workspace' : scenario && scenario.id === 'update' ? 'v2.2 -  auto-patched by Workspace' : 'Installed and configured by Workspace'}</div>
                     </div>
                   </div>
                   <div class="app-window-body" style="flex-direction:row">
@@ -1741,7 +1799,7 @@
                         </div>
                         <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.6s">
                           <div class="teams-msg-avatar" style="background:#10b981">JR</div>
-                          <div class="teams-msg-bubble">Perfect timing — pulling it up now</div>
+                          <div class="teams-msg-bubble">Perfect timing -  pulling it up now</div>
                         </div>
                         <div class="teams-msg ${appOpen ? 'show' : ''}" style="transition-delay:0.9s">
                           <div class="teams-msg-bubble self">On it. Give me 5 min.</div>
@@ -1758,7 +1816,7 @@
                 ${appOpen && ['checking','routing','config'].includes(phase) ? `
                   <div style="position:absolute;bottom:6px;right:6px;z-index:10;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9999px;background:rgba(255,255,255,0.92);border:1px solid #a7f3d0;font-size:9px;font-weight:600;color:#059669;backdrop-filter:blur(4px)">
                     <i data-lucide="check-circle" class="w-3 h-3"></i>
-                    User is working — orchestration happens invisibly
+                    User is working -  orchestration happens invisibly
                   </div>
                 ` : ''}
               </div>
@@ -2223,7 +2281,7 @@
                 <!-- Flow controls -->
                 <div class="flex items-center gap-2 text-[12px]">
                   <button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white w-7 h-7 rounded-full hover:bg-[#005AD0] inline-flex items-center justify-center"><i data-lucide="${STATE.flowRunning && !STATE.flowPaused ? 'pause' : 'play'}" class="w-3.5 h-3.5"></i></button>
-                  <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded text-[12px] font-semibold hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+                  <button type="button" data-action="reset-flow" class="bg-[#0A1C60] text-white w-7 h-7 rounded-full hover:bg-[#0070F3] inline-flex items-center justify-center" title="Reset"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
                 </div>
               </div>
 
@@ -2236,7 +2294,8 @@
               ${STATE.solutionViewMultiTenant ? renderMultiTenantView() : ''}
             </div>
 
-            <div class="flex justify-end mt-2">
+            <div class="flex flex-col items-end gap-2 mt-2">
+              <div class="text-xs italic text-[#64748b]">You've seen what changes for one user on one device. Now see what it means across your entire organization.</div>
               <button type="button" class="bg-[#0070F3] text-white px-5 py-2.5 text-sm font-semibold rounded-full hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
             </div>
           </section>
@@ -2264,15 +2323,15 @@
                   </div>
                   <div class="font-semibold mb-1">Action Sets</div>
                   <div class="space-y-1 mb-2">
-                    <div class="border rounded p-1.5 ${scenario.activePath === 'local' && ['routing','config','done','final'].includes(phase) ? 'admin-highlight border-[#0070F3]' : 'border-slate-200'}"><span class="text-slate-500">Launch \u2014 Corporate Network \u2192</span> <span class="font-medium">Local install</span></div>
-                    <div class="border rounded p-1.5 ${scenario.activePath === 'saas' && ['routing','config','done','final'].includes(phase) ? 'admin-highlight border-[#0070F3]' : 'border-slate-200'}"><span class="text-slate-500">Launch \u2014 VPN / Remote \u2192</span><span class="font-medium">${isBackend && ['done','final'].includes(phase) ? 'SaaS URL' : 'AVD RemoteApp'}</span>${isBackend && ['config','done','final'].includes(phase) ? '<span class="ml-1 px-1 py-0.5 rounded bg-blue-100 text-blue-700 text-[8px] font-semibold">Changed</span>' : ''}</div>
-                    <div class="border rounded p-1.5 border-slate-200"><span class="text-slate-500">Launch \u2014 Browser / No Agent \u2192</span> <span class="font-medium">SaaS URL</span></div>
+                    <div class="border rounded p-1.5 ${scenario.activePath === 'local' && ['routing','config','done','final'].includes(phase) ? 'admin-highlight border-[#0070F3]' : 'border-slate-200'}"><span class="text-slate-500">Launch -  Corporate Network \u2192</span> <span class="font-medium">Local install</span></div>
+                    <div class="border rounded p-1.5 ${scenario.activePath === 'saas' && ['routing','config','done','final'].includes(phase) ? 'admin-highlight border-[#0070F3]' : 'border-slate-200'}"><span class="text-slate-500">Launch -  VPN / Remote \u2192</span><span class="font-medium">${isBackend && ['done','final'].includes(phase) ? 'SaaS URL' : 'AVD RemoteApp'}</span>${isBackend && ['config','done','final'].includes(phase) ? '<span class="ml-1 px-1 py-0.5 rounded bg-blue-100 text-blue-700 text-[8px] font-semibold">Changed</span>' : ''}</div>
+                    <div class="border rounded p-1.5 border-slate-200"><span class="text-slate-500">Launch -  Browser / No Agent \u2192</span> <span class="font-medium">SaaS URL</span></div>
                   </div>
                   <div class="font-semibold mb-1">Entitlements</div>
                   <div class="space-y-1 mb-2 text-slate-500">
-                    <div class="border rounded p-1 border-slate-200 ${['done','final'].includes(phase) ? 'admin-highlight' : ''}">All Users \u2014 <span class="text-slate-700">Forced</span> \u2014 Production</div>
-                    <div class="border rounded p-1 border-slate-200">Engineering \u2014 <span class="text-slate-700">Forced</span> \u2014 Production</div>
-                    <div class="border rounded p-1 border-slate-200">Contractors \u2014 <span class="text-slate-700">Catalog</span> \u2014 Production</div>
+                    <div class="border rounded p-1 border-slate-200 ${['done','final'].includes(phase) ? 'admin-highlight' : ''}">All Users -  <span class="text-slate-700">Forced</span> -  Production</div>
+                    <div class="border rounded p-1 border-slate-200">Engineering -  <span class="text-slate-700">Forced</span> -  Production</div>
+                    <div class="border rounded p-1 border-slate-200">Contractors -  <span class="text-slate-700">Catalog</span> -  Production</div>
                   </div>
                   ${isBackend ? `<div class="mt-2 p-2 rounded bg-blue-50 border border-blue-200 text-[9px] text-blue-800 font-medium"><i data-lucide="info" class="w-3 h-3 inline mr-1"></i>IT changed one routing rule. Zero user impact.</div>` : ''}
                   ${isUpdate ? `<div class="mt-2 p-2 rounded bg-indigo-50 border border-indigo-200 text-[9px] text-indigo-800 font-medium"><i data-lucide="git-merge" class="w-3 h-3 inline mr-1"></i>Setup Store flagged v2.2. Auto-promoted through release pipeline.</div>` : ''}
@@ -2303,7 +2362,7 @@
           {icon:'cloud-cog', label:'Autopilot enrolls device', detail:'Intune enrollment in progress...', phase:'autopilot'},
           {icon:'shield-check', label:'Device compliant', detail:'Policies applied, device registered', phase:'autopilot'},
           {icon:'download', label:'Workspace agent activates', detail:'Autopilot hands off to Application Workspace', phase:'handoff'},
-          {icon:'user-check', label:'Identity detected', detail:'Sarah Chen \u2014 Engineering, Seattle office', phase:'workspace'},
+          {icon:'user-check', label:'Identity detected', detail:'Sarah Chen -  Engineering, Seattle office', phase:'workspace'},
           {icon:'layers', label:'Persona matched', detail:'25 apps, 3 drive mappings, 2 printers', phase:'workspace'},
           {icon:'zap', label:'Delivering all apps', detail:'25 apps delivered at once', phase:'workspace'},
           {icon:'check-circle', label:'Ready to work', detail:'Total elapsed: ~8 minutes', phase:'done'},
@@ -2312,7 +2371,7 @@
         // Device screen content per step
         let deviceScreen = '';
         if (s < 0) {
-          deviceScreen = `<div class="text-center py-8 text-slate-300"><i data-lucide="laptop" class="w-10 h-10 mx-auto mb-2"></i><div class="text-[10px]">New device \u2014 powered off</div></div>`;
+          deviceScreen = `<div class="text-center py-8 text-slate-300"><i data-lucide="laptop" class="w-10 h-10 mx-auto mb-2"></i><div class="text-[10px]">New device -  powered off</div></div>`;
         } else if (s <= 2) {
           deviceScreen = `
             <div class="ap-device-header autopilot"><i data-lucide="cloud-cog" class="w-3 h-3"></i> Windows Autopilot</div>
@@ -2337,13 +2396,13 @@
             <div class="text-center py-3">
               <div class="h-10 w-10 rounded-full mx-auto mb-2 grid place-items-center text-white font-bold" style="background:#3b82f6">SC</div>
               <div class="text-[11px] font-semibold text-[#0A1C60]">Sarah Chen</div>
-              <div class="text-[9px] text-slate-400">Engineering \u2014 Seattle office</div>
+              <div class="text-[9px] text-slate-400">Engineering -  Seattle office</div>
             </div>`;
         } else if (s === 5) {
           deviceScreen = `
             <div class="ap-device-header workspace"><i data-lucide="boxes" class="w-3 h-3"></i> Application Workspace</div>
             <div class="text-center py-3">
-              <div class="text-[11px] font-semibold text-[#0A1C60] mb-2">Persona: Engineering \u2014 Seattle</div>
+              <div class="text-[11px] font-semibold text-[#0A1C60] mb-2">Persona: Engineering -  Seattle</div>
               <div class="flex justify-center gap-4 text-[9px] text-slate-500 mb-3">
                 <span><strong class="text-[#0A1C60]">25</strong> apps</span>
                 <span><strong class="text-[#0A1C60]">3</strong> drive maps</span>
@@ -2376,7 +2435,7 @@
                   </div>
                 `).join('')}
               </div>
-              <div class="text-[9px] text-center text-emerald-600 font-semibold mt-1"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> 25 apps \u00b7 3 drives \u00b7 2 printers \u2014 ready</div>
+              <div class="text-[9px] text-center text-emerald-600 font-semibold mt-1"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> 25 apps \u00b7 3 drives \u00b7 2 printers -  ready</div>
             </div>`;
         }
 
@@ -2404,7 +2463,7 @@
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <div class="h-7 w-7 rounded-lg grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60]"><i data-lucide="laptop" class="w-4 h-4 text-white"></i></div>
-                <div><div class="text-sm font-semibold text-[#0A1C60]">Day One \u2014 Autopilot to Productive</div><div class="text-[10px] text-slate-400">New hire laptop goes from zero to fully configured</div></div>
+                <div><div class="text-sm font-semibold text-[#0A1C60]">Day One -  Autopilot to Productive</div><div class="text-[10px] text-slate-400">New hire laptop goes from zero to fully configured</div></div>
               </div>
               <div class="flex items-center gap-2">
                 ${s >= 7 ? `<button type="button" data-action="reset-autopilot" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-3 py-1 text-[11px] font-semibold rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>` : `<button type="button" data-action="start-autopilot" class="bg-[#0070F3] text-white px-3 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${s >= 0 && s < 7 ? 'loader' : 'play'}" class="w-3 h-3"></i> ${s >= 0 && s < 7 ? 'Playing...' : 'Play'}</button>`}
@@ -2429,7 +2488,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div class="p-3 rounded-lg bg-red-50 border border-red-200">
                     <div class="text-[9px] font-semibold text-red-400 uppercase tracking-wide mb-1.5">Without Workspace</div>
-                    <div class="text-lg font-bold text-red-600 mb-1">1\u20133 hours</div>
+                    <div class="text-lg font-bold text-red-600 mb-1">1-3 hours</div>
                     <div class="text-[9px] text-red-500 space-y-0.5">
                       <div>Apps install one by one</div>
                       <div>Multiple reboots needed</div>
@@ -2452,6 +2511,12 @@
         `;
       }
 
+      function renderLogoTicker(){
+        const allNames = TRUST_LOGOS.flatMap(s => s.names);
+        const items = allNames.map(n => '<span class="logo-name">'+n+'</span>').join('<span class="logo-divider"></span>');
+        return '<div class="mt-4 pt-3 border-t border-slate-100"><div class="text-[9px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">Trusted across industries</div><div class="logo-ticker-wrap"><div class="logo-ticker">'+items+'<span class="logo-divider"></span>'+items+'</div></div></div>';
+      }
+
       function compactCard(card){
         const expanded = STATE.openCards[card.id];
         const visited = STATE.visitedCards.includes(card.id);
@@ -2472,13 +2537,14 @@
                 <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}" aria-hidden="true"></i>
               </div>
             </button>
-            <div id="${contentId}" class="overflow-hidden" style="max-height:${expanded?'1000px':'0'};opacity:${expanded?'1':'0'};transition:max-height 250ms cubic-bezier(.2,.8,.2,1),opacity 200ms ease">
+            <div id="${contentId}" class="overflow-hidden" style="max-height:${expanded?'1200px':'0'};opacity:${expanded?'1':'0'};transition:max-height 250ms cubic-bezier(.2,.8,.2,1),opacity 200ms ease">
               <div class="px-4 pb-4 pt-1 border-t border-slate-100">
                 <ul class="list-none space-y-2 text-[13px] leading-[1.5] text-[#4A5568]">
                   ${card.bullets.map(b=>`<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-[#0070F3] flex-shrink-0 mt-0.5"></i><span>${b}</span></li>`).join('')}
                 </ul>
                 ${card.timeline && onboardingMiniTimelineEnabled && expanded ? renderMiniTimeline() : ''}
                 <p class="mt-3 text-[12px] italic text-[#64748b] border-l-2 border-[#0070F3] pl-3">${card.closer}</p>
+                ${card.id === 'trust' && expanded ? renderLogoTicker() : ''}
               </div>
             </div>
           </div>
@@ -2525,14 +2591,14 @@
       function deriveFromEmployees(n){
         const ci = STATE.calcInputs;
         ci.users = n;
-        ci.endpoints = Math.round(n * 1.2);
-        ci.envs = 3;
-        ci.apps = n > 10000 ? 200 : n > 3000 ? 150 : 100;
-        ci.customApps = 30;
-        ci.monthlyTickets = Math.round(n * 0.12);
-        ci.avgTicketMins = 18;
-        ci.pkgHours = ci.apps > 150 ? 100 : 80;
-        ci.patchHours = 60;
+        if (n <= 200) { ci.endpoints = n; ci.envs = 1; ci.apps = 25; ci.customApps = 2; ci.monthlyTickets = Math.round(n * 0.05); ci.avgTicketMins = 12; ci.pkgHours = 8; ci.patchHours = 5; }
+        else if (n <= 500) { ci.endpoints = Math.round(n * 1.1); ci.envs = 2; ci.apps = 50; ci.customApps = 5; ci.monthlyTickets = Math.round(n * 0.08); ci.avgTicketMins = 15; ci.pkgHours = 20; ci.patchHours = 15; }
+        else if (n <= 1000) { ci.endpoints = Math.round(n * 1.15); ci.envs = 2; ci.apps = 75; ci.customApps = 10; ci.monthlyTickets = Math.round(n * 0.10); ci.avgTicketMins = 15; ci.pkgHours = 35; ci.patchHours = 25; }
+        else if (n <= 3000) { ci.endpoints = Math.round(n * 1.2); ci.envs = 3; ci.apps = 100; ci.customApps = 15; ci.monthlyTickets = Math.round(n * 0.10); ci.avgTicketMins = 18; ci.pkgHours = 50; ci.patchHours = 35; }
+        else if (n <= 5000) { ci.endpoints = Math.round(n * 1.2); ci.envs = 3; ci.apps = 150; ci.customApps = 25; ci.monthlyTickets = Math.round(n * 0.12); ci.avgTicketMins = 18; ci.pkgHours = 80; ci.patchHours = 60; }
+        else if (n <= 10000) { ci.endpoints = Math.round(n * 1.25); ci.envs = 4; ci.apps = 175; ci.customApps = 30; ci.monthlyTickets = Math.round(n * 0.12); ci.avgTicketMins = 18; ci.pkgHours = 100; ci.patchHours = 70; }
+        else if (n <= 25000) { ci.endpoints = Math.round(n * 1.3); ci.envs = 5; ci.apps = 200; ci.customApps = 40; ci.monthlyTickets = Math.round(n * 0.12); ci.avgTicketMins = 20; ci.pkgHours = 130; ci.patchHours = 90; }
+        else { ci.endpoints = Math.round(n * 1.3); ci.envs = 6; ci.apps = 250; ci.customApps = 50; ci.monthlyTickets = Math.round(n * 0.12); ci.avgTicketMins = 20; ci.pkgHours = 160; ci.patchHours = 110; }
       }
 
       function renderROI(){
@@ -2543,29 +2609,25 @@
         return `
           <section id="panel-roi" class="space-y-4">
 
-            <!-- WHY THIS MATTERS NOW -->
-            <div class="section-card p-5 rounded-2xl">
-              <div class="text-[10px] font-semibold text-amber-600 uppercase tracking-widest mb-2">The operational bottleneck</div>
-              <div class="text-sm font-semibold text-[#0A1C60] mb-3 leading-snug">Application management is consuming the capacity your team needs for everything else.</div>
-              <div class="text-xs text-[#64748b] leading-relaxed">Your engineers are packaging, patching, and repackaging applications across multiple platforms and environments \u2014 manually, repeatedly, for every update cycle. Your support team is fielding hundreds of app-related tickets a month. Headcount is flat. The backlog grows.</div>
-              <div class="text-xs text-[#64748b] leading-relaxed mt-2">The result: strategic initiatives \u2014 migrations, AI rollouts, compliance projects, endpoint modernization \u2014 are waiting for capacity that is trapped in routine app delivery work.</div>
+            <!-- BRIDGE CARD -->
+            <div class="section-card px-5 py-3 rounded-xl border-l-4 border-[#0070F3]">
+              <div class="text-xs text-[#475569] leading-relaxed">What you just saw -  self-service delivery, automatic patching, zero per-platform rebuilds -  eliminates hours of repetitive work per app, per update, per environment. Enter your employee count to see what that adds up to.</div>
             </div>
 
-            <!-- EMPLOYEE COUNT INPUT -->
-            <div class="section-card p-5 rounded-2xl">
+            <!-- EMPLOYEE COUNT INPUT -  HERO -->
+            <div class="section-card p-6 rounded-2xl">
               <div class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-3 flex-1">
-                  <div class="h-10 w-10 rounded-xl grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60] flex-shrink-0"><i data-lucide="building-2" class="w-5 h-5 text-white"></i></div>
+                <div class="flex items-center gap-4 flex-1">
+                  <div class="h-12 w-12 rounded-xl grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60] flex-shrink-0"><i data-lucide="building-2" class="w-6 h-6 text-white"></i></div>
                   <div class="flex-1">
-                    <div class="text-sm font-semibold text-[#0A1C60] mb-0.5">How many employees does your organization manage?</div>
-                    <div class="text-[10px] text-slate-400 mb-1">We\u2019ll estimate your current operational effort and show where capacity is locked up.</div>
-                    <div class="flex items-center gap-2">
-                      <input type="number" id="roi-employees" placeholder="5000" value="${ci.users}" class="w-full max-w-[200px] px-3 py-2 text-lg font-semibold text-[#0A1C60] border-2 border-slate-200 rounded-lg focus:border-[#0070F3] focus:outline-none transition" style="appearance:textfield;-moz-appearance:textfield">
-                      <button type="button" data-action="calculate-impact" class="inline-flex items-center gap-1.5 bg-[#0070F3] text-white px-4 py-2.5 text-xs font-semibold rounded-lg hover:bg-[#005AD0] transition whitespace-nowrap"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Show Results</button>
+                    <div class="text-base font-semibold text-[#0A1C60] mb-1">How many employees?</div>
+                    <div class="flex items-center gap-3">
+                      <input type="number" id="roi-employees" placeholder="5000" value="${ci.users}" class="w-full max-w-[220px] px-4 py-3 text-2xl font-bold text-[#0A1C60] border-2 border-slate-200 rounded-xl focus:border-[#0070F3] focus:outline-none transition" style="appearance:textfield;-moz-appearance:textfield">
+                      <button type="button" data-action="calculate-impact" class="inline-flex items-center gap-2 bg-[#0070F3] text-white px-5 py-3 text-sm font-semibold rounded-xl hover:bg-[#005AD0] transition whitespace-nowrap"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> Show Results</button>
                     </div>
                   </div>
                 </div>
-                <button type="button" data-action="toggle-assumptions" class="p-2 text-slate-400 hover:text-[#0070F3] border border-slate-200 rounded-lg hover:border-[#0070F3] transition" title="Adjust assumptions"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                <button type="button" data-action="toggle-assumptions" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs text-slate-400 hover:text-[#0070F3] border border-slate-200 rounded-lg hover:border-[#0070F3] transition" title="Adjust assumptions"><i data-lucide="sliders" class="w-3.5 h-3.5"></i> Adjust</button>
               </div>
 
               ${STATE.showAssumptions ? `
@@ -2603,7 +2665,7 @@
             </div>
 
             <!-- ROI DASHBOARD -->
-            ${r ? '<div id="impact-results">' + renderCalcResult() + '</div>' : ''}
+            ${ci.users <= 200 ? '<div class="section-card p-6 rounded-2xl text-center"><i data-lucide="info" class="w-8 h-8 text-slate-300 mx-auto mb-3"></i><div class="text-sm font-semibold text-[#0A1C60] mb-2">Not the right fit for this size</div><div class="text-xs text-[#64748b] max-w-md mx-auto leading-relaxed">Organizations under 200 employees typically don\'t face the multi-platform complexity that Application Workspace addresses. For smaller teams, the per-platform model usually works fine.</div></div>' : (r ? '<div id="impact-results">' + renderCalcResult() + '</div>' : '')}
 
             <div class="text-[10px] text-center text-slate-400 mt-1">Estimated business impact based on employee count and configurable assumptions.</div>
 
@@ -2623,152 +2685,86 @@
         const r = STATE.calcResult;
         const a = ROI_ASSUMPTIONS[STATE.calcScenario];
         const ci = STATE.calcInputs;
-        const supportHrsBefore = r.currentSupportHours;
-        const supportHrsAfter = Math.round(supportHrsBefore - r.ticketHoursReturned);
-        const ticketsBefore = ci.monthlyTickets;
-        const ticketsAfter = ticketsBefore - r.ticketsAvoided;
-        const pkgBefore = ci.pkgHours;
-        const pkgAfter = Math.round(pkgBefore - r.pkgHoursReturned);
-        const patchBefore = ci.patchHours;
-        const patchAfter = Math.round(patchBefore - r.patchHoursReturned);
+        const supportPct = Math.round(a.ticketReduction * 100);
+        const pkgPct = Math.round(a.pkgReduction * 100);
+        const patchPct = Math.round(a.patchReduction * 100);
         return `
-          <!-- SECTION A: Where your capacity is locked -->
-          <div class="section-card p-5 rounded-2xl dash-animate">
-            <div class="text-[10px] font-semibold text-amber-600 uppercase tracking-widest mb-3">Where your capacity is locked</div>
-            <div class="grid grid-cols-3 gap-3">
-              <div class="bg-slate-50 rounded-xl p-4">
-                <div class="text-2xl font-bold text-[#0A1C60] leading-none">${num(r.totalHoursMonth)}</div>
-                <div class="text-[10px] text-slate-400 mt-1">hrs / month</div>
-                <div class="text-[10px] font-semibold text-[#64748b] mt-2">Consumed by routine app operations</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">Support, packaging, patching, and rework across ${STATE.calcInputs.envs} environments</div>
+          <!-- BEAT 1: Here's what we estimated -->
+          <div class="section-card p-6 rounded-2xl dash-animate">
+            <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-widest mb-4">Here's what we estimated</div>
+            <div class="grid grid-cols-3 gap-6">
+              <div class="text-center">
+                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${num(r.totalHoursYear)}</div>
+                <div class="text-xs text-slate-400 mt-2">hours / year locked in routine work</div>
               </div>
-              <div class="bg-slate-50 rounded-xl p-4">
-                <div class="text-2xl font-bold text-[#0A1C60] leading-none">${r.fteCapacity}</div>
-                <div class="text-[10px] text-slate-400 mt-1">FTE-equivalents</div>
-                <div class="text-[10px] font-semibold text-[#64748b] mt-2">Tied to repetitive delivery work</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">This capacity could be reallocated \u2014 not reduced</div>
+              <div class="text-center">
+                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${r.fteCapacity}</div>
+                <div class="text-xs text-slate-400 mt-2">FTE-equivalents recoverable</div>
               </div>
-              <div class="bg-slate-50 rounded-xl p-4">
-                <div class="text-2xl font-bold text-[#0A1C60] leading-none">${STATE.calcInputs.envs}</div>
-                <div class="text-[10px] text-slate-400 mt-1">platforms</div>
-                <div class="text-[10px] font-semibold text-[#64748b] mt-2">Multiplying every task</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">Each environment requires separate packaging, testing, and deployment</div>
+              <div class="text-center">
+                <div class="text-4xl font-bold text-[#0070F3] leading-none">${num(r.strategicHours)}</div>
+                <div class="text-xs text-slate-400 mt-2">strategic hours returned / year</div>
               </div>
             </div>
           </div>
 
-          <!-- SECTION B: What standardization removes -->
-          <div class="dash-animate mt-4">
-            <div class="text-[10px] font-semibold text-[#0070F3] uppercase tracking-widest mb-2 px-1">What standardization removes</div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="section-card p-4 rounded-2xl">
-                <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
-                  <div class="w-1 h-4 rounded-full bg-emerald-500"></div>
-                  <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider">Support Operations</div>
-                </div>
-                <div class="space-y-3 text-xs text-[#475569]">
-                  <div class="flex items-center justify-between">
-                    <span>App support hours / mo</span>
-                    <div class="flex items-center gap-2">
-                      <span class="text-slate-400 line-through">${num(supportHrsBefore)}</span>
-                      <span class="text-slate-300">\u2192</span>
-                      <span class="font-semibold text-emerald-600">${num(supportHrsAfter)}</span>
-                      <span class="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.ticketReduction * 100)}%</span>
-                    </div>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span>Tickets / month</span>
-                    <div class="flex items-center gap-2">
-                      <span class="text-slate-400 line-through">${num(ticketsBefore)}</span>
-                      <span class="text-slate-300">\u2192</span>
-                      <span class="font-semibold text-emerald-600">${num(ticketsAfter)}</span>
-                      <span class="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.ticketReduction * 100)}%</span>
-                    </div>
-                  </div>
-                </div>
+          <!-- BEAT 2: Here's where it comes from -->
+          <div class="section-card p-6 rounded-2xl dash-animate mt-4">
+            <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-widest mb-4">Here's where it comes from</div>
+            <div class="space-y-4">
+              <div>
+                <div class="flex items-center justify-between mb-1.5"><span class="text-sm font-semibold text-[#0A1C60]">Support & tickets</span><span class="text-sm font-bold text-emerald-600">${num(r.ticketHoursReturned)} hrs/mo returned</span></div>
+                <div class="h-3 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-700" style="width:${supportPct}%"></div></div>
+                <div class="text-[10px] text-slate-400 mt-1">${supportPct}% reduction - ${num(r.ticketsAvoided)} tickets avoided per month</div>
               </div>
-              <div class="section-card p-4 rounded-2xl">
-                <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
-                  <div class="w-1 h-4 rounded-full bg-[#0070F3]"></div>
-                  <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider">Engineering Capacity</div>
-                </div>
-                <div class="space-y-3 text-xs text-[#475569]">
-                  <div class="flex items-center justify-between">
-                    <span>Packaging hours / mo</span>
-                    <div class="flex items-center gap-2">
-                      <span class="text-slate-400 line-through">${num(pkgBefore)}</span>
-                      <span class="text-slate-300">\u2192</span>
-                      <span class="font-semibold text-[#0070F3]">${num(pkgAfter)}</span>
-                      <span class="text-[9px] font-semibold text-[#0070F3] bg-blue-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.pkgReduction * 100)}%</span>
-                    </div>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span>Patching hours / mo</span>
-                    <div class="flex items-center gap-2">
-                      <span class="text-slate-400 line-through">${num(patchBefore)}</span>
-                      <span class="text-slate-300">\u2192</span>
-                      <span class="font-semibold text-[#0070F3]">${num(patchAfter)}</span>
-                      <span class="text-[9px] font-semibold text-[#0070F3] bg-blue-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.patchReduction * 100)}%</span>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <div class="flex items-center justify-between mb-1.5"><span class="text-sm font-semibold text-[#0A1C60]">Packaging</span><span class="text-sm font-bold text-[#0070F3]">${num(r.pkgHoursReturned)} hrs/mo returned</span></div>
+                <div class="h-3 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style="width:${pkgPct}%"></div></div>
+                <div class="text-[10px] text-slate-400 mt-1">${pkgPct}% reduction across ${ci.envs} environments</div>
               </div>
-            </div>
-            <div class="text-xs text-[#64748b] italic mt-3 px-1">Fewer app versions in production means fewer variables when something breaks \u2014 less technical debt, lower operational risk, and a more governable environment.</div>
-          </div>
-
-          <!-- SECTION C: Where the capacity goes -->
-          <div class="section-card p-5 rounded-2xl dash-animate mt-4">
-            <div class="flex gap-5 items-start">
-              <div class="flex-shrink-0 pr-5 border-r border-slate-200">
-                <div class="text-[9px] font-semibold text-amber-600 uppercase tracking-wider mb-2">Capacity returned</div>
-                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${num(r.strategicHours)}</div>
-                <div class="text-[10px] text-slate-400 mt-1">hours / year</div>
-              </div>
-              <div class="pt-0.5">
-                <div class="text-sm font-semibold text-[#0A1C60] mb-2 leading-snug">This capacity goes back to work your team is already trying to do.</div>
-                <div class="text-xs text-[#64748b] leading-relaxed">When routine app delivery absorbs less time, your existing engineers can focus on the projects that are actually on the roadmap. You may be able to defer open reqs instead of hiring. And the people doing this work today get to do something more interesting \u2014 which helps with retention.</div>
-                <div class="flex flex-wrap gap-3 mt-3">
-                  ${['AI and Copilot rollouts','Cloud and endpoint migrations','Compliance and security posture','Automation and self-service','Pilot programs and modernization'].map(t => '<div class="flex items-center gap-1.5 text-[10px] text-slate-500"><div class="w-1 h-1 rounded-full bg-amber-500"></div>'+t+'</div>').join('')}
-                </div>
+              <div>
+                <div class="flex items-center justify-between mb-1.5"><span class="text-sm font-semibold text-[#0A1C60]">Patching</span><span class="text-sm font-bold text-indigo-600">${num(r.patchHoursReturned)} hrs/mo returned</span></div>
+                <div class="h-3 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-indigo-600 transition-all duration-700" style="width:${patchPct}%"></div></div>
+                <div class="text-[10px] text-slate-400 mt-1">${patchPct}% reduction - staged pipeline replaces per-platform rebuilds</div>
               </div>
             </div>
           </div>
 
-          <!-- SECTION D: Executive Summary -->
-          <div class="dash-animate mt-4">
-            <div class="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest mb-2 px-1">Executive summary</div>
-            <div class="grid grid-cols-3 gap-4">
-              <div class="section-card p-5 rounded-2xl border-t-4 border-emerald-500">
-                <div class="text-[9px] font-semibold text-emerald-600 uppercase tracking-wider mb-3">Capacity Recovered</div>
-                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">${num(r.totalHoursYear)} hrs</div>
-                <div class="text-xs font-semibold text-[#0A1C60] mb-1">${r.fteCapacity} FTE-equivalents returned to strategic work</div>
-                <div class="text-[10px] text-[#64748b] leading-relaxed">Hours freed from routine packaging, patching, and support \u2014 reallocated, not eliminated. Dollar equivalent: ${fmtDollars(r.totalRecoveredAnnual)}/yr.</div>
-              </div>
-              <div class="section-card p-5 rounded-2xl border-t-4 border-[#0070F3]">
-                <div class="text-[9px] font-semibold text-[#0070F3] uppercase tracking-wider mb-3">Time to Value</div>
-                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">4\u20136 wk</div>
-                <div class="text-xs font-semibold text-[#0A1C60] mb-1">Kickoff to full rollout</div>
-                <div class="text-[10px] text-[#64748b] leading-relaxed">No rip-and-replace. Connects to your existing stack. 1\u20132 engineers part-time. Live before your next patch cycle.</div>
-              </div>
-              <div class="section-card p-5 rounded-2xl border-t-4 border-indigo-500">
-                <div class="text-[9px] font-semibold text-indigo-500 uppercase tracking-wider mb-3">Platform Risk</div>
-                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">Zero</div>
-                <div class="text-xs font-semibold text-[#0A1C60] mb-1">No disruption to existing systems</div>
-                <div class="text-[10px] text-[#64748b] leading-relaxed">SOC 2 Type II. ISO 27001. 87 CSAT. 60M+ devices across 130 countries. Additive to your current environment.</div>
-              </div>
+          <!-- BEAT 3: Here's what it means -  THE CLIMAX -->
+          <div class="rounded-2xl dash-animate mt-4 p-6" style="background:linear-gradient(135deg,#0A1C60 0%,#0070F3 100%)">
+            <div class="text-center mb-5">
+              <div class="text-[10px] font-semibold text-blue-200 uppercase tracking-widest mb-3">Where the capacity goes</div>
+              <div class="text-5xl font-bold text-white leading-none">${num(r.strategicHours)}</div>
+              <div class="text-sm text-blue-200 mt-2">hours / year returned to strategic work</div>
+              <div class="text-sm font-semibold text-white mt-1">${r.fteCapacity} FTE-equivalents - reallocated, not eliminated</div>
+            </div>
+            <div class="text-sm text-blue-100 text-center mb-4 max-w-lg mx-auto leading-relaxed">The capacity gap you saw earlier -  between what your team is asked to deliver and what they can actually get to -  this is what closes it. Your existing engineers can focus on the projects that are actually on the roadmap. You may be able to defer open reqs instead of hiring.</div>
+            <div class="flex flex-wrap justify-center gap-3 mb-2">
+              ${['AI and Copilot rollouts','Cloud and endpoint migrations','Compliance and security posture','Automation and self-service','Pilot programs and modernization'].map(t => '<div class="px-3 py-1.5 rounded-full bg-white/15 text-[11px] font-semibold text-white">'+t+'</div>').join('')}
             </div>
           </div>
 
-          <!-- SECTION E: Closing -->
-          <div class="section-card px-5 py-3 rounded-xl dash-animate mt-4 border-l-4 border-slate-300">
-            <div class="text-xs text-[#64748b]">The math is straightforward: less time spent on routine app operations means more capacity for the work that moves the business forward.</div>
+          <!-- Executive summary cards -->
+          <div class="grid grid-cols-3 gap-4 mt-4 dash-animate">
+            <div class="section-card p-5 rounded-2xl border-t-4 border-emerald-500">
+              <div class="text-[9px] font-semibold text-emerald-600 uppercase tracking-wider mb-3">Capacity Recovered</div>
+              <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">${num(r.totalHoursYear)} hrs</div>
+              <div class="text-[10px] text-[#64748b] leading-relaxed">${num(r.totalHoursYear)} hours returned to the work that's actually on your roadmap. Dollar equivalent: ${fmtDollars(r.totalRecoveredAnnual)}/yr.</div>
+            </div>
+            <div class="section-card p-5 rounded-2xl border-t-4 border-[#0070F3]">
+              <div class="text-[9px] font-semibold text-[#0070F3] uppercase tracking-wider mb-3">Time to Value</div>
+              <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">4-6 wk</div>
+              <div class="text-[10px] text-[#64748b] leading-relaxed">No rip-and-replace. Connects to your existing stack. Live before your next patch cycle.</div>
+            </div>
+            <div class="section-card p-5 rounded-2xl border-t-4 border-indigo-500">
+              <div class="text-[9px] font-semibold text-indigo-500 uppercase tracking-wider mb-3">Platform Risk</div>
+              <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">Zero</div>
+              <div class="text-[10px] text-[#64748b] leading-relaxed">SOC 2 Type II. ISO 27001. 60M+ devices. Additive to your current environment.</div>
+            </div>
           </div>
 
-          <!-- SECTION F: Trust Strip -->
-          <div class="flex items-center justify-center gap-4 flex-wrap mt-3 dash-animate">
-            ${['SOC 2 Type II & ISO 27001','60M+ devices managed','87 CSAT','8,000+ pre-tested apps','130+ countries','End users get apps in seconds, not days'].map(t => '<div class="text-[10px] text-slate-400"><span class="text-slate-300 mr-1">\u2014</span>'+t+'</div>').join('')}
-          </div>
+          <!-- Trust line -->
+          <div class="text-center text-[10px] text-slate-400 mt-3 dash-animate">Trusted by 70k+ organizations across 130 countries.</div>
         `;
       }
 
@@ -2877,8 +2873,8 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.calcResult = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
-          if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
+          if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
           if (action === 'toggle-solution-view') {
             const view = act.getAttribute('data-view');
             if (view === 'user') STATE.solutionViewUser = !STATE.solutionViewUser;
@@ -2897,6 +2893,8 @@
           if (action === 'pause-mt') { if (STATE.mtPaused) { STATE.mtPaused = false; render(); runMtQueue(); } else { STATE.mtPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
+          if (action === 'open-analyst-modal') { STATE.showAnalystModal = true; render(); return; }
+          if (action === 'close-analyst-modal') { STATE.showAnalystModal = false; render(); return; }
           if (action === 'close-insight-modal') { STATE.insightContent = null; STATE.highlightDriverId = null; render(); return; }
           if (action === 'why-nav') { STATE.openWhyModal = act.getAttribute('data-to'); render(); return; }
 
@@ -2957,7 +2955,7 @@
             const a = ROI_ASSUMPTIONS[STATE.calcScenario];
             const ci = STATE.calcInputs;
 
-            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nCAPACITY LOCKED TODAY\n  Hours consumed / month:     ${num(r.totalHoursMonth)}\n  FTE-equivalents tied up:    ${r.fteCapacity}\n  Environments managed:       ${ci.envs}\n\nWHAT CHANGES\n  Support hours/mo:           ${num(r.currentSupportHours)} \u2192 ${num(Math.round(r.currentSupportHours - r.ticketHoursReturned))}  (-${Math.round(a.ticketReduction * 100)}%)\n  Tickets/mo:                 ${num(ci.monthlyTickets)} \u2192 ${num(ci.monthlyTickets - r.ticketsAvoided)}  (-${Math.round(a.ticketReduction * 100)}%)\n  Packaging hours/mo:         ${num(ci.pkgHours)} \u2192 ${num(Math.round(ci.pkgHours - r.pkgHoursReturned))}  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours/mo:          ${num(ci.patchHours)} \u2192 ${num(Math.round(ci.patchHours - r.patchHoursReturned))}  (-${Math.round(a.patchReduction * 100)}%)\n\nCAPACITY RECOVERED\n  Hours returned / year:      ${num(r.totalHoursYear)}\n  FTE-equivalents:            ${r.fteCapacity}\n  Strategic hours unlocked:   ${num(r.strategicHours)} / year\n  Dollar equivalent:          ${fmtDollars(r.totalRecoveredAnnual)} / year\n\nTIME TO VALUE:                4\u20136 weeks\nPLATFORM RISK:                Zero disruption to existing systems\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
+            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nCAPACITY LOCKED TODAY\n  Hours consumed / month:     ${num(r.totalHoursMonth)}\n  FTE-equivalents tied up:    ${r.fteCapacity}\n  Environments managed:       ${ci.envs}\n\nWHAT CHANGES\n  Support hours/mo:           ${num(r.currentSupportHours)} \u2192 ${num(Math.round(r.currentSupportHours - r.ticketHoursReturned))}  (-${Math.round(a.ticketReduction * 100)}%)\n  Tickets/mo:                 ${num(ci.monthlyTickets)} \u2192 ${num(ci.monthlyTickets - r.ticketsAvoided)}  (-${Math.round(a.ticketReduction * 100)}%)\n  Packaging hours/mo:         ${num(ci.pkgHours)} \u2192 ${num(Math.round(ci.pkgHours - r.pkgHoursReturned))}  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours/mo:          ${num(ci.patchHours)} \u2192 ${num(Math.round(ci.patchHours - r.patchHoursReturned))}  (-${Math.round(a.patchReduction * 100)}%)\n\nCAPACITY RECOVERED\n  Hours returned / year:      ${num(r.totalHoursYear)}\n  FTE-equivalents:            ${r.fteCapacity}\n  Strategic hours unlocked:   ${num(r.strategicHours)} / year\n  Dollar equivalent:          ${fmtDollars(r.totalRecoveredAnnual)} / year\n\nTIME TO VALUE:                4-6 weeks\nPLATFORM RISK:                Zero disruption to existing systems\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
 
             try {
               navigator.clipboard.writeText(plainText).then(function() {
@@ -3064,7 +3062,7 @@
       deriveFromEmployees(STATE.calcInputs.users);
       calculateImpact();
       document.addEventListener('DOMContentLoaded', render);
-      document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent)){ STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; render(); } });
+      document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent || STATE.showAnalystModal)){ STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; STATE.showAnalystModal=false; render(); } });
     </script>
   </body>
 </html>
