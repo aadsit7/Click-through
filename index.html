@@ -567,6 +567,7 @@
         flowPaused: false,
         flowQueue: [],
         flowQueueIdx: 0,
+        flowDevice: null,
         flowAppOpened: false,
         showAdminView: false,
         showAutopilot: false,
@@ -632,6 +633,14 @@
         { id: 'crowdstrike', letter: 'CS', color: '#D61F26', name: 'CrowdStrike' },
         { id: 'box', letter: 'BX', color: '#0061D5', name: 'Box' },
         { id: 'defender', letter: 'MD', color: '#0067B8', name: 'Defender' },
+      ];
+
+      const DEVICE_OPTIONS = [
+        { id: 'Windows', icon: 'monitor', desc: 'Corporate desktop' },
+        { id: 'macOS', icon: 'laptop', desc: 'Developer laptop' },
+        { id: 'VDI', icon: 'monitor-smartphone', desc: 'Virtual desktop' },
+        { id: 'Cloud PC', icon: 'cloud', desc: 'Cloud-hosted PC' },
+        { id: 'BYOD', icon: 'smartphone', desc: 'Personal device' },
       ];
 
       const SCENARIOS = [
@@ -1187,6 +1196,7 @@
         STATE.flowQueueIdx = 0;
         STATE.flowAppOpened = false;
         STATE._firstOpenDone = false;
+        STATE.flowDevice = null;
         render();
       }
 
@@ -1612,10 +1622,24 @@
                   <div class="device-dot device-dot-r"></div>
                   <div class="device-dot device-dot-y"></div>
                   <div class="device-dot device-dot-g"></div>
-                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : showDesktop ? (phase === 'launch' ? 'Opening Application Workspace...' : 'Desktop') : phase === 'clicking' ? 'Application Workspace — selecting Teams...' : 'Application Workspace'}</span>
+                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : showDesktop ? (phase === 'launch' ? 'Opening Application Workspace...' : STATE.flowDevice ? STATE.flowDevice + ' — Desktop' : 'Select a device') : phase === 'clicking' ? 'Application Workspace — selecting Teams...' : 'Application Workspace'}</span>
                 </div>
 
-                ${showDesktop ? `
+                ${showDesktop && !STATE.flowDevice ? `
+                <!-- Device picker: choose a device to start -->
+                <div style="background:linear-gradient(135deg,#e0e7ff 0%,#dbeafe 40%,#eff6ff 100%);min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;gap:14px">
+                  <div style="font-size:11px;font-weight:600;color:#0A1C60;text-transform:uppercase;letter-spacing:0.05em">Select a device to see the experience</div>
+                  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
+                    ${DEVICE_OPTIONS.map(d => `
+                      <button type="button" data-action="select-device" data-device="${d.id}" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 14px;border-radius:12px;border:1.5px solid #cbd5e1;background:rgba(255,255,255,0.85);cursor:pointer;transition:all 0.15s ease;min-width:80px" onmouseover="this.style.borderColor='#0070F3';this.style.boxShadow='0 4px 16px rgba(0,112,243,0.15)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.boxShadow='none';this.style.transform='none'">
+                        <i data-lucide="${d.icon}" style="width:24px;height:24px;color:#0A1C60"></i>
+                        <span style="font-size:11px;font-weight:700;color:#0A1C60">${d.id}</span>
+                        <span style="font-size:8px;color:#64748b">${d.desc}</span>
+                      </button>
+                    `).join('')}
+                  </div>
+                </div>
+                ` : showDesktop ? `
                 <!-- Desktop view: user's device with app icons -->
                 <div style="background:linear-gradient(135deg,#e0e7ff 0%,#dbeafe 40%,#eff6ff 100%);min-height:180px;display:flex;flex-direction:column;position:relative">
                   <!-- Desktop icons -->
@@ -1714,7 +1738,7 @@
             <!-- Device type strip -->
             <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
               <span class="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Same experience on:</span>
-              ${['Windows','macOS','VDI','Cloud PC','BYOD'].map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569] font-medium">${d}</span>`).join('')}
+              ${DEVICE_OPTIONS.map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${STATE.flowDevice === d.id ? 'border-[#0070F3] bg-blue-50 text-[#0070F3]' : 'border-slate-200 bg-white text-[#475569]'} text-[10px] font-medium">${d.id}</span>`).join('')}
             </div>
 
             ${scenario && !['idle','launch','catalog','clicking'].includes(phase) ? `
@@ -2780,7 +2804,8 @@
             STATE.editingAssumptions = false; if (STATE.calcResult) calculateImpact(); render(); return;
           }
           if (action === 'toggle-regulated') { STATE.calcInputs.regulated = act.getAttribute('data-val') === 'true'; render(); return; }
-          if (action === 'toggle-flow') { if (!STATE.flowRunning) { startFlow(); } else if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
+          if (action === 'select-device') { STATE.flowDevice = act.getAttribute('data-device'); startFlow(); return; }
+          if (action === 'toggle-flow') { if (!STATE.flowRunning) { if (!STATE.flowDevice) STATE.flowDevice = 'Windows'; startFlow(); } else if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
           if (action === 'reset-flow') { resetFlow(); return; }
           if (action === 'toggle-admin-view') { STATE.showAdminView = !STATE.showAdminView; render(); return; }
           if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
