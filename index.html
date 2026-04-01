@@ -428,6 +428,7 @@
       const STATE = {
         activeTab: 'problems',
         showAnalystModal: false,
+        showAIAgent: false,
         impact: { minutes: 9, pkgHours: 6, riskHrs: 22.5 },
         defaults: { impact: { minutes: 9, pkgHours: 6, riskHrs: 22.5 } },
         ctx: { device: 'Windows', network: 'Corporate', compliant: true },
@@ -992,7 +993,7 @@
               </div>
             `}
 
-            ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
+            ${phase === 'final' ? `
               <div id="finalPayoff" class="sub-card p-4 mt-2 text-center final-glow" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
                 <div class="text-lg font-bold text-[#0A1C60] mb-1">Click → It just works</div>
                 <div class="text-xs text-[#4A5568]">First access, backend migration, security patch -  completely different scenarios. The user experience was identical every time.</div>
@@ -1307,6 +1308,7 @@
           ${renderWhyModal()}
           ${renderInsightModal()}
           ${renderAnalystModal()}
+          ${renderAIAgentModal()}
         `;
         if (window.lucide?.createIcons) { try { window.lucide.createIcons(); } catch {} }
         attachEvents();
@@ -1556,6 +1558,26 @@
         `;
       }
 
+      function renderAIAgentModal(){
+        if (!STATE.showAIAgent) return '';
+        return `
+          <div class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" data-action="close-ai-agent">
+            <div class="w-full max-w-5xl mx-4 rounded-2xl overflow-hidden modal-content glass" style="height:85vh;display:flex;flex-direction:column" onclick="if(!event.target.closest('[data-action]'))event.stopPropagation()">
+              <div class="bg-white/40 backdrop-blur-lg px-6 py-4 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid var(--border-subtle)">
+                <div class="flex items-center gap-3">
+                  <div class="h-8 w-8 rounded-lg grid place-items-center" style="background:linear-gradient(135deg,#0070F3,#0A1C60)"><i data-lucide="message-circle-question" class="w-4 h-4 text-white"></i></div>
+                  <h2 class="text-xl font-bold tracking-tight text-[#0A1C60]">Ask a Question</h2>
+                </div>
+                <button type="button" class="text-slate-500 hover:text-slate-700 focus-ring p-2" data-action="close-ai-agent"><i data-lucide="x" class="w-5 h-5"></i></button>
+              </div>
+              <div class="flex-1 min-h-0 bg-white">
+                <iframe src="https://app.nimbusweb.me/ai-agent-public/WrYUiYuwtl12Dvij?orgId=u268pl" width="100%" height="100%" frameborder="0" allow="clipboard-write"></iframe>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       function renderWhyModal(){
         if(!STATE.openWhyModal) return '';
         const id = STATE.openWhyModal;
@@ -1700,7 +1722,7 @@
 
             <!-- What the user sees -->
             <div class="flex items-center gap-2 mb-3">
-              <div class="bts-label bts-label-user"><i data-lucide="user" class="w-3 h-3"></i> What the user sees</div>
+              ${['done','final'].includes(phase) ? '<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i><span class="text-xs font-semibold text-emerald-700">Same experience. Every device. Every time.</span></div>' : '<div class="bts-label bts-label-user"><i data-lucide="user" class="w-3 h-3"></i> What the user sees</div>'}
             </div>
 
             <div class="device-frame" id="deviceFrame">
@@ -1824,15 +1846,15 @@
 
             <!-- Device type strip -->
             <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
-              <span class="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Same experience on:</span>
-              ${DEVICE_OPTIONS.map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${STATE.flowDevice === d.id ? 'border-[#0070F3] bg-blue-50 text-[#0070F3]' : 'border-slate-200 bg-white text-[#475569]'} text-[10px] font-medium">${d.id}</span>`).join('')}
+              <span class="text-[9px] ${['done','final'].includes(phase) ? 'text-emerald-600' : 'text-slate-400'} font-semibold uppercase tracking-wider">${['done','final'].includes(phase) ? 'Verified across:' : 'Same experience on:'}</span>
+              ${DEVICE_OPTIONS.map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${['done','final'].includes(phase) ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : STATE.flowDevice === d.id ? 'border-[#0070F3] bg-blue-50 text-[#0070F3]' : 'border-slate-200 bg-white text-[#475569]'} text-[10px] font-medium">${d.id}</span>`).join('')}
             </div>
 
             ${scenario && !['idle','launch','catalog','clicking'].includes(phase) ? `
               <div class="text-[10px] text-center mt-2 text-slate-400">${scenario.bannerMsg}</div>
             ` : ''}
 
-            ${phase === 'final' && sc >= SCENARIOS.length - 1 ? `
+            ${phase === 'final' ? `
               <div class="sub-card p-3 mt-2 text-center" style="background:linear-gradient(135deg,#f0fdf4,#eff6ff);border-color:#10b981">
                 <div class="text-sm font-bold text-[#0A1C60] mb-0.5">Click → It just works</div>
                 <div class="text-[10px] text-[#4A5568]">Three different scenarios. The user experience was identical every time.</div>
@@ -2295,7 +2317,6 @@
             </div>
 
             <div class="flex flex-col items-end gap-2 mt-2">
-              <div class="text-xs italic text-[#64748b]">You've seen what changes for one user on one device. Now see what it means across your entire organization.</div>
               <button type="button" class="bg-[#0070F3] text-white px-5 py-2.5 text-sm font-semibold rounded-full hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
             </div>
           </section>
@@ -2667,15 +2688,19 @@
             <!-- ROI DASHBOARD -->
             ${ci.users <= 200 ? '<div class="section-card p-6 rounded-2xl text-center"><i data-lucide="info" class="w-8 h-8 text-slate-300 mx-auto mb-3"></i><div class="text-sm font-semibold text-[#0A1C60] mb-2">Not the right fit for this size</div><div class="text-xs text-[#64748b] max-w-md mx-auto leading-relaxed">Organizations under 200 employees typically don\'t face the multi-platform complexity that Application Workspace addresses. For smaller teams, the per-platform model usually works fine.</div></div>' : (r ? '<div id="impact-results">' + renderCalcResult() + '</div>' : '')}
 
-            <div class="text-[10px] text-center text-slate-400 mt-1">Estimated business impact based on employee count and configurable assumptions.</div>
 
-            <div class="flex justify-start gap-3">
-              <button type="button" data-action="open-currentstate-editor" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition">
-                <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Current State
+            <div class="flex items-center justify-between">
+              <div class="flex gap-3">
+                <button type="button" data-action="open-currentstate-editor" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Current State
+                </button>
+                ${r ? `<button type="button" data-action="copy-results" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition ${STATE.copied ? '!border-emerald-400 !text-emerald-600' : ''}">
+                  <i data-lucide="${STATE.copied ? 'check' : 'copy'}" class="w-4 h-4"></i> ${STATE.copied ? 'Copied!' : 'Copy Results'}
+                </button>` : ''}
+              </div>
+              <button type="button" data-action="open-ai-agent" class="inline-flex items-center gap-2 text-white px-4 py-2.5 text-sm font-semibold rounded-full shadow-lg hover:opacity-90 transition" style="background:linear-gradient(135deg,#0070F3,#0A1C60)">
+                <i data-lucide="message-circle-question" class="w-4 h-4"></i> Ask a Question
               </button>
-              ${r ? `<button type="button" data-action="copy-results" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition ${STATE.copied ? '!border-emerald-400 !text-emerald-600' : ''}">
-                <i data-lucide="${STATE.copied ? 'check' : 'copy'}" class="w-4 h-4"></i> ${STATE.copied ? 'Copied!' : 'Copy Results'}
-              </button>` : ''}
             </div>
           </section>
         `;
@@ -2764,7 +2789,6 @@
           </div>
 
           <!-- Trust line -->
-          <div class="text-center text-[10px] text-slate-400 mt-3 dash-animate">Trusted by 70k+ organizations across 130 countries.</div>
         `;
       }
 
@@ -2895,6 +2919,8 @@
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
           if (action === 'open-analyst-modal') { STATE.showAnalystModal = true; render(); return; }
           if (action === 'close-analyst-modal') { STATE.showAnalystModal = false; render(); return; }
+          if (action === 'open-ai-agent') { STATE.showAIAgent = true; render(); return; }
+          if (action === 'close-ai-agent') { STATE.showAIAgent = false; render(); return; }
           if (action === 'close-insight-modal') { STATE.insightContent = null; STATE.highlightDriverId = null; render(); return; }
           if (action === 'why-nav') { STATE.openWhyModal = act.getAttribute('data-to'); render(); return; }
 
@@ -3062,7 +3088,7 @@
       deriveFromEmployees(STATE.calcInputs.users);
       calculateImpact();
       document.addEventListener('DOMContentLoaded', render);
-      document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent || STATE.showAnalystModal)){ STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; STATE.showAnalystModal=false; render(); } });
+      document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent || STATE.showAnalystModal || STATE.showAIAgent)){ STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; STATE.showAnalystModal=false; STATE.showAIAgent=false; render(); } });
     </script>
   </body>
 </html>
