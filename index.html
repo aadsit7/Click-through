@@ -400,6 +400,16 @@
       .platform-bar-mini::before { content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); pointer-events: none; }
       .cinema-scenario-caption { font-size: 13px; font-weight: 600; color: #475569; text-align: center; padding: 2px 0 6px; }
       .cinema-working-badge { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 12px; font-size: 10px; font-weight: 600; color: #059669; background: rgba(240,253,244,0.9); border: 1px solid #a7f3d0; border-radius: 9999px; backdrop-filter: blur(4px); margin: 4px auto 0; width: fit-content; }
+      .flip-card { perspective: 1000px; cursor: pointer; height: 90px; transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+      .flip-card.flipped { height: 200px; }
+      .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+      .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+      .flip-card-front, .flip-card-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--radius); border: 1px solid var(--border-subtle); overflow: hidden; }
+      .flip-card-front { background: white; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 10px; padding: 0 16px; }
+      .flip-card-back { background: linear-gradient(135deg, #0A1C60 0%, #0070F3 100%); color: white; transform: rotateY(180deg); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+      .flip-card-stat { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #0070F3, #0A1C60); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+      .flip-card-tap { font-size: 8px; color: #cbd5e1; opacity: 0; animation: fadeIn 1s ease 2s forwards; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
   </head>
 
@@ -415,6 +425,7 @@
         packHrs: 8, configHrs: 2, currentHrs: 24,
         roiInputs: { users: 5000, ticketsPerUserPerMonth: 0.035, avgHandleMins: 18 },
         copied: false,
+        flippedCards: { card0: false, card1: false, card2: false, card3: false },
         visitedTabs: [],
         solutionViewUser: true,
         solutionViewAdmin: false,
@@ -439,11 +450,11 @@
         activePopover: null,
         years: [2025, 2026, 2027, 2028],
         drivers: [
-          { id: "more_apps", label: "More Applications", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work—packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "More apps = more packaging, updates, testing, support.", state: 'off' },
-          { id: "constant_updates", label: "Constant Change", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional—work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are continuous; stability requires constant change.", state: 'off' },
-          { id: "too_many_tools", label: " Multiple Environments", subtext: "Fragmented delivery across platforms", markerYear: 2026.8, bullets: ["App delivery is fragmented across tools and environments (e.g., Intune/ConfigMgr/VDI).", "Teams rebuild packaging and deployment logic per platform.", "Tool fragmentation creates handoffs, duplication, and drift."], short: "Same app, different platforms, rebuilt logic everywhere.", state: 'off' },
-          { id: "manual_rework", label: "Re-Work Multiplier", subtext: "Rebuilds, exceptions, one-off fixes", markerYear: 2027.3, bullets: ["Manual rebuilds per version create packaging backlog and rework.", "Reactive fixes become permanent exceptions (technical debt).", "Firefighting displaces planned work and modernization."], short: "Rebuilds, retesting, one-off fixes consume senior time.", state: 'off' },
-          { id: "security_compliance", label: "Security", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "More urgency, less tolerance; complexity amplifies risk.", state: 'off' }
+          { id: "more_apps", label: "App Portfolio Growth", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work\u2014packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "Every new app creates ongoing packaging, testing, update, and support work across every platform.", state: 'off' },
+          { id: "constant_updates", label: "Continuous Change Velocity", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional\u2014work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are constant \u2014 not occasional. Stability now requires perpetual change management.", state: 'off' },
+          { id: "too_many_tools", label: "Platform Multiplication", subtext: "Fragmented delivery across platforms", markerYear: 2026.8, bullets: ["App delivery is fragmented across tools and environments (e.g., Intune/ConfigMgr/VDI).", "Teams rebuild packaging and deployment logic per platform.", "Tool fragmentation creates handoffs, duplication, and drift."], short: "Same app, different platforms. Packaging and deployment logic rebuilt per environment.", state: 'off' },
+          { id: "manual_rework", label: "Rework & Technical Debt", subtext: "Rebuilds, exceptions, one-off fixes", markerYear: 2027.3, bullets: ["Manual rebuilds per version create packaging backlog and rework.", "Reactive fixes become permanent exceptions (technical debt).", "Firefighting displaces planned work and modernization."], short: "Manual rebuilds, one-off fixes, and undocumented exceptions compound into permanent drag.", state: 'off' },
+          { id: "security_compliance", label: "Security & Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "Higher urgency, tighter windows, zero tolerance \u2014 on top of everything else.", state: 'off' }
         ],
         tippingPointYear: 2027.5,
         tippingPoint: {
@@ -452,11 +463,11 @@
           closing: "This isn't failure — it's the limit of a model that no longer scales."
         },
         chartConfig: {
-          yAxis: "Expectations & Requests",
+          yAxis: "Demand on IT",
           xAxis: "Time",
-          center: "Resources & Appreciation",
+          center: "The Capacity Gap",
           footer: "",
-          tipping: ""
+          tipping: "Operational breaking point"
         },
         currentDemandExponent: 1.6,
         targetDemandExponent: 1.6,
@@ -465,27 +476,27 @@
         showTippingPoint: false,
         currentState: {
           change: {
-            intro: "Forrester, Gartner, and McKinsey are converging on the same finding — the application layer is now the primary constraint on IT execution capacity.",
+            intro: "Your team isn\u2019t underperforming. They\u2019re hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
             bullets: [
-              "Applications are still managed per platform — packaged, tested, and maintained separately for every environment. That model was built for a world with two delivery targets. Most organizations now have five or six.",
-              "Every new platform, migration, or security mandate multiplies that work against every existing application. The math compounds — it doesn't level off.",
-              "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling — and most teams are already pressed against it."
+              "Applications are still managed per platform \u2014 packaged, tested, and maintained separately for every environment. That model worked when there were two delivery targets. Now there are five or six, and every new platform multiplies effort against every existing application.",
+              "This isn\u2019t a workload spike \u2014 it\u2019s a structural compound. Every migration, every security mandate, every new tool the business adopts creates work that fans out across every platform. The math gets worse, not better.",
+              "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling \u2014 and most teams are already pressed against it."
             ],
-            analyst: "The constraint isn't skill or effort — it's that the per-platform delivery model wasn't designed for this level of complexity. The organizations pulling ahead aren't adding headcount. They're changing the model."
+            analyst: "The constraint isn\u2019t skill or effort \u2014 it\u2019s that the per-platform delivery model wasn\u2019t designed for this level of complexity. The organizations pulling ahead aren\u2019t working harder. They\u2019re changing the model."
           },
           now: {
-            intro: "This has been building for a while — but 2026 is where the math stops working for most teams.",
+            intro: "This has been building for years \u2014 but 2026 is where the math stops working for most teams.",
             bullets: [
               "Platform sprawl, AI adoption pressure, and continuous security patching are all accelerating simultaneously. Any one of these is absorbable. Together, they exceed what per-platform delivery can sustain.",
-              "The workarounds that got teams through the last few years — tribal knowledge, manual rebuilds, heroic effort — are now the risk themselves. They don't scale, they don't transfer, and they create single points of failure that leadership can't see until someone leaves.",
-              "The window to stabilize is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting — patching the model instead of replacing it."
+              "The workarounds that got teams through the last few years \u2014 tribal knowledge, manual rebuilds, heroic effort \u2014 are now the risk. They don\u2019t scale, they don\u2019t transfer, and they create single points of failure that leadership can\u2019t see until someone leaves.",
+              "The window to act is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting \u2014 patching the model instead of replacing it."
             ],
             analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
           },
           recast: {
-            intro: "Application Workspace sits on top of your existing tools and gives you one place to package, deliver, update, and manage every app across every environment.",
+            intro: "Application Workspace doesn\u2019t replace your tools \u2014 it\u2019s the layer that makes them work together. One place to package, deliver, update, and manage every app across every environment.",
             bullets: [
-              "Define once, deliver everywhere = Stop rebuilding the same app for every platform. Define it once — Application Workspace delivers it to Intune, SCCM, Citrix, AVD, and macOS automatically.",
+              "Define once, deliver everywhere = Stop rebuilding the same app for every platform. Define it once \u2014 Application Workspace delivers it to Intune, SCCM, Citrix, AVD, and macOS automatically.",
               "8,000+ apps ready to go = Most of your catalog deploys without any packaging work. The Setup Store has 8,000+ pre-tested apps — your team only packages what's unique to your org.",
               "Self-service replaces tickets = Users get approved apps in seconds from a catalog — no tickets, no wait. IT controls the catalog. Users control the timing.",
               "Patches land everywhere at once = Security updates deploy across every environment simultaneously through a staged pipeline. No per-platform rebuilds. No version drift.",
@@ -498,22 +509,22 @@
         defaultsCurrentState() {
           return JSON.parse(JSON.stringify({
             change: {
-              intro: "Forrester, Gartner, and McKinsey are converging on the same finding — the application layer is now the primary constraint on IT execution capacity.",
+              intro: "Your team isn\u2019t underperforming. They\u2019re hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
               bullets: [
-                "Applications are still managed per platform — packaged, tested, and maintained separately for every environment. That model was built for a world with two delivery targets. Most organizations now have five or six.",
-                "Every new platform, migration, or security mandate multiplies that work against every existing application. The math compounds — it doesn't level off.",
-                "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling — and most teams are already pressed against it."
+                "Applications are still managed per platform \u2014 packaged, tested, and maintained separately for every environment. That model worked when there were two delivery targets. Now there are five or six, and every new platform multiplies effort against every existing application.",
+                "This isn\u2019t a workload spike \u2014 it\u2019s a structural compound. Every migration, every security mandate, every new tool the business adopts creates work that fans out across every platform. The math gets worse, not better.",
+                "Most organizations have already optimized within the current model. The teams are strong. The tools work. But per-platform delivery has a structural ceiling \u2014 and most teams are already pressed against it."
               ],
-              analyst: "The constraint isn't skill or effort — it's that the per-platform delivery model wasn't designed for this level of complexity. The organizations pulling ahead aren't adding headcount. They're changing the model."
+              analyst: "The constraint isn\u2019t skill or effort \u2014 it\u2019s that the per-platform delivery model wasn\u2019t designed for this level of complexity. The organizations pulling ahead aren\u2019t working harder. They\u2019re changing the model."
             },
             now: {
-              intro: "This has been building for a while — but 2026 is where the math stops working for most teams.",
+              intro: "This has been building for years \u2014 but 2026 is where the math stops working for most teams.",
               bullets: [
                 "Platform sprawl, AI adoption pressure, and continuous security patching are all accelerating simultaneously. Any one of these is absorbable. Together, they exceed what per-platform delivery can sustain.",
-                "The workarounds that got teams through the last few years — tribal knowledge, manual rebuilds, heroic effort — are now the risk themselves. They don't scale, they don't transfer, and they create single points of failure that leadership can't see until someone leaves.",
-                "The window to stabilize is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting — patching the model instead of replacing it."
+                "The workarounds that got teams through the last few years \u2014 tribal knowledge, manual rebuilds, heroic effort \u2014 are now the risk. They don\u2019t scale, they don\u2019t transfer, and they create single points of failure that leadership can\u2019t see until someone leaves.",
+                "The window to act is narrowing. Organizations that solve application delivery now will absorb the next wave of platform change without breaking stride. The ones that wait will spend the next three years reacting \u2014 patching the model instead of replacing it."
               ],
-              analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
+              analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall \u2014 and strategy doesn\u2019t fix a capacity problem."
             },
             recast: {
               intro: "Application Workspace sits on top of your existing tools and gives you one place to package, deliver, update, and manage every app across every environment.",
@@ -531,20 +542,20 @@
         },
         defaultsChartConfig() {
           return JSON.parse(JSON.stringify({
-            yAxis: "Expectations & Requests",
+            yAxis: "Demand on IT",
             xAxis: "Time",
-            center: "Resources & Appreciation",
+            center: "The Capacity Gap",
             footer: "",
             tipping: "Operational breaking point"
           }));
         },
         defaultsDrivers() {
           return JSON.parse(JSON.stringify([
-            { id: "more_apps", label: "More Applications", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work—packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "More apps = more packaging, updates, testing, support.", state: 'off' },
-            { id: "constant_updates", label: "Constant Change", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional—work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are continuous; stability requires constant change.", state: 'off' },
-            { id: "too_many_tools", label: "Multiple Environments", subtext: "Fragmented delivery across platforms", markerYear: 2026.8, bullets: ["App delivery is fragmented across tools and environments (e.g., Intune/ConfigMgr/VDI).", "Teams rebuild packaging and deployment logic per platform.", "Tool fragmentation creates handoffs, duplication, and drift."], short: "Same app, different platforms, rebuilt logic everywhere.", state: 'off' },
-            { id: "manual_rework", label: "Too Much Manual Work", subtext: "Rebuilds, exceptions, one-off fixes", markerYear: 2027.3, bullets: ["Manual rebuilds per version create packaging backlog and rework.", "Reactive fixes become permanent exceptions (technical debt).", "Firefighting displaces planned work and modernization."], short: "Rebuilds, retesting, one-off fixes consume senior time.", state: 'off' },
-            { id: "security_compliance", label: "Security and Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "More urgency, less tolerance; complexity amplifies risk.", state: 'off' }
+            { id: "more_apps", label: "App Portfolio Growth", subtext: "Portfolio growth across Windows, macOS, VDI, web", markerYear: 2025.6, bullets: ["Every new app adds ongoing work\u2014packaging, testing, updates, support.", "App sprawl compounds across Windows, macOS, VDI, and web delivery paths.", "Portfolio growth increases version drift and troubleshooting load."], short: "Every new app creates ongoing packaging, testing, update, and support work across every platform.", state: 'off' },
+            { id: "constant_updates", label: "Continuous Change Velocity", subtext: "Security patches, compatibility, vendor releases", markerYear: 2026.2, bullets: ["Updates are continuous, not occasional\u2014work never clears.", "Security patches and compatibility changes create perpetual churn.", "Release velocity outpaces admin capacity."], short: "Updates are constant \u2014 not occasional. Stability now requires perpetual change management.", state: 'off' },
+            { id: "too_many_tools", label: "Platform Multiplication", subtext: "Fragmented delivery across platforms", markerYear: 2026.8, bullets: ["App delivery is fragmented across tools and environments (e.g., Intune/ConfigMgr/VDI).", "Teams rebuild packaging and deployment logic per platform.", "Tool fragmentation creates handoffs, duplication, and drift."], short: "Same app, different platforms. Packaging and deployment logic rebuilt per environment.", state: 'off' },
+            { id: "manual_rework", label: "Rework & Technical Debt", subtext: "Rebuilds, exceptions, one-off fixes", markerYear: 2027.3, bullets: ["Manual rebuilds per version create packaging backlog and rework.", "Reactive fixes become permanent exceptions (technical debt).", "Firefighting displaces planned work and modernization."], short: "Manual rebuilds, one-off fixes, and undocumented exceptions compound into permanent drag.", state: 'off' },
+            { id: "security_compliance", label: "Security & Compliance Pressure", subtext: "Higher urgency, higher risk", markerYear: 2027.7, bullets: ["Security/compliance raises the urgency and risk of app change.", "Inconsistent versions and installs increase exposure and escalations.", "Patching timelines stretch when workflows are manual and fragmented."], short: "Higher urgency, tighter windows, zero tolerance \u2014 on top of everything else.", state: 'off' }
           ]));
         },
         progress: { apps: 0, time: 0, tickets: 0 },
@@ -634,6 +645,13 @@
         { id: 'crowdstrike', letter: 'CS', color: '#D61F26', name: 'CrowdStrike' },
         { id: 'box', letter: 'BX', color: '#0061D5', name: 'Box' },
         { id: 'defender', letter: 'MD', color: '#0067B8', name: 'Defender' },
+      ];
+
+      const STAT_CARDS = [
+        { id:'card0', stat:'3\u00d7', hint:'Platform targets since 2020', title:'The workload is compounding', body:'The average enterprise now manages 3\u00d7 more delivery platforms than five years ago. Every new platform multiplies packaging work against every existing application.', source:'Recast customer data', icon:'layers' },
+        { id:'card1', stat:'60%', hint:'Organizations that won\'t execute', title:'The model doesn\'t scale', body:'Gartner predicts that by 2026, the lack of digital skills will prevent 60% of organizations from executing their digital strategies. The per-platform model requires specialist skills that don\'t scale with headcount.', source:'Gartner, 2024', icon:'trending-up' },
+        { id:'card2', stat:'51%', hint:'Where IT operations time goes', title:'Your best people are trapped', body:'51% of all IT operations effort is reactive - fixing what\'s broken, not building what\'s next. Your senior engineers are stuck in that cycle, spending their time on repetitive packaging and firefighting instead of strategic work.', source:'Grand View Research, 2025', icon:'user-x' },
+        { id:'card3', stat:'70%', hint:'Digital transformations that fail', title:'Your roadmap is stalling', body:'McKinsey found 70% of digital transformations fail. Not because of bad strategy - because of execution capacity. When app delivery consumes your team, your modernization roadmap doesn\'t move.', source:'McKinsey & Company', icon:'calendar-x' },
       ];
 
       const DEVICE_OPTIONS = [
@@ -1240,7 +1258,7 @@
               <h1 class="text-[40px] md:text-[56px] font-semibold leading-tight"><span style="color:#0070F3">Re</span><span style="color:#0A1C60">cast</span> Software</h1>
               <p class="mt-2 max-w-2xl text-[16px] leading-[1.5] text-[#4A5568]">
                 ${STATE.activeTab==='problems'
-                  ? 'The application layer is now the #1 primary constraint in modern IT.'
+                  ? ''
                   : STATE.activeTab==='solution'
                     ? 'What actually happens when a user clicks an app? This is the core differentiator.'
                     : 'Application Workspace helps IT keep applications running smoothly as platforms change \u2014 without creating more work'}
@@ -1292,21 +1310,31 @@
       }
 
       function renderProblems(){
-        const items=[
-          {t:'Growing Environment Complexity',s:'More platforms mean more overhead to manage applications.',i:'layers'},
-          {t:'Inconsistent Application Experience',s:'Apps behave differently depending on where and how they are delivered.',i:'monitor-smartphone'},
-          {t:'Repetitive Application Work',s:'The same apps must be rebuilt, tested, and maintained multiple times.',i:'repeat'},
-          {t:'Limited IT Capacity',s:'Teams are stuck in maintenance work instead of driving strategic initiatives.',i:'clock'}
-        ];
         return `
           <section id="panel-problems" class="space-y-4">
+            <div class="mb-1">
+              <h2 class="text-lg font-semibold text-[#0A1C60]">The application layer is now the #1 primary constraint in modern IT.</h2>
+            </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              ${items.map(p=>`
-                <article class="section-card p-4">
-                  <div class="flex items-center gap-2"><i data-lucide="${p.i}" class="w-5 h-5 text-[#0070F3]"></i><h3 class="text-base font-semibold">${p.t}</h3></div>
-                  <p class="mt-1 text-sm text-[#4A5568]">${p.s}</p>
-                </article>
-              `).join('')}
+              ${STAT_CARDS.map(card => {
+                const isFlipped = STATE.flippedCards[card.id];
+                return '<div class="flip-card '+(isFlipped ? 'flipped' : '')+'" data-action="flip-card" data-card-id="'+card.id+'" role="button" tabindex="0" aria-label="'+card.title+'">'
+                  +'<div class="flip-card-inner">'
+                    +'<div class="flip-card-front section-card">'
+                      +'<i data-lucide="'+card.icon+'" class="w-4 h-4 text-[#0070F3] flex-shrink-0"></i>'
+                      +'<div class="flip-card-stat">'+card.stat+'</div>'
+                      +'<div class="flip-card-tap">tap to reveal</div>'
+                    +'</div>'
+                    +'<div class="flip-card-back">'
+                      +'<div>'
+                        +'<div class="text-xs font-bold uppercase tracking-wide text-blue-200 mb-1">'+card.title+'</div>'
+                        +'<p class="text-xs leading-relaxed text-white/90">'+card.body+'</p>'
+                      +'</div>'
+                      +'<div class="text-[9px] text-blue-300/60 mt-2">'+card.source+'</div>'
+                    +'</div>'
+                  +'</div>'
+                +'</div>';
+              }).join('')}
             </div>
             <div class="section-card p-6">
               <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
@@ -2515,36 +2543,12 @@
         return `
           <section id="panel-roi" class="space-y-4">
 
-            <!-- TWO-LANE INTRO -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="section-card p-5 rounded-2xl border-t-4 border-[#0070F3]">
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="h-8 w-8 rounded-lg grid place-items-center bg-blue-50"><i data-lucide="wrench" class="w-4 h-4 text-[#0070F3]"></i></div>
-                  <div class="text-sm font-semibold text-[#0A1C60]">Engineering Team</div>
-                </div>
-                <div class="text-xs text-[#64748b] leading-relaxed mb-3">Per-platform packaging, patching, and testing eats engineering capacity. Every new environment multiplies the work.</div>
-                <div class="flex items-center gap-2 mb-3"><div class="flex-1 h-px bg-slate-200"></div><i data-lucide="arrow-down" class="w-3.5 h-3.5 text-[#0070F3]"></i><div class="flex-1 h-px bg-slate-200"></div></div>
-                <div class="text-xs font-semibold text-[#0070F3] mb-2">With Application Workspace</div>
-                <div class="space-y-1.5 text-xs text-[#475569]">
-                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Define once — deliver to every platform automatically</div>
-                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> 8,000+ pre-tested apps — your team only packages what's unique</div>
-                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Patches deploy everywhere at once through staged pipeline</div>
-                </div>
-              </div>
-              <div class="section-card p-5 rounded-2xl border-t-4 border-emerald-500">
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="h-8 w-8 rounded-lg grid place-items-center bg-emerald-50"><i data-lucide="users" class="w-4 h-4 text-emerald-500"></i></div>
-                  <div class="text-sm font-semibold text-[#0A1C60]">End Users</div>
-                </div>
-                <div class="text-xs text-[#64748b] leading-relaxed mb-3">App tickets, install failures, and wait times drain support bandwidth. Users lose productivity while IT manually fulfills requests.</div>
-                <div class="flex items-center gap-2 mb-3"><div class="flex-1 h-px bg-slate-200"></div><i data-lucide="arrow-down" class="w-3.5 h-3.5 text-emerald-500"></i><div class="flex-1 h-px bg-slate-200"></div></div>
-                <div class="text-xs font-semibold text-emerald-600 mb-2">With Application Workspace</div>
-                <div class="space-y-1.5 text-xs text-[#475569]">
-                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Self-service catalog — users get approved apps in seconds</div>
-                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> No tickets, no wait — IT controls the catalog, users control timing</div>
-                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Same experience on every device — reduces confusion and support calls</div>
-                </div>
-              </div>
+            <!-- WHY THIS MATTERS NOW -->
+            <div class="section-card p-5 rounded-2xl">
+              <div class="text-[10px] font-semibold text-amber-600 uppercase tracking-widest mb-2">The operational bottleneck</div>
+              <div class="text-sm font-semibold text-[#0A1C60] mb-3 leading-snug">Application management is consuming the capacity your team needs for everything else.</div>
+              <div class="text-xs text-[#64748b] leading-relaxed">Your engineers are packaging, patching, and repackaging applications across multiple platforms and environments \u2014 manually, repeatedly, for every update cycle. Your support team is fielding hundreds of app-related tickets a month. Headcount is flat. The backlog grows.</div>
+              <div class="text-xs text-[#64748b] leading-relaxed mt-2">The result: strategic initiatives \u2014 migrations, AI rollouts, compliance projects, endpoint modernization \u2014 are waiting for capacity that is trapped in routine app delivery work.</div>
             </div>
 
             <!-- EMPLOYEE COUNT INPUT -->
@@ -2553,7 +2557,8 @@
                 <div class="flex items-center gap-3 flex-1">
                   <div class="h-10 w-10 rounded-xl grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60] flex-shrink-0"><i data-lucide="building-2" class="w-5 h-5 text-white"></i></div>
                   <div class="flex-1">
-                    <div class="text-sm font-semibold text-[#0A1C60] mb-1">How many employees?</div>
+                    <div class="text-sm font-semibold text-[#0A1C60] mb-0.5">How many employees does your organization manage?</div>
+                    <div class="text-[10px] text-slate-400 mb-1">We\u2019ll estimate your current operational effort and show where capacity is locked up.</div>
                     <div class="flex items-center gap-2">
                       <input type="number" id="roi-employees" placeholder="5000" value="${ci.users}" class="w-full max-w-[200px] px-3 py-2 text-lg font-semibold text-[#0A1C60] border-2 border-slate-200 rounded-lg focus:border-[#0070F3] focus:outline-none transition" style="appearance:textfield;-moz-appearance:textfield">
                       <button type="button" data-action="calculate-impact" class="inline-flex items-center gap-1.5 bg-[#0070F3] text-white px-4 py-2.5 text-xs font-semibold rounded-lg hover:bg-[#005AD0] transition whitespace-nowrap"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Show Results</button>
@@ -2627,38 +2632,34 @@
         const patchBefore = ci.patchHours;
         const patchAfter = Math.round(patchBefore - r.patchHoursReturned);
         return `
-          <!-- SECTION A: What this costs you today -->
+          <!-- SECTION A: Where your capacity is locked -->
           <div class="section-card p-5 rounded-2xl dash-animate">
-            <div class="text-[10px] font-semibold text-red-500 uppercase tracking-widest mb-2">What this is costing you today</div>
-            <div class="flex items-start gap-6 mb-4">
-              <div class="flex-shrink-0">
-                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${fmtDollars(r.totalBurnAnnual)}</div>
-                <div class="text-[10px] text-slate-400 uppercase tracking-wide mt-1">Per year — estimated</div>
-              </div>
-              <div class="text-xs text-[#64748b] leading-relaxed pt-1">What your organization spends annually on <strong class="text-[#0A1C60]">reactive application packaging, cross-platform delivery, and support ticket resolution</strong>. A significant share is duplicated effort — the same application packaged separately for every platform and environment.</div>
-            </div>
+            <div class="text-[10px] font-semibold text-amber-600 uppercase tracking-widest mb-3">Where your capacity is locked</div>
             <div class="grid grid-cols-3 gap-3">
-              <div class="bg-slate-50 rounded-xl p-3.5">
-                <div class="text-lg font-bold text-[#0A1C60]">${fmtDollars(r.supportCostAnnual)}</div>
-                <div class="text-[10px] font-semibold text-[#64748b] mt-1">Support & ticket handling</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">~${num(supportHrsBefore)} hrs/mo at $90/hr</div>
+              <div class="bg-slate-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-[#0A1C60] leading-none">${num(r.totalHoursMonth)}</div>
+                <div class="text-[10px] text-slate-400 mt-1">hrs / month</div>
+                <div class="text-[10px] font-semibold text-[#64748b] mt-2">Consumed by routine app operations</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">Support, packaging, patching, and rework across ${STATE.calcInputs.envs} environments</div>
               </div>
-              <div class="bg-slate-50 rounded-xl p-3.5">
-                <div class="text-lg font-bold text-[#0A1C60]">${fmtDollars(r.engineeringCostAnnual)}</div>
-                <div class="text-[10px] font-semibold text-[#64748b] mt-1">Packaging & patching labor</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">~${num(pkgBefore + patchBefore)} hrs/mo at $120/hr</div>
+              <div class="bg-slate-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-[#0A1C60] leading-none">${r.fteCapacity}</div>
+                <div class="text-[10px] text-slate-400 mt-1">FTE-equivalents</div>
+                <div class="text-[10px] font-semibold text-[#64748b] mt-2">Tied to repetitive delivery work</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">This capacity could be reallocated \u2014 not reduced</div>
               </div>
-              <div class="bg-slate-50 rounded-xl p-3.5">
-                <div class="text-lg font-bold text-[#0A1C60]">${fmtDollars(r.wasteCostAnnual)}</div>
-                <div class="text-[10px] font-semibold text-[#64748b] mt-1">Duplication & rework</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">Per-platform, per-environment redundancy</div>
+              <div class="bg-slate-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-[#0A1C60] leading-none">${STATE.calcInputs.envs}</div>
+                <div class="text-[10px] text-slate-400 mt-1">platforms</div>
+                <div class="text-[10px] font-semibold text-[#64748b] mt-2">Multiplying every task</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">Each environment requires separate packaging, testing, and deployment</div>
               </div>
             </div>
           </div>
 
-          <!-- SECTION B: Before and After -->
+          <!-- SECTION B: What standardization removes -->
           <div class="dash-animate mt-4">
-            <div class="text-[10px] font-semibold text-[#0070F3] uppercase tracking-widest mb-2 px-1">Your team before and after</div>
+            <div class="text-[10px] font-semibold text-[#0070F3] uppercase tracking-widest mb-2 px-1">What standardization removes</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="section-card p-4 rounded-2xl">
                 <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
@@ -2713,17 +2714,36 @@
                 </div>
               </div>
             </div>
+            <div class="text-xs text-[#64748b] italic mt-3 px-1">Fewer app versions in production means fewer variables when something breaks \u2014 less technical debt, lower operational risk, and a more governable environment.</div>
           </div>
 
-          <!-- SECTION C: The Business Case -->
+          <!-- SECTION C: Where the capacity goes -->
+          <div class="section-card p-5 rounded-2xl dash-animate mt-4">
+            <div class="flex gap-5 items-start">
+              <div class="flex-shrink-0 pr-5 border-r border-slate-200">
+                <div class="text-[9px] font-semibold text-amber-600 uppercase tracking-wider mb-2">Capacity returned</div>
+                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${num(r.strategicHours)}</div>
+                <div class="text-[10px] text-slate-400 mt-1">hours / year</div>
+              </div>
+              <div class="pt-0.5">
+                <div class="text-sm font-semibold text-[#0A1C60] mb-2 leading-snug">This capacity goes back to work your team is already trying to do.</div>
+                <div class="text-xs text-[#64748b] leading-relaxed">When routine app delivery absorbs less time, your existing engineers can focus on the projects that are actually on the roadmap. You may be able to defer open reqs instead of hiring. And the people doing this work today get to do something more interesting \u2014 which helps with retention.</div>
+                <div class="flex flex-wrap gap-3 mt-3">
+                  ${['AI and Copilot rollouts','Cloud and endpoint migrations','Compliance and security posture','Automation and self-service','Pilot programs and modernization'].map(t => '<div class="flex items-center gap-1.5 text-[10px] text-slate-500"><div class="w-1 h-1 rounded-full bg-amber-500"></div>'+t+'</div>').join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION D: Executive Summary -->
           <div class="dash-animate mt-4">
-            <div class="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest mb-2 px-1">The business case</div>
+            <div class="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest mb-2 px-1">Executive summary</div>
             <div class="grid grid-cols-3 gap-4">
               <div class="section-card p-5 rounded-2xl border-t-4 border-emerald-500">
-                <div class="text-[9px] font-semibold text-emerald-600 uppercase tracking-wider mb-3">Dollar Impact</div>
-                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">${fmtDollars(r.totalRecoveredAnnual)}</div>
-                <div class="text-xs font-semibold text-[#0A1C60] mb-1">Annual capacity recovered</div>
-                <div class="text-[10px] text-[#64748b] leading-relaxed">Dollar value of engineering and support hours returned to strategic work. Capacity freed \u2014 not headcount reduced.</div>
+                <div class="text-[9px] font-semibold text-emerald-600 uppercase tracking-wider mb-3">Capacity Recovered</div>
+                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">${num(r.totalHoursYear)} hrs</div>
+                <div class="text-xs font-semibold text-[#0A1C60] mb-1">${r.fteCapacity} FTE-equivalents returned to strategic work</div>
+                <div class="text-[10px] text-[#64748b] leading-relaxed">Hours freed from routine packaging, patching, and support \u2014 reallocated, not eliminated. Dollar equivalent: ${fmtDollars(r.totalRecoveredAnnual)}/yr.</div>
               </div>
               <div class="section-card p-5 rounded-2xl border-t-4 border-[#0070F3]">
                 <div class="text-[9px] font-semibold text-[#0070F3] uppercase tracking-wider mb-3">Time to Value</div>
@@ -2740,35 +2760,14 @@
             </div>
           </div>
 
-          <!-- SECTION D: Strategic Capacity Callout -->
-          <div class="section-card p-5 rounded-2xl dash-animate mt-4">
-            <div class="flex gap-5 items-start">
-              <div class="flex-shrink-0 pr-5 border-r border-slate-200">
-                <div class="text-[9px] font-semibold text-amber-600 uppercase tracking-wider mb-2">Capacity Unlocked</div>
-                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${num(r.strategicHours)}</div>
-                <div class="text-[10px] text-slate-400 mt-1">hours / year</div>
-              </div>
-              <div class="pt-0.5">
-                <div class="text-sm font-semibold text-[#0A1C60] mb-2 leading-snug">Your strategic initiatives are stalled because your engineers are stuck packaging apps.</div>
-                <div class="text-xs text-[#64748b] leading-relaxed">Every organization has an AI and modernization roadmap. Almost none have the <strong class="text-[#0A1C60]">engineering capacity to execute it</strong> \u2014 because that capacity is trapped in reactive app delivery work. Application Workspace returns <strong class="text-[#0A1C60]">${r.fteCapacity} FTE-equivalents</strong> of engineering time.</div>
-                <div class="flex flex-wrap gap-3 mt-3">
-                  ${['Copilot & AI tool rollouts','Automation pipeline buildout','Endpoint modernization','Security posture projects'].map(t => '<div class="flex items-center gap-1.5 text-[10px] text-slate-500"><div class="w-1 h-1 rounded-full bg-amber-500"></div>'+t+'</div>').join('')}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- SECTION E: Urgency Bar -->
-          <div class="section-card px-5 py-3 rounded-xl dash-animate mt-4 border-l-4 border-red-400">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-[#475569]">Every month you wait costs an estimated <strong class="text-red-500">${fmtDollars(r.monthlyCostOfWaiting)}</strong> in recoverable capacity \u2014 and another month your roadmap doesn\u2019t move.</div>
-              <div class="text-xs font-semibold text-red-500 whitespace-nowrap ml-4">${fmtDollars(r.totalRecoveredAnnual)}/yr recoverable</div>
-            </div>
+          <!-- SECTION E: Closing -->
+          <div class="section-card px-5 py-3 rounded-xl dash-animate mt-4 border-l-4 border-slate-300">
+            <div class="text-xs text-[#64748b]">The math is straightforward: less time spent on routine app operations means more capacity for the work that moves the business forward.</div>
           </div>
 
           <!-- SECTION F: Trust Strip -->
           <div class="flex items-center justify-center gap-4 flex-wrap mt-3 dash-animate">
-            ${['SOC 2 Type II & ISO 27001','60M+ devices managed','87 CSAT','8,000+ pre-tested apps','130+ countries'].map(t => '<div class="text-[10px] text-slate-400"><span class="text-slate-300 mr-1">\u2014</span>'+t+'</div>').join('')}
+            ${['SOC 2 Type II & ISO 27001','60M+ devices managed','87 CSAT','8,000+ pre-tested apps','130+ countries','End users get apps in seconds, not days'].map(t => '<div class="text-[10px] text-slate-400"><span class="text-slate-300 mr-1">\u2014</span>'+t+'</div>').join('')}
           </div>
         `;
       }
@@ -2911,6 +2910,7 @@
             STATE.openWhyModal = id; render(); return;
           }
 
+          if (action === 'flip-card') { const cardId = act.getAttribute('data-card-id'); STATE.flippedCards[cardId] = !STATE.flippedCards[cardId]; const cardEl = act.closest('.flip-card'); if (cardEl) cardEl.classList.toggle('flipped'); return; }
           if (action === 'toggle-card') { const id = act.getAttribute('data-card'); const wasOpen = STATE.openCards[id]; Object.keys(STATE.openCards).forEach(k => STATE.openCards[k] = false); STATE.openCards[id] = !wasOpen; if (STATE.openCards[id] && !STATE.visitedCards.includes(id)) STATE.visitedCards.push(id); render(); if (STATE.openCards[id]) { setTimeout(() => act.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200); } return; }
           if (action === 'expand-all') { Object.keys(STATE.openCards).forEach(k => STATE.openCards[k] = true); STATE.visitedCards = ['core','onboarding','trust']; render(); return; }
           if (action === 'calculate-impact') { calculateImpact(); render(); return; }
@@ -2957,7 +2957,7 @@
             const a = ROI_ASSUMPTIONS[STATE.calcScenario];
             const ci = STATE.calcInputs;
 
-            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nCURRENT ANNUAL COST\n  Total burn:                 ${fmtDollars(r.totalBurnAnnual)} / year\n  Support & tickets:          ${fmtDollars(r.supportCostAnnual)}\n  Packaging & patching:       ${fmtDollars(r.engineeringCostAnnual)}\n  Duplication & rework:       ${fmtDollars(r.wasteCostAnnual)}\n\nCAPACITY RECOVERED\n  Annual value recovered:     ${fmtDollars(r.totalRecoveredAnnual)}\n  Hours returned / year:      ${num(r.totalHoursYear)}  (${num(r.totalHoursMonth)} / month)\n  Tickets avoided / month:    ${num(r.ticketsAvoided)}\n  Strategic hours unlocked:   ${num(r.strategicHours)} / year\n  FTE-equivalent capacity:    ${r.fteCapacity}\n\nBEFORE / AFTER\n  Support hours/mo:           ${num(r.currentSupportHours)} \u2192 ${num(Math.round(r.currentSupportHours - r.ticketHoursReturned))}  (-${Math.round(a.ticketReduction * 100)}%)\n  Tickets/mo:                 ${num(ci.monthlyTickets)} \u2192 ${num(ci.monthlyTickets - r.ticketsAvoided)}  (-${Math.round(a.ticketReduction * 100)}%)\n  Packaging hours/mo:         ${num(ci.pkgHours)} \u2192 ${num(Math.round(ci.pkgHours - r.pkgHoursReturned))}  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours/mo:          ${num(ci.patchHours)} \u2192 ${num(Math.round(ci.patchHours - r.patchHoursReturned))}  (-${Math.round(a.patchReduction * 100)}%)\n\nMONTHLY COST OF WAITING:     ${fmtDollars(r.monthlyCostOfWaiting)}\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
+            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nCAPACITY LOCKED TODAY\n  Hours consumed / month:     ${num(r.totalHoursMonth)}\n  FTE-equivalents tied up:    ${r.fteCapacity}\n  Environments managed:       ${ci.envs}\n\nWHAT CHANGES\n  Support hours/mo:           ${num(r.currentSupportHours)} \u2192 ${num(Math.round(r.currentSupportHours - r.ticketHoursReturned))}  (-${Math.round(a.ticketReduction * 100)}%)\n  Tickets/mo:                 ${num(ci.monthlyTickets)} \u2192 ${num(ci.monthlyTickets - r.ticketsAvoided)}  (-${Math.round(a.ticketReduction * 100)}%)\n  Packaging hours/mo:         ${num(ci.pkgHours)} \u2192 ${num(Math.round(ci.pkgHours - r.pkgHoursReturned))}  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours/mo:          ${num(ci.patchHours)} \u2192 ${num(Math.round(ci.patchHours - r.patchHoursReturned))}  (-${Math.round(a.patchReduction * 100)}%)\n\nCAPACITY RECOVERED\n  Hours returned / year:      ${num(r.totalHoursYear)}\n  FTE-equivalents:            ${r.fteCapacity}\n  Strategic hours unlocked:   ${num(r.strategicHours)} / year\n  Dollar equivalent:          ${fmtDollars(r.totalRecoveredAnnual)} / year\n\nTIME TO VALUE:                4\u20136 weeks\nPLATFORM RISK:                Zero disruption to existing systems\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
 
             try {
               navigator.clipboard.writeText(plainText).then(function() {
@@ -3018,6 +3018,8 @@
           if (action === 'reset-currentstate-defaults') { clearDraft(); STATE.chartConfig = STATE.defaultsChartConfig(); STATE.drivers = STATE.defaultsDrivers(); STATE.currentState = STATE.defaultsCurrentState(); STATE.editChartBuffer = null; render(); return; }
           if (action === 'reset-sliders') { resetSliders(); return; }
         });
+
+        root.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { const flipTarget = e.target.closest('[data-action="flip-card"]'); if (flipTarget) { flipTarget.click(); e.preventDefault(); } } });
 
         let _roiDebounce = null;
         root.addEventListener('input', (e) => {
