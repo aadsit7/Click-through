@@ -238,6 +238,20 @@
       .admin-row.row-idle { opacity: 0.5; }
       /* Phase status label */
       .phase-status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; transition: all 0.3s ease; }
+      /* Multi-tenant view */
+      .mt-zone { border-radius: 10px; padding: 10px; transition: opacity 0.5s ease, transform 0.5s ease; }
+      .mt-zone.mt-hidden { opacity: 0; transform: translateY(10px); }
+      .mt-zone.mt-visible { opacity: 1; transform: translateY(0); }
+      .mt-primary { background: linear-gradient(135deg, #0A1C60 0%, #1e3a8a 100%); color: white; }
+      .mt-secondary { background: white; border: 2px solid #0070F3; color: #0A1C60; }
+      .mt-sync-line { width: 2px; height: 0; background: linear-gradient(180deg, #0070F3, #10b981); margin: 0 auto; transition: height 0.8s ease; border-radius: 2px; }
+      .mt-sync-line.mt-drawn { height: 28px; }
+      .mt-app-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 10px; border: 1px solid #e2e8f0; background: white; color: #475569; transition: all 0.3s ease; }
+      .mt-app-pill.mt-custom { border-color: #0070F3; background: #eff6ff; }
+      .mt-control { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; font-size: 9px; border: 1px solid #e2e8f0; background: #f8fafc; color: #94a3b8; transition: all 0.3s ease; }
+      .mt-control.mt-lit { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+      .mt-callout { opacity: 0; transform: translateY(4px); transition: all 0.5s ease; font-size: 10px; font-weight: 600; }
+      .mt-callout.mt-show { opacity: 1; transform: translateY(0); }
       @keyframes finalGlow { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
       .final-glow { animation: finalGlow 2s ease-in-out; }
       .cfg-item { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; font-size: 10px; color: #475569; background: white; border: 1px solid #e2e8f0; transition: all 0.3s ease; opacity: 0; transform: translateX(-6px); }
@@ -404,6 +418,12 @@
         visitedTabs: [],
         solutionViewUser: true,
         solutionViewAdmin: false,
+        solutionViewMultiTenant: false,
+        mtPhase: 'idle',
+        mtRunning: false,
+        mtPaused: false,
+        mtQueue: [],
+        mtQueueIdx: 0,
         showLabels: false,
         showSolutionCards: true,
         openWhy: null,
@@ -463,16 +483,16 @@
             analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
           },
           recast: {
-            intro: "Application Workspace changes how apps are delivered — to the user, not the device.",
+            intro: "Application Workspace sits on top of your existing tools and gives you one place to package, deliver, update, and manage every app across every environment.",
             bullets: [
-              "Applications Are Tied to the User = Apps follow the user across platforms. Assigned by user identity, not device or location.",
-              "Define Once, Deliver Everywhere = Applications are defined a single time. Delivered consistently across platforms. No repackaging or extra configuration required.",
-              "Support is Simplified = IT uses a single support model across all delivery methods.",
-              "New platforms can be integrated without rework = Backend updates don't affect user-facing experience.",
-              "Consistent User Experience = Users see the same apps and interfaces every time. Reduces user confusion and support demand.",
-              "Central management of application delivery = Ensures design consistency across environments. Reduces fragmentation and configuration drift."
+              "Define once, deliver everywhere = Stop rebuilding the same app for every platform. Define it once — Application Workspace delivers it to Intune, SCCM, Citrix, AVD, and macOS automatically.",
+              "8,000+ apps ready to go = Most of your catalog deploys without any packaging work. The Setup Store has 8,000+ pre-tested apps — your team only packages what's unique to your org.",
+              "Self-service replaces tickets = Users get approved apps in seconds from a catalog — no tickets, no wait. IT controls the catalog. Users control the timing.",
+              "Patches land everywhere at once = Security updates deploy across every environment simultaneously through a staged pipeline. No per-platform rebuilds. No version drift.",
+              "Nothing gets ripped out = Works with what you already run — Intune, SCCM, Citrix, AVD, macOS. It's the layer that makes them work together.",
+              "Your team gets time back = Engineers stop rebuilding and firefighting. That capacity goes back to the projects stuck in your backlog."
             ],
-            analyst: "Leading IT organizations are shifting from device-centric management to user-centric delivery models to reduce operational friction and keep pace with constant platform change."
+            analyst: "The organizations pulling ahead aren't adding headcount — they're adding a layer that eliminates per-platform rework and redirects capacity toward what matters next."
           }
         },
         defaultsCurrentState() {
@@ -496,16 +516,16 @@
               analyst: "The organizations that succeed with AI, cloud, and platform modernization over the next two to three years will be the ones that solved application delivery first. Everyone else hits a capacity wall — and strategy doesn't fix a capacity problem."
             },
             recast: {
-              intro: "Application Workspace changes how apps are delivered — to the user, not the device.",
+              intro: "Application Workspace sits on top of your existing tools and gives you one place to package, deliver, update, and manage every app across every environment.",
               bullets: [
-                "Applications Are Tied to the User = Apps follow the user across platforms. Assigned by user identity, not device or location.",
-                "Define Once, Deliver Everywhere = Applications are defined a single time. Delivered consistently across platforms. No repackaging or extra configuration required.",
-                "Support is Simplified = IT uses a single support model across all delivery methods.",
-                "New platforms can be integrated without rework = Backend updates don't affect user-facing experience.",
-                "Consistent User Experience = Users see the same apps and interfaces every time. Reduces user confusion and support demand.",
-                "Central management of application delivery = Ensures design consistency across environments. Reduces fragmentation and configuration drift."
+                "Define once, deliver everywhere = Stop rebuilding the same app for every platform. Define it once — Application Workspace delivers it to Intune, SCCM, Citrix, AVD, and macOS automatically.",
+                "8,000+ apps ready to go = Most of your catalog deploys without any packaging work. The Setup Store has 8,000+ pre-tested apps — your team only packages what's unique to your org.",
+                "Self-service replaces tickets = Users get approved apps in seconds from a catalog — no tickets, no wait. IT controls the catalog. Users control the timing.",
+                "Patches land everywhere at once = Security updates deploy across every environment simultaneously through a staged pipeline. No per-platform rebuilds. No version drift.",
+                "Nothing gets ripped out = Works with what you already run — Intune, SCCM, Citrix, AVD, Nerdio, macOS. It's the layer that makes them work together.",
+                "Your team gets time back = Engineers stop rebuilding and firefighting. That capacity goes back to the projects stuck in your backlog."
               ],
-              analyst: "Leading IT organizations are shifting from device-centric management to user-centric delivery models to reduce operational friction and keep pace with constant platform change."
+              analyst: "The organizations pulling ahead aren't adding headcount — they're adding a layer that eliminates per-platform rework and redirects capacity toward what matters next."
             }
           }));
         },
@@ -694,7 +714,7 @@
 
         const stageState = (stagePhases) => {
           if (!scenario) return '';
-          const idx = ['clicking','checking','routing','config','done','final'];
+          const idx = ['launch','catalog','clicking','checking','routing','config','done','final'];
           const currentIdx = idx.indexOf(phase);
           if (currentIdx < 0) return '';
           const lastIdx = idx.indexOf(stagePhases[stagePhases.length - 1]);
@@ -731,8 +751,8 @@
                 `}
               </div>
               <div class="flex items-center gap-2 text-[12px]">
-                ${STATE.flowRunning ? `<button type="button" data-action="pause-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i> ${STATE.flowPaused ? 'Resume' : 'Pause'}</button>` : `<button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Play</button>`}
-                <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+                <button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white w-7 h-7 rounded-full hover:bg-[#005AD0] inline-flex items-center justify-center"><i data-lucide="${STATE.flowRunning && !STATE.flowPaused ? 'pause' : 'play'}" class="w-3.5 h-3.5"></i></button>
+                <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded text-[12px] font-semibold hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
               </div>
             </div>
 
@@ -941,7 +961,7 @@
 
         const stageState = (stagePhases) => {
           if (!scenario) return '';
-          const idx = ['clicking','checking','routing','config','done','final'];
+          const idx = ['launch','catalog','clicking','checking','routing','config','done','final'];
           const currentIdx = idx.indexOf(phase);
           if (currentIdx < 0) return '';
           const lastIdx = idx.indexOf(stagePhases[stagePhases.length - 1]);
@@ -1081,23 +1101,20 @@
 
       function buildFlowQueue(){
         const queue = [];
-        for (let i = 0; i < SCENARIOS.length; i++) {
-          const idx = i;
-          const isCatalog = SCENARIOS[i].id === 'catalog';
-          if (i === 0) {
-            queue.push({ delay: 600, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; if (!isCatalog) { STATE.flowAppOpened = true; } updateFlowDOM(); } });
-          } else {
-            queue.push({ delay: 1200, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'clicking'; if (SCENARIOS[idx].id !== 'catalog') STATE.flowAppOpened = true; updateFlowDOM(); } });
-          }
-          queue.push({ delay: 1200, fn(){ STATE.flowPhase = 'checking'; updateFlowDOM(); animateChecks(); } });
-          queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'routing'; updateFlowDOM(); } });
-          queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'config'; updateFlowDOM(); } });
-          queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'done'; if (isCatalog) { STATE._firstOpenDone = false; STATE.flowAppOpened = true; } updateFlowDOM(); } });
-          if (i === SCENARIOS.length - 1) {
-            queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'final'; updateFlowDOM(); } });
-            queue.push({ delay: 3000, fn(){ STATE.flowRunning = false; STATE.flowPaused = false; updateFlowDOM(); } });
-          }
-        }
+        const idx = 0;
+        const isCatalog = SCENARIOS[0].id === 'catalog';
+        // Launch phase: user opens Application Workspace on their device
+        queue.push({ delay: 600, fn(){ STATE.flowScenarioIdx = idx; STATE.flowPhase = 'launch'; STATE.flowAppOpened = false; updateFlowDOM(); } });
+        // Catalog phase: workspace opens, user sees all their apps
+        queue.push({ delay: 1200, fn(){ STATE.flowPhase = 'catalog'; updateFlowDOM(); } });
+        // Clicking phase: user selects an app from the catalog
+        queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'clicking'; updateFlowDOM(); } });
+        queue.push({ delay: 1200, fn(){ STATE.flowPhase = 'checking'; updateFlowDOM(); animateChecks(); } });
+        queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'routing'; updateFlowDOM(); } });
+        queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'config'; updateFlowDOM(); } });
+        queue.push({ delay: 1500, fn(){ STATE.flowPhase = 'done'; if (isCatalog) { STATE._firstOpenDone = false; STATE.flowAppOpened = true; } updateFlowDOM(); } });
+        queue.push({ delay: 2000, fn(){ STATE.flowPhase = 'final'; updateFlowDOM(); } });
+        queue.push({ delay: 3000, fn(){ STATE.flowRunning = false; STATE.flowPaused = false; updateFlowDOM(); } });
         return queue;
       }
 
@@ -1465,7 +1482,7 @@
               <div class="${isRecast ? 'px-6 py-4 overflow-y-auto' : 'p-8'} bg-white/35 backdrop-blur-lg" style="${isRecast ? 'flex:1;min-height:0' : ''}">
                 ${isRecast ? `
                   <p class="text-sm leading-relaxed text-[#4A5568] mb-3">${data.intro}</p>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">${data.bullets.map(b=>`<div class="bg-white/70 backdrop-blur-lg p-2.5 rounded-lg shadow-sm flex items-start gap-2"><i data-lucide="check-circle" class="w-4 h-4 text-[#0070F3] flex-shrink-0 mt-0.5"></i><p class="text-xs leading-relaxed text-[#4A5568]">${b}</p></div>`).join('')}</div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">${data.bullets.map(b=>{const parts=b.split(' = ');const hasTitle=parts.length>1;return '<div class="bg-white/70 backdrop-blur-lg p-2.5 rounded-lg shadow-sm flex items-start gap-2 hover:shadow-md transition-shadow">'+'<div class="w-4 h-4 flex-shrink-0 mt-0.5"><i data-lucide="check-circle" class="w-4 h-4 text-[#0070F3]"></i></div>'+'<div>'+(hasTitle?'<div class="text-xs font-semibold text-[#0A1C60] mb-0.5">'+parts[0]+'</div>':'')+'<p class="text-xs leading-relaxed text-[#4A5568]">'+(hasTitle?parts.slice(1).join(' = '):b)+'</p></div></div>';}).join('')}</div>
                   <div class="bg-white/70 backdrop-blur-lg p-2.5 rounded-lg shadow-sm flex items-start gap-2 mb-4"><i data-lucide="lightbulb" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-xs italic text-[#4A5568]">${data.analyst}</p></div>
                   <div class="rounded-xl border border-slate-200 bg-white/80 p-4">
                     <div class="text-sm font-semibold text-[#0A1C60] mb-3 text-center">How It Fits Together</div>
@@ -1525,11 +1542,14 @@
         const sc = STATE.flowScenarioIdx;
         const phase = STATE.flowPhase;
         const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
-        const appOpen = scenario && !['idle','catalog'].includes(phase);
+        const appOpen = scenario && !['idle','launch','catalog','clicking'].includes(phase);
+        const showDesktop = !scenario || phase === 'idle' || phase === 'launch';
 
         const phaseLabel = !scenario ? 'Ready' :
           phase === 'idle' ? 'Waiting...' :
-          phase === 'clicking' ? 'User clicks app...' :
+          phase === 'launch' ? 'User opens Application Workspace...' :
+          phase === 'catalog' ? 'Browsing app catalog...' :
+          phase === 'clicking' ? 'User selects Teams...' :
           phase === 'checking' ? 'Verifying identity & context...' :
           phase === 'routing' ? 'Selecting delivery path...' :
           phase === 'config' ? 'Applying configuration...' :
@@ -1584,7 +1604,6 @@
             <!-- What the user sees -->
             <div class="flex items-center gap-2 mb-3">
               <div class="bts-label bts-label-user"><i data-lucide="user" class="w-3 h-3"></i> What the user sees</div>
-              <div class="phase-status ${phaseColor}">${['done','final'].includes(phase) ? '<i data-lucide="check-circle" class="w-3 h-3"></i>' : phase === 'idle' || !scenario ? '' : '<div class="spinner" style="width:10px;height:10px;border-width:2px"></div>'} ${phaseLabel}</div>
             </div>
 
             <div class="device-frame" id="deviceFrame">
@@ -1593,8 +1612,44 @@
                   <div class="device-dot device-dot-r"></div>
                   <div class="device-dot device-dot-y"></div>
                   <div class="device-dot device-dot-g"></div>
-                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : 'Application Workspace'}</span>
+                  <span class="device-titlebar-text">${appOpen ? 'Microsoft Teams' : showDesktop ? (phase === 'launch' ? 'Opening Application Workspace...' : 'Desktop') : phase === 'clicking' ? 'Application Workspace — selecting Teams...' : 'Application Workspace'}</span>
                 </div>
+
+                ${showDesktop ? `
+                <!-- Desktop view: user's device with app icons -->
+                <div style="background:linear-gradient(135deg,#e0e7ff 0%,#dbeafe 40%,#eff6ff 100%);min-height:180px;display:flex;flex-direction:column;position:relative">
+                  <!-- Desktop icons -->
+                  <div style="flex:1;padding:16px 20px;display:flex;flex-wrap:wrap;gap:16px;align-content:start">
+                    ${[
+                      {l:'W',c:'#185ABD',n:'Word'},
+                      {l:'X',c:'#107C41',n:'Excel'},
+                      {l:'C',c:'#4285F4',n:'Chrome'},
+                      {l:'O',c:'#106EBE',n:'Outlook'},
+                    ].map(a => `
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:48px">
+                        <div style="width:36px;height:36px;border-radius:10px;background:${a.c};display:grid;place-items:center;font-size:14px;font-weight:800;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.15)">${a.l}</div>
+                        <span style="font-size:9px;color:#334155;text-align:center">${a.n}</span>
+                      </div>
+                    `).join('')}
+                    <!-- Application Workspace icon (hero) -->
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:48px;position:relative">
+                      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0A1C60,#0070F3);display:grid;place-items:center;box-shadow:0 2px 12px rgba(0,112,243,0.3);${phase === 'launch' ? 'box-shadow:0 0 0 3px rgba(0,112,243,0.4),0 2px 12px rgba(0,112,243,0.3)' : ''}">
+                        <i data-lucide="layout-grid" class="w-4 h-4 text-white"></i>
+                      </div>
+                      ${phase === 'launch' ? '<div class="click-ring" style="width:36px;height:36px;border-radius:10px;position:absolute;top:0"></div>' : ''}
+                      <span style="font-size:9px;color:#0A1C60;font-weight:600;text-align:center">Workspace</span>
+                    </div>
+                  </div>
+                  <!-- Taskbar -->
+                  <div style="background:rgba(255,255,255,0.85);backdrop-filter:blur(8px);border-top:1px solid rgba(203,213,225,0.5);padding:4px 12px;display:flex;align-items:center;justify-content:center;gap:8px">
+                    ${[
+                      {c:'#185ABD',l:'W'},{c:'#107C41',l:'X'},{c:'#4285F4',l:'C'},{c:'#106EBE',l:'O'},
+                    ].map(a => `<div style="width:22px;height:22px;border-radius:5px;background:${a.c};display:grid;place-items:center;font-size:8px;font-weight:800;color:white">${a.l}</div>`).join('')}
+                    <div style="width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#0A1C60,#0070F3);display:grid;place-items:center;${phase === 'launch' ? 'box-shadow:0 0 8px rgba(0,112,243,0.5)' : ''}"><i data-lucide="layout-grid" class="w-3 h-3 text-white"></i></div>
+                  </div>
+                </div>
+                ` : `
+                <!-- Catalog grid view -->
                 <div class="catalog-grid" id="catalogGrid">
                   ${CATALOG_APPS.map(app => `
                     <div class="catalog-app ${(appOpen && app.id === 'teams') ? 'clicked' : ''}" data-app="${app.id}">
@@ -1606,6 +1661,7 @@
                     </div>
                   `).join('')}
                 </div>
+                `}
 
                 <div class="app-window-overlay ${appOpen ? 'open' : ''}" id="appWindow">
                   <div class="app-window-topbar">
@@ -1655,7 +1711,13 @@
               </div>
             </div>
 
-            ${scenario && !['idle'].includes(phase) ? `
+            <!-- Device type strip -->
+            <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
+              <span class="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Same experience on:</span>
+              ${['Windows','macOS','VDI','Cloud PC','BYOD'].map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569] font-medium">${d}</span>`).join('')}
+            </div>
+
+            ${scenario && !['idle','launch','catalog','clicking'].includes(phase) ? `
               <div class="text-[10px] text-center mt-2 text-slate-400">${scenario.bannerMsg}</div>
             ` : ''}
 
@@ -1680,7 +1742,7 @@
 
         const rowState = (phases) => {
           if (!scenario) return 'row-idle';
-          const idx = ['clicking','checking','routing','config','done','final'];
+          const idx = ['launch','catalog','clicking','checking','routing','config','done','final'];
           const cur = idx.indexOf(phase);
           const last = idx.indexOf(phases[phases.length - 1]);
           if (cur < 0) return 'row-idle';
@@ -1696,11 +1758,95 @@
             </div>
 
             ${!scenario ? `
-              <div class="text-center py-8 text-sm text-slate-400">
-                <i data-lucide="monitor-cog" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+              <!-- Architecture diagram (idle state) -->
+              <div class="rounded-xl border border-slate-200 bg-white/80 p-4 mb-3">
+                <div class="text-[10px] font-semibold text-[#0A1C60] text-center mb-3 uppercase tracking-widest">How It Fits Together</div>
+                <div class="text-center mb-2">
+                  <div class="text-[9px] font-semibold uppercase tracking-widest text-[#64748b] mb-1.5">Your Existing Mgmt Tools</div>
+                  <div class="flex flex-wrap justify-center gap-1.5">
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#5B53D6">Intune</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#E84D1A">ConfigMgr</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#374151">Citrix</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#4B5563">AVD / W365</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#4B5563">macOS</span>
+                  </div>
+                </div>
+                <div class="flex justify-center"><div style="width:70%;height:18px;border:2px dashed #cbd5e1;border-top:none;border-radius:0 0 12px 12px"></div></div>
+                <div class="relative my-1.5">
+                  <div class="flex items-center">
+                    <div class="hidden md:flex flex-col gap-1 flex-shrink-0 mr-3">
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>8,000+ Pre-tested Apps</div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>Custom App Packaging</div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-purple-400"></div>Smart Icon Technology</div>
+                    </div>
+                    <div class="flex-1 rounded-lg p-3 text-center" style="background:linear-gradient(135deg,#0A1C60 0%,#0070F3 100%)">
+                      <div class="text-sm font-bold text-white">Application Workspace</div>
+                      <div class="text-[11px] text-blue-200 mt-0.5">Package &middot; Deliver &middot; Update &middot; Self-Service &middot; Audit</div>
+                    </div>
+                    <div class="hidden md:flex flex-col gap-1 flex-shrink-0 ml-3">
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>Identity-Based Access</div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>CVE / Auto-Patching</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex justify-center"><div style="width:70%;height:18px;border:2px solid #0070F3;border-top:none;border-radius:0 0 12px 12px"></div></div>
+                <div class="text-center mt-2">
+                  <div class="text-[9px] font-semibold uppercase tracking-widest text-[#0070F3] mb-1.5">End Users & Devices</div>
+                  <div class="flex flex-wrap justify-center gap-1.5">
+                    ${['Laptop','Virtual Desktop','Cloud PC / W365','macOS','BYOD / Remote'].map(d => `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-[11px] text-[#475569]">${d}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+              <div class="text-center py-4 text-sm text-slate-400">
+                <i data-lucide="play-circle" class="w-6 h-6 mx-auto mb-2 text-slate-300"></i>
                 <div>Press <strong>Start</strong> or <strong>Step</strong> to see the admin perspective</div>
               </div>
             ` : `
+              <!-- Architecture diagram: How It Fits Together -->
+              <div class="rounded-xl border border-slate-200 bg-white/80 p-4 mb-3">
+                <div class="text-[10px] font-semibold text-[#0A1C60] text-center mb-3 uppercase tracking-widest">How It Fits Together</div>
+                <!-- Existing Mgmt Tools -->
+                <div class="text-center mb-2">
+                  <div class="text-[9px] font-semibold uppercase tracking-widest text-[#64748b] mb-1.5">Your Existing Mgmt Tools</div>
+                  <div class="flex flex-wrap justify-center gap-1.5">
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#5B53D6">Intune</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#E84D1A">ConfigMgr</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#374151">Citrix</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#4B5563">AVD / W365</span>
+                    <span class="px-3 py-1 rounded-full text-[11px] font-medium text-white" style="background:#4B5563">macOS</span>
+                  </div>
+                </div>
+                <!-- Dashed bracket down -->
+                <div class="flex justify-center"><div style="width:70%;height:18px;border:2px dashed #cbd5e1;border-top:none;border-radius:0 0 12px 12px"></div></div>
+                <!-- Application Workspace with side capabilities -->
+                <div class="relative my-1.5">
+                  <div class="flex items-center">
+                    <div class="hidden md:flex flex-col gap-1 flex-shrink-0 mr-3">
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>8,000+ Pre-tested Apps</div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>Custom App Packaging</div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-purple-400"></div>Smart Icon Technology</div>
+                    </div>
+                    <div class="flex-1 rounded-lg p-3 text-center" style="background:linear-gradient(135deg,#0A1C60 0%,#0070F3 100%)">
+                      <div class="text-sm font-bold text-white">Application Workspace</div>
+                      <div class="text-[11px] text-blue-200 mt-0.5">Package &middot; Deliver &middot; Update &middot; Self-Service &middot; Audit</div>
+                    </div>
+                    <div class="hidden md:flex flex-col gap-1 flex-shrink-0 ml-3">
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>Identity-Based Access</div>
+                      <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-200 bg-white text-[10px] text-[#475569]"><div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>CVE / Auto-Patching</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Solid bracket down -->
+                <div class="flex justify-center"><div style="width:70%;height:18px;border:2px solid #0070F3;border-top:none;border-radius:0 0 12px 12px"></div></div>
+                <!-- End Users & Devices -->
+                <div class="text-center mt-2">
+                  <div class="text-[9px] font-semibold uppercase tracking-widest text-[#0070F3] mb-1.5">End Users & Devices</div>
+                  <div class="flex flex-wrap justify-center gap-1.5">
+                    ${['Laptop','Virtual Desktop','Cloud PC / W365','macOS','BYOD / Remote'].map(d => `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-[11px] text-[#475569]">${d}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+
               <!-- Platform stats strip -->
               <div class="platform-bar mb-3" style="padding:8px 12px">
                 <div class="flex items-center justify-between">
@@ -1794,15 +1940,222 @@
         `;
       }
 
+      /* ========== MULTI-TENANT VIEW ========== */
+
+      const MT_SHARED_APPS = [
+        {icon:'chrome',label:'Google Chrome',type:'standard'},
+        {icon:'archive',label:'7-Zip',type:'standard'},
+        {icon:'shield',label:'VPN Client',type:'standard'},
+      ];
+      const MT_CUSTOM_APPS = [
+        {label:'In-House HR App',customer:'A'},
+        {label:'Legacy Finance Tool',customer:'B'},
+        {label:'Proprietary Sales App',customer:'C'},
+      ];
+      const MT_CUSTOMERS = [
+        {id:'A',name:'Customer A',custom:'In-House HR App vX',customNote:'Pilot'},
+        {id:'B',name:'Customer B',custom:'Legacy Finance Tool vY',customNote:'Hold'},
+        {id:'C',name:'Customer C',custom:'Proprietary Sales App v2',customNote:'Broad'},
+      ];
+      const MT_CONTROLS = ['Entitlements','Scoped deployments','Reporting','Governance'];
+
+      function renderMultiTenantView(){
+        const p = STATE.mtPhase;
+        const past = (target) => {
+          const order = ['idle','primary','catalog','syncing','customers','controls','done'];
+          return order.indexOf(p) >= order.indexOf(target);
+        };
+        const is = (target) => p === target;
+
+        return `
+          <div class="section-card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="bts-label bts-label-platform"><i data-lucide="building-2" class="w-3 h-3"></i> Multi-Tenant Deployment</div>
+              <div class="flex items-center gap-2 text-[12px]">
+                ${STATE.mtRunning ? `
+                  <button type="button" data-action="pause-mt" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${STATE.mtPaused ? 'play' : 'pause'}" class="w-3 h-3"></i> ${STATE.mtPaused ? 'Resume' : 'Pause'}</button>
+                ` : `
+                  <button type="button" data-action="start-mt" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Auto</button>
+                  <button type="button" data-action="step-mt" class="bg-white text-[#0070F3] border border-[#0070F3] px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#eff6ff] inline-flex items-center gap-1"><i data-lucide="skip-forward" class="w-3 h-3"></i> Step</button>
+                `}
+                <button type="button" data-action="reset-mt" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+              </div>
+            </div>
+
+            ${!past('primary') ? `
+              <div class="text-center py-6 text-sm text-slate-400">
+                <i data-lucide="building-2" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                <div>Press <strong>Auto</strong> or <strong>Step</strong> to see multi-tenant deployment</div>
+                <div class="text-[10px] text-slate-300 mt-1">See how one primary zone publishes apps to multiple customer environments</div>
+              </div>
+            ` : `
+
+              <!-- PRIMARY ZONE -->
+              <div class="mt-zone mt-primary ${past('primary') ? 'mt-visible' : 'mt-hidden'} mb-2">
+                <div class="flex items-center gap-2 mb-2">
+                  <i data-lucide="layers" class="w-4 h-4 text-blue-300"></i>
+                  <span class="text-xs font-bold tracking-wide">Primary Zone</span>
+                  <span class="ml-auto text-[9px] text-blue-300 font-medium mt-callout ${past('done') ? 'mt-show' : ''}" style="color:#93c5fd">Publish once. Reuse everywhere.</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <!-- Shared App Catalogs -->
+                  <div class="rounded-lg bg-white/10 p-2.5 ${past('catalog') ? '' : 'opacity-30'}">
+                    <div class="text-[10px] font-semibold text-blue-200 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                      <i data-lucide="layout-grid" class="w-3 h-3"></i> Shared App Catalogs
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                      ${MT_SHARED_APPS.map(a => `<div class="mt-app-pill" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.2);color:white"><i data-lucide="${a.icon}" class="w-3 h-3"></i> ${a.label}</div>`).join('')}
+                      ${MT_CUSTOM_APPS.map(a => `<div class="mt-app-pill" style="background:rgba(0,112,243,0.3);border-color:rgba(0,112,243,0.5);color:#bfdbfe"><i data-lucide="package" class="w-3 h-3"></i> ${a.label}</div>`).join('')}
+                    </div>
+                  </div>
+                  <!-- Zone Governance -->
+                  <div class="rounded-lg bg-white/10 p-2.5 ${past('catalog') ? '' : 'opacity-30'}">
+                    <div class="text-[10px] font-semibold text-blue-200 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                      <i data-lucide="shield-check" class="w-3 h-3"></i> Zone Governance
+                    </div>
+                    <div class="space-y-1 text-[10px] text-blue-100">
+                      <div class="flex items-center gap-1.5"><i data-lucide="package" class="w-3 h-3 text-blue-300"></i> Standard app packages</div>
+                      <div class="flex items-center gap-1.5"><i data-lucide="settings" class="w-3 h-3 text-blue-300"></i> Custom settings</div>
+                      <div class="flex items-center gap-1.5"><i data-lucide="filter" class="w-3 h-3 text-blue-300"></i> Sync filters and actions</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CUSTOM APP CATALOG label -->
+              ${past('catalog') ? `
+                <div class="text-center my-1">
+                  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-slate-300 bg-white text-[10px] font-semibold text-[#0A1C60]"><i data-lucide="package" class="w-3 h-3"></i> Custom App Catalog</span>
+                </div>
+              ` : ''}
+
+              <!-- SYNC / PUBLISH arrows -->
+              ${past('syncing') ? `
+                <div class="flex justify-around px-8 my-1">
+                  ${MT_CUSTOMERS.map((c, i) => `
+                    <div class="flex flex-col items-center">
+                      <div class="mt-sync-line ${past('syncing') ? 'mt-drawn' : ''}" style="transition-delay:${i * 0.2}s"></div>
+                      <span class="text-[8px] text-slate-400 font-medium mt-0.5">Sync / Publish</span>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+
+              <!-- SECONDARY ZONES -->
+              ${past('customers') ? `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                  ${MT_CUSTOMERS.map((c, i) => `
+                    <div class="mt-zone mt-secondary ${past('customers') ? 'mt-visible' : 'mt-hidden'}" style="transition-delay:${i * 0.15}s">
+                      <div class="flex items-center justify-between mb-1.5">
+                        <div>
+                          <div class="text-[8px] text-slate-400 uppercase tracking-wider">Secondary Zone</div>
+                          <div class="text-[11px] font-bold text-[#0A1C60]">${c.name}</div>
+                        </div>
+                        <i data-lucide="lock" class="w-3 h-3 text-slate-400"></i>
+                      </div>
+                      <div class="text-[9px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Apps</div>
+                      <div class="space-y-1 mb-2">
+                        <div class="mt-app-pill mt-custom text-[9px]"><i data-lucide="package" class="w-2.5 h-2.5"></i> ${c.custom} <span class="px-1 py-0 rounded text-[7px] font-bold bg-[#0070F3] text-white">${c.customNote}</span></div>
+                        ${MT_SHARED_APPS.map(a => `<div class="mt-app-pill text-[9px]"><i data-lucide="${a.icon}" class="w-2.5 h-2.5"></i> ${a.label}</div>`).join('')}
+                      </div>
+                      <div class="text-[9px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Controls</div>
+                      <div class="flex flex-wrap gap-1">
+                        ${MT_CONTROLS.map(ctrl => `<div class="mt-control ${past('controls') ? 'mt-lit' : ''}">${ctrl}</div>`).join('')}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+
+              <!-- Callouts -->
+              ${past('done') ? `
+                <div class="flex flex-wrap justify-center gap-4 mt-3">
+                  <div class="mt-callout mt-show text-[#0070F3] flex items-center gap-1.5"><i data-lucide="repeat" class="w-3.5 h-3.5"></i> Publish once. Reuse everywhere.</div>
+                  <div class="mt-callout mt-show text-emerald-600 flex items-center gap-1.5"><i data-lucide="lock" class="w-3.5 h-3.5"></i> Each zone keeps its own scope, reporting, and control.</div>
+                </div>
+              ` : ''}
+
+            `}
+          </div>
+        `;
+      }
+
+      /* ========== MT ANIMATION ENGINE ========== */
+      function buildMtQueue(){
+        const phases = ['primary','catalog','syncing','customers','controls','done'];
+        const delays = [800, 1200, 1200, 1500, 1200, 1500];
+        const queue = [];
+        phases.forEach((phase, i) => {
+          queue.push({ delay: delays[i], fn(){ STATE.mtPhase = phase; render(); } });
+        });
+        queue.push({ delay: 2000, fn(){ STATE.mtRunning = false; STATE.mtPaused = false; render(); } });
+        return queue;
+      }
+
+      function runMtQueue(){
+        if (STATE.mtPaused || STATE.mtQueueIdx >= STATE.mtQueue.length) return;
+        const step = STATE.mtQueue[STATE.mtQueueIdx];
+        const tid = setTimeout(() => {
+          if (STATE.mtPaused) return;
+          step.fn();
+          STATE.mtQueueIdx++;
+          runMtQueue();
+        }, step.delay);
+        STATE.flowTimers.timeouts.push(tid);
+      }
+
+      function startMt(){
+        if (STATE.mtRunning) return;
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        STATE.mtRunning = true;
+        STATE.mtPaused = false;
+        STATE.mtPhase = 'idle';
+        STATE.mtQueue = buildMtQueue();
+        STATE.mtQueueIdx = 0;
+        render();
+        runMtQueue();
+      }
+
+      function stepMt(){
+        if (STATE.mtRunning) return;
+        if (!STATE.mtQueue || STATE.mtQueue.length === 0) {
+          STATE.mtQueue = buildMtQueue();
+          STATE.mtQueueIdx = 0;
+          STATE.mtPhase = 'idle';
+        }
+        if (STATE.mtQueueIdx >= STATE.mtQueue.length) return;
+        const step = STATE.mtQueue[STATE.mtQueueIdx];
+        step.fn();
+        STATE.mtQueueIdx++;
+      }
+
+      function resetMt(){
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        STATE.mtPhase = 'idle';
+        STATE.mtRunning = false;
+        STATE.mtPaused = false;
+        STATE.mtQueue = [];
+        STATE.mtQueueIdx = 0;
+        render();
+      }
+
       /* ========== SOLUTION TAB (3-zone layout) ========== */
       function renderSolution(){
         const sc = STATE.flowScenarioIdx;
         const phase = STATE.flowPhase;
         const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
-        const bothActive = STATE.solutionViewUser && STATE.solutionViewAdmin;
+        const activeViewCount = [STATE.solutionViewUser, STATE.solutionViewAdmin, STATE.solutionViewMultiTenant].filter(Boolean).length;
+        const multiCol = activeViewCount >= 2;
 
         return `
           <section id="panel-solution" class="space-y-3">
+
+            <!-- ZONE C: Solution cards (horizontal) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" style="align-items:start">
+              ${NEW_CARDS.map(card => compactCard(card)).join('')}
+            </div>
 
             <!-- ZONE A: Control strip -->
             <div class="section-card p-3">
@@ -1812,48 +2165,25 @@
                   <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">View:</span>
                   <button type="button" data-action="toggle-solution-view" data-view="user" class="view-toggle ${STATE.solutionViewUser ? 'active' : ''}"><i data-lucide="monitor-smartphone" class="w-3.5 h-3.5"></i> User Experience</button>
                   <button type="button" data-action="toggle-solution-view" data-view="admin" class="view-toggle ${STATE.solutionViewAdmin ? 'active' : ''}"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console</button>
+                  <button type="button" data-action="toggle-solution-view" data-view="multitenant" class="view-toggle ${STATE.solutionViewMultiTenant ? 'active' : ''}"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Multi-Tenant</button>
                 </div>
                 <!-- Flow controls -->
                 <div class="flex items-center gap-2 text-[12px]">
-                  ${STATE.flowRunning ? `
-                    <button type="button" data-action="pause-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${STATE.flowPaused ? 'play' : 'pause'}" class="w-3 h-3"></i> ${STATE.flowPaused ? 'Resume' : 'Pause'}</button>
-                  ` : `
-                    <button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Auto</button>
-                    <button type="button" data-action="step-flow" class="bg-white text-[#0070F3] border border-[#0070F3] px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#eff6ff] inline-flex items-center gap-1"><i data-lucide="skip-forward" class="w-3 h-3"></i> Step</button>
-                  `}
-                  <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+                  <button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white w-7 h-7 rounded-full hover:bg-[#005AD0] inline-flex items-center justify-center"><i data-lucide="${STATE.flowRunning && !STATE.flowPaused ? 'pause' : 'play'}" class="w-3.5 h-3.5"></i></button>
+                  <button type="button" data-action="reset-flow" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded text-[12px] font-semibold hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
                 </div>
               </div>
 
-              <!-- Scenario pills -->
-              <div class="flex flex-wrap gap-2 mt-2">
-                ${SCENARIOS.map((s, i) => `
-                  <div class="scenario-pill ${i === sc ? 'active-scenario' : (i < sc ? 'done-scenario' : '')}">
-                    ${i < sc ? '<i data-lucide="check" class="w-3 h-3"></i>' : '<span class="w-3 h-3 grid place-items-center" style="font-size:9px">' + (i+1) + '</span>'}
-                    <span>${s.label}</span>
-                  </div>
-                `).join('')}
-              </div>
-
-              ${scenario ? `
-                <div class="text-xs text-[#475569] mt-2 px-1 leading-relaxed" style="border-left:3px solid #0070F3;padding-left:10px">
-                  <strong>${scenario.subtitle}:</strong> ${scenario.scenarioDesc}
-                </div>
-              ` : ''}
             </div>
 
             <!-- ZONE B: Main content (dynamic columns) -->
-            <div class="grid grid-cols-1 ${bothActive ? 'lg:grid-cols-2' : ''} gap-3">
+            <div class="grid grid-cols-1 ${multiCol ? 'lg:grid-cols-2' : ''} gap-3">
               ${STATE.solutionViewUser ? renderUserView() : ''}
               ${STATE.solutionViewAdmin ? renderAdminConsole() : ''}
+              ${STATE.solutionViewMultiTenant ? renderMultiTenantView() : ''}
             </div>
 
-            <!-- ZONE C: Solution cards (horizontal) -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" style="align-items:start">
-              ${NEW_CARDS.map(card => compactCard(card)).join('')}
-            </div>
-
-            <div class="text-center mt-2">
+            <div class="flex justify-end mt-2">
               <button type="button" class="bg-[#0070F3] text-white px-5 py-2.5 text-sm font-semibold rounded-full hover:bg-[#005AD0]" data-action="advance" data-next="roi">See Business Impact</button>
             </div>
           </section>
@@ -1872,7 +2202,7 @@
               <div class="admin-sidebar">${sidebarItems.map((s,i) => `<div class="admin-sidebar-item ${i===0 ? 'active' : ''}">${s}</div>`).join('')}</div>
               <div class="admin-main text-[10px]">
                 ${!scenario ? `
-                  <div class="text-center py-8 text-slate-400"><i data-lucide="monitor-cog" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i><div class="mb-3">Start the animation to see the admin view in sync</div><button type="button" data-action="start-flow" class="bg-[#0070F3] text-white px-4 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">Start</button></div>
+                  <div class="text-center py-8 text-slate-400"><i data-lucide="monitor-cog" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i><div class="mb-3">Start the animation to see the admin view in sync</div><button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white px-4 py-1.5 text-[11px] font-semibold rounded hover:bg-[#005AD0]">Start</button></div>
                 ` : `
                   <div class="font-semibold text-[#0A1C60] mb-2">Package: ${scenario.appName || 'Microsoft Teams'}</div>
                   <div class="border border-slate-200 rounded p-2 mb-2 ${['routing','config','done','final'].includes(phase) ? 'admin-highlight' : ''}">
@@ -2409,12 +2739,18 @@
             const view = act.getAttribute('data-view');
             if (view === 'user') STATE.solutionViewUser = !STATE.solutionViewUser;
             if (view === 'admin') STATE.solutionViewAdmin = !STATE.solutionViewAdmin;
-            if (!STATE.solutionViewUser && !STATE.solutionViewAdmin) {
+            if (view === 'multitenant') STATE.solutionViewMultiTenant = !STATE.solutionViewMultiTenant;
+            if (!STATE.solutionViewUser && !STATE.solutionViewAdmin && !STATE.solutionViewMultiTenant) {
               if (view === 'user') STATE.solutionViewUser = true;
-              else STATE.solutionViewAdmin = true;
+              else if (view === 'admin') STATE.solutionViewAdmin = true;
+              else STATE.solutionViewMultiTenant = true;
             }
             render(); return;
           }
+          if (action === 'start-mt') { startMt(); return; }
+          if (action === 'step-mt') { stepMt(); return; }
+          if (action === 'reset-mt') { resetMt(); return; }
+          if (action === 'pause-mt') { if (STATE.mtPaused) { STATE.mtPaused = false; render(); runMtQueue(); } else { STATE.mtPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
           if (action === 'close-insight-modal') { STATE.insightContent = null; STATE.highlightDriverId = null; render(); return; }
@@ -2444,9 +2780,8 @@
             STATE.editingAssumptions = false; if (STATE.calcResult) calculateImpact(); render(); return;
           }
           if (action === 'toggle-regulated') { STATE.calcInputs.regulated = act.getAttribute('data-val') === 'true'; render(); return; }
-          if (action === 'start-flow') { startFlow(); return; }
+          if (action === 'toggle-flow') { if (!STATE.flowRunning) { startFlow(); } else if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
           if (action === 'reset-flow') { resetFlow(); return; }
-          if (action === 'pause-flow') { if (STATE.flowPaused) { resumeFlow(); } else { pauseFlow(); } return; }
           if (action === 'toggle-admin-view') { STATE.showAdminView = !STATE.showAdminView; render(); return; }
           if (action === 'toggle-autopilot') { STATE.showAutopilot = !STATE.showAutopilot; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
           if (action === 'start-autopilot') {
