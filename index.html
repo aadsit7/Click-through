@@ -609,6 +609,7 @@
       function cx(...a){ return a.filter(Boolean).join(' '); }
       function round(n){ return Math.round(n*100)/100; }
       function num(n){ return new Intl.NumberFormat().format(Math.round(n)); }
+      function fmtDollars(n){ if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M'; if (n >= 1000) return '$' + Math.round(n / 1000) + 'K'; return '$' + Math.round(n); }
       function routeRecommendation(ctx){ if(!ctx.compliant) return 'Web'; if(ctx.device==='Windows' && ctx.network!=='Home') return 'Local'; return 'VDI'; }
       function cleanNum(v){ v = Number(String(v).replace(/[^0-9.\-]/g,'')); return isFinite(v) ? v : 0; }
 
@@ -2493,92 +2494,113 @@
         return `<div><div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-wide mb-1 flex items-center gap-1.5"><i data-lucide="${icon}" class="w-3 h-3 text-[#0070F3]"></i> ${label}</div><div class="text-[10px] text-[#94a3b8] mb-1.5">${hint}</div><div class="input-field"><input type="${extra === 'bool' ? 'hidden' : 'number'}" id="${id}" placeholder="${placeholder}" value="${val}" class="focus-ring" ${extra || ''}>${extra === 'bool' ? `<div class="flex gap-2"><button type="button" data-action="toggle-regulated" data-val="true" class="px-3 py-1.5 text-xs rounded-lg border ${STATE.calcInputs.regulated ? 'bg-[#0070F3] text-white border-[#0070F3]' : 'bg-white text-slate-500 border-slate-200'}">Yes</button><button type="button" data-action="toggle-regulated" data-val="false" class="px-3 py-1.5 text-xs rounded-lg border ${!STATE.calcInputs.regulated ? 'bg-[#0070F3] text-white border-[#0070F3]' : 'bg-white text-slate-500 border-slate-200'}">No</button></div>` : ''}</div></div>`;
       }
 
+      function deriveFromEmployees(n){
+        const ci = STATE.calcInputs;
+        ci.users = n;
+        ci.endpoints = Math.round(n * 1.2);
+        ci.envs = 3;
+        ci.apps = n > 10000 ? 200 : n > 3000 ? 150 : 100;
+        ci.customApps = 30;
+        ci.monthlyTickets = Math.round(n * 0.12);
+        ci.avgTicketMins = 18;
+        ci.pkgHours = ci.apps > 150 ? 100 : 80;
+        ci.patchHours = 60;
+      }
+
       function renderROI(){
         const r = STATE.calcResult;
         const ci = STATE.calcInputs;
         const sc = STATE.calcScenario;
+        const a = ROI_ASSUMPTIONS[sc];
         return `
-          <section id="panel-roi" class="space-y-5">
+          <section id="panel-roi" class="space-y-4">
+
+            <!-- TWO-LANE INTRO -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="section-card p-5 rounded-2xl border-t-4 border-[#0070F3]">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="h-8 w-8 rounded-lg grid place-items-center bg-blue-50"><i data-lucide="wrench" class="w-4 h-4 text-[#0070F3]"></i></div>
+                  <div class="text-sm font-semibold text-[#0A1C60]">Engineering Team</div>
+                </div>
+                <div class="text-xs text-[#64748b] leading-relaxed mb-3">Per-platform packaging, patching, and testing eats engineering capacity. Every new environment multiplies the work.</div>
+                <div class="flex items-center gap-2 mb-3"><div class="flex-1 h-px bg-slate-200"></div><i data-lucide="arrow-down" class="w-3.5 h-3.5 text-[#0070F3]"></i><div class="flex-1 h-px bg-slate-200"></div></div>
+                <div class="text-xs font-semibold text-[#0070F3] mb-2">With Application Workspace</div>
+                <div class="space-y-1.5 text-xs text-[#475569]">
+                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Define once — deliver to every platform automatically</div>
+                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> 8,000+ pre-tested apps — your team only packages what's unique</div>
+                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Patches deploy everywhere at once through staged pipeline</div>
+                </div>
+              </div>
+              <div class="section-card p-5 rounded-2xl border-t-4 border-emerald-500">
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="h-8 w-8 rounded-lg grid place-items-center bg-emerald-50"><i data-lucide="users" class="w-4 h-4 text-emerald-500"></i></div>
+                  <div class="text-sm font-semibold text-[#0A1C60]">End Users</div>
+                </div>
+                <div class="text-xs text-[#64748b] leading-relaxed mb-3">App tickets, install failures, and wait times drain support bandwidth. Users lose productivity while IT manually fulfills requests.</div>
+                <div class="flex items-center gap-2 mb-3"><div class="flex-1 h-px bg-slate-200"></div><i data-lucide="arrow-down" class="w-3.5 h-3.5 text-emerald-500"></i><div class="flex-1 h-px bg-slate-200"></div></div>
+                <div class="text-xs font-semibold text-emerald-600 mb-2">With Application Workspace</div>
+                <div class="space-y-1.5 text-xs text-[#475569]">
+                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Self-service catalog — users get approved apps in seconds</div>
+                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> No tickets, no wait — IT controls the catalog, users control timing</div>
+                  <div class="flex items-start gap-1.5"><i data-lucide="check" class="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0"></i> Same experience on every device — reduces confusion and support calls</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EMPLOYEE COUNT INPUT -->
             <div class="section-card p-5 rounded-2xl">
-              <div class="flex items-start justify-between gap-3 mb-4">
-                <div class="flex items-start gap-3">
-                  <div class="h-10 w-10 rounded-xl grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60] flex-shrink-0"><i data-lucide="bar-chart-3" class="w-5 h-5 text-white"></i></div>
-                  <div><h3 class="text-xl font-semibold text-[#0A1C60]">Business Impact Model</h3><p class="text-xs text-[#64748b] mt-0.5">Estimate the capacity, support, and operational impact of centralizing application delivery.</p></div>
-                </div>
-                <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5 flex-shrink-0">
-                  ${['conservative','expected','high'].map(s => `<button type="button" data-action="set-scenario" data-val="${s}" class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition ${sc === s ? 'bg-white text-[#0A1C60] shadow-sm' : 'text-slate-400 hover:text-slate-600'}">${ROI_ASSUMPTIONS[s].label}</button>`).join('')}
-                </div>
-              </div>
-              <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-2">Your environment</div>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                ${roiInput('roi-users','users','Managed users','End users in scope','5000',ci.users)}
-                ${roiInput('roi-endpoints','monitor','Endpoints','Devices in scope','6000',ci.endpoints)}
-                ${roiInput('roi-envs','layers','Environments','Intune, SCCM, VDI, Jamf, etc.','3',ci.envs)}
-                ${roiInput('roi-apps','layout-grid','Active apps','Apps actively managed','150',ci.apps)}
-                ${roiInput('roi-custom','package','Custom / internal apps','Internally packaged or unique','30',ci.customApps)}
-                ${roiInput('roi-tickets','ticket','Monthly app tickets','App-related support tickets/mo','600',ci.monthlyTickets)}
-              </div>
-              <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-2">Current effort</div>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                ${roiInput('roi-ticketmins','clock','Avg ticket time (min)','Minutes per app ticket','18',ci.avgTicketMins)}
-                ${roiInput('roi-pkghrs','wrench','Packaging hours / mo','Package + repackage effort','80',ci.pkgHours)}
-                ${roiInput('roi-patchhrs','refresh-cw','Patching hours / mo','Validate + deploy updates','60',ci.patchHours)}
-              </div>
-              <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-2">Strategic context <span class="text-slate-400 font-normal">(optional)</span></div>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                ${roiInput('roi-reqs','briefcase','Open IT / EUC reqs','Roles tied to app/endpoint work','0',ci.openReqs)}
-                ${roiInput('roi-initiatives','rocket','Delayed initiatives','Projects slowed by reactive work','0',ci.delayedInitiatives)}
-                <div>
-                  <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-wide mb-1 flex items-center gap-1.5"><i data-lucide="shield" class="w-3 h-3 text-[#0070F3]"></i> Regulated environment</div>
-                  <div class="text-[10px] text-[#94a3b8] mb-1.5">Compliance-sensitive?</div>
-                  <div class="flex gap-2">
-                    <button type="button" data-action="toggle-regulated" data-val="true" class="px-3 py-1.5 text-xs rounded-lg border transition ${ci.regulated ? 'bg-[#0070F3] text-white border-[#0070F3]' : 'bg-white text-slate-500 border-slate-200 hover:border-[#0070F3]'}">Yes</button>
-                    <button type="button" data-action="toggle-regulated" data-val="false" class="px-3 py-1.5 text-xs rounded-lg border transition ${!ci.regulated ? 'bg-[#0070F3] text-white border-[#0070F3]' : 'bg-white text-slate-500 border-slate-200 hover:border-[#0070F3]'}">No</button>
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 flex-1">
+                  <div class="h-10 w-10 rounded-xl grid place-items-center bg-gradient-to-br from-[#0070F3] to-[#0A1C60] flex-shrink-0"><i data-lucide="building-2" class="w-5 h-5 text-white"></i></div>
+                  <div class="flex-1">
+                    <div class="text-sm font-semibold text-[#0A1C60] mb-1">How many employees?</div>
+                    <div class="flex items-center gap-2">
+                      <input type="number" id="roi-employees" placeholder="5000" value="${ci.users}" class="w-full max-w-[200px] px-3 py-2 text-lg font-semibold text-[#0A1C60] border-2 border-slate-200 rounded-lg focus:border-[#0070F3] focus:outline-none transition" style="appearance:textfield;-moz-appearance:textfield">
+                      <button type="button" data-action="calculate-impact" class="inline-flex items-center gap-1.5 bg-[#0070F3] text-white px-4 py-2.5 text-xs font-semibold rounded-lg hover:bg-[#005AD0] transition whitespace-nowrap"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Show Results</button>
+                    </div>
                   </div>
                 </div>
+                <button type="button" data-action="toggle-assumptions" class="p-2 text-slate-400 hover:text-[#0070F3] border border-slate-200 rounded-lg hover:border-[#0070F3] transition" title="Adjust assumptions"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
               </div>
-              <div class="flex items-center gap-3">
-                <button type="button" data-action="calculate-impact" class="inline-flex items-center gap-2 bg-[#0070F3] text-white px-5 py-2.5 text-sm font-semibold rounded-full hover:bg-[#005AD0] focus-ring transition"><i data-lucide="bar-chart-3" class="w-4 h-4"></i> ${r ? 'Recalculate' : 'Calculate Impact'}</button>
-                <button type="button" data-action="toggle-assumptions" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#0070F3] transition"><i data-lucide="${STATE.showAssumptions ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i> ${STATE.showAssumptions ? 'Hide' : 'Show'} assumptions</button>
-              </div>
+
               ${STATE.showAssumptions ? `
-                <div class="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide">Modeling assumptions (${ROI_ASSUMPTIONS[sc].label} scenario)</div>
-                    ${!STATE.editingAssumptions ? `<button type="button" data-action="edit-assumptions" class="p-1 rounded hover:bg-slate-200 transition" title="Edit assumptions"><i data-lucide="pencil" class="w-3 h-3 text-slate-300 hover:text-slate-500"></i></button>` : ''}
+                <div class="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide">Environment & Effort Assumptions</div>
                   </div>
-                  ${STATE.editingAssumptions ? `
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-[#475569]">
-                      <label class="flex flex-col gap-1"><span>Ticket reduction %</span><input type="number" id="asn-ticket" min="0" max="100" value="${Math.round(ROI_ASSUMPTIONS[sc].ticketReduction * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
-                      <label class="flex flex-col gap-1"><span>Packaging reduction %</span><input type="number" id="asn-pkg" min="0" max="100" value="${Math.round(ROI_ASSUMPTIONS[sc].pkgReduction * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
-                      <label class="flex flex-col gap-1"><span>Patching reduction %</span><input type="number" id="asn-patch" min="0" max="100" value="${Math.round(ROI_ASSUMPTIONS[sc].patchReduction * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
-                      <label class="flex flex-col gap-1"><span>Strategic reallocation %</span><input type="number" id="asn-strategic" min="0" max="100" value="${Math.round(ROI_ASSUMPTIONS[sc].strategicRealloc * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
-                    </div>
-                    <div class="flex items-center gap-2 mt-3">
-                      <button type="button" data-action="save-assumptions" class="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-semibold rounded-md bg-[#0070F3] text-white hover:bg-[#005AD0] transition"><i data-lucide="save" class="w-3 h-3"></i> Save & Recalculate</button>
-                      <button type="button" data-action="cancel-edit-assumptions" class="px-3 py-1 text-[10px] font-semibold rounded-md text-slate-500 hover:text-slate-700 transition">Cancel</button>
-                    </div>
-                  ` : `
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-[#475569]">
-                      <div>Ticket reduction: <span class="font-semibold">${Math.round(ROI_ASSUMPTIONS[sc].ticketReduction * 100)}%</span></div>
-                      <div>Packaging reduction: <span class="font-semibold">${Math.round(ROI_ASSUMPTIONS[sc].pkgReduction * 100)}%</span></div>
-                      <div>Patching reduction: <span class="font-semibold">${Math.round(ROI_ASSUMPTIONS[sc].patchReduction * 100)}%</span></div>
-                      <div>Strategic reallocation: <span class="font-semibold">${Math.round(ROI_ASSUMPTIONS[sc].strategicRealloc * 100)}%</span></div>
-                    </div>
-                  `}
-                  <div class="text-[9px] text-slate-400 mt-2">Assumptions are configurable. Reduction rates scale with environment complexity and app estate size.</div>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                    ${roiInput('roi-users','users','Managed users','End users in scope','5000',ci.users)}
+                    ${roiInput('roi-endpoints','monitor','Endpoints','Devices in scope','6000',ci.endpoints)}
+                    ${roiInput('roi-envs','layers','Environments','Intune, SCCM, VDI, Jamf, etc.','3',ci.envs)}
+                    ${roiInput('roi-apps','layout-grid','Active apps','Apps actively managed','150',ci.apps)}
+                    ${roiInput('roi-custom','package','Custom / internal apps','Internally packaged or unique','30',ci.customApps)}
+                    ${roiInput('roi-tickets','ticket','Monthly app tickets','App-related support tickets/mo','600',ci.monthlyTickets)}
+                  </div>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                    ${roiInput('roi-ticketmins','clock','Avg ticket time (min)','Minutes per app ticket','18',ci.avgTicketMins)}
+                    ${roiInput('roi-pkghrs','wrench','Packaging hours / mo','Package + repackage effort','80',ci.pkgHours)}
+                    ${roiInput('roi-patchhrs','refresh-cw','Patching hours / mo','Validate + deploy updates','60',ci.patchHours)}
+                  </div>
+                  <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-2 mt-4">Reduction rates</div>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-[#475569]">
+                    <label class="flex flex-col gap-1"><span>Ticket reduction %</span><input type="number" id="asn-ticket" min="0" max="100" value="${Math.round(a.ticketReduction * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
+                    <label class="flex flex-col gap-1"><span>Packaging reduction %</span><input type="number" id="asn-pkg" min="0" max="100" value="${Math.round(a.pkgReduction * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
+                    <label class="flex flex-col gap-1"><span>Patching reduction %</span><input type="number" id="asn-patch" min="0" max="100" value="${Math.round(a.patchReduction * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
+                    <label class="flex flex-col gap-1"><span>Strategic reallocation %</span><input type="number" id="asn-strategic" min="0" max="100" value="${Math.round(a.strategicRealloc * 100)}" class="w-full px-2 py-1 rounded border border-slate-300 text-xs font-semibold focus-ring"></label>
+                  </div>
+                  <div class="flex items-center gap-2 mt-3">
+                    <button type="button" data-action="save-assumptions" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-md bg-[#0070F3] text-white hover:bg-[#005AD0] transition"><i data-lucide="save" class="w-3 h-3"></i> Save & Recalculate</button>
+                    <button type="button" data-action="toggle-assumptions" class="px-3 py-1.5 text-[10px] font-semibold rounded-md text-slate-500 hover:text-slate-700 transition">Close</button>
+                  </div>
+                  <div class="text-[9px] text-slate-400 mt-2">All values are editable. Changes recalculate the impact below.</div>
                 </div>
               ` : ''}
             </div>
 
-            ${r ? '<div id="impact-results">' + renderCalcResult() + '</div>' : `
-              <div class="section-card p-8 rounded-2xl text-center">
-                <i data-lucide="bar-chart-3" class="w-12 h-12 text-slate-200 mx-auto mb-3"></i>
-                <div class="text-sm text-slate-400">Enter your environment details and click <strong>Calculate Impact</strong></div>
-              </div>
-            `}
+            <!-- ROI DASHBOARD -->
+            ${r ? '<div id="impact-results">' + renderCalcResult() + '</div>' : ''}
 
-            <div class="text-[10px] text-center text-slate-400 mt-2">Estimated business impact based on customer inputs and configurable modeling assumptions.</div>
+            <div class="text-[10px] text-center text-slate-400 mt-1">Estimated business impact based on employee count and configurable assumptions.</div>
 
             <div class="flex justify-start gap-3">
               <button type="button" data-action="open-currentstate-editor" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition">
@@ -2595,57 +2617,158 @@
       function renderCalcResult(){
         const r = STATE.calcResult;
         const a = ROI_ASSUMPTIONS[STATE.calcScenario];
+        const ci = STATE.calcInputs;
+        const supportHrsBefore = r.currentSupportHours;
+        const supportHrsAfter = Math.round(supportHrsBefore - r.ticketHoursReturned);
+        const ticketsBefore = ci.monthlyTickets;
+        const ticketsAfter = ticketsBefore - r.ticketsAvoided;
+        const pkgBefore = ci.pkgHours;
+        const pkgAfter = Math.round(pkgBefore - r.pkgHoursReturned);
+        const patchBefore = ci.patchHours;
+        const patchAfter = Math.round(patchBefore - r.patchHoursReturned);
         return `
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 dash-animate">
-            <div class="dash-metric"><i data-lucide="clock" class="w-8 h-8 metric-icon text-[#0070F3]"></i><div class="metric-value">${num(r.totalHoursYear)}</div><div class="metric-label">Hours returned / year</div><div class="metric-sub">${num(r.totalHoursMonth)} / month</div></div>
-            <div class="dash-metric accent-green"><i data-lucide="ticket" class="w-8 h-8 metric-icon text-emerald-500"></i><div class="metric-value">${num(r.ticketsAvoided)}</div><div class="metric-label">Tickets avoided / month</div><div class="metric-sub">${num(r.ticketsAvoided * 12)} / year</div></div>
-            <div class="dash-metric accent-amber"><i data-lucide="rocket" class="w-8 h-8 metric-icon text-amber-500"></i><div class="metric-value">${num(r.strategicHours)}</div><div class="metric-label">Strategic hours unlocked</div><div class="metric-sub">per year</div></div>
-            <div class="dash-metric"><i data-lucide="user-check" class="w-8 h-8 metric-icon text-[#0070F3]"></i><div class="metric-value">${r.reqsDeferred > 0 ? r.reqsDeferred : r.fteCapacity}</div><div class="metric-label">${r.reqsDeferred > 0 ? 'Hires deferred' : 'FTE capacity returned'}</div><div class="metric-sub">${r.reqsDeferred > 0 ? 'open reqs addressed by returned capacity' : 'equivalent capacity, not headcount reduction'}</div></div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div class="section-card p-4 rounded-2xl dash-animate">
-              <div class="flex items-center gap-2 mb-3"><div class="h-7 w-7 rounded-lg grid place-items-center bg-emerald-50"><i data-lucide="headphones" class="w-3.5 h-3.5 text-emerald-500"></i></div><div class="text-xs font-semibold text-[#0A1C60]">Support burden reduced</div></div>
-              <div class="space-y-2 text-xs text-[#475569]">
-                <div class="flex justify-between py-1 border-b border-slate-100"><span>Current app support hours/mo</span><span class="font-semibold">${num(r.currentSupportHours)}</span></div>
-                <div class="flex justify-between py-1 border-b border-slate-100"><span>Support hours returned/mo</span><span class="font-semibold text-emerald-600">${num(r.ticketHoursReturned)}</span></div>
-                <div class="flex justify-between py-1"><span>Tickets avoided/mo</span><span class="font-semibold text-emerald-600">${num(r.ticketsAvoided)}</span></div>
+          <!-- SECTION A: What this costs you today -->
+          <div class="section-card p-5 rounded-2xl dash-animate">
+            <div class="text-[10px] font-semibold text-red-500 uppercase tracking-widest mb-2">What this is costing you today</div>
+            <div class="flex items-start gap-6 mb-4">
+              <div class="flex-shrink-0">
+                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${fmtDollars(r.totalBurnAnnual)}</div>
+                <div class="text-[10px] text-slate-400 uppercase tracking-wide mt-1">Per year — estimated</div>
               </div>
-              <div class="mt-2"><div class="compare-bar-track" style="height:14px"><div class="compare-bar-fill" style="width:${Math.round((1 - a.ticketReduction) * 100)}%;background:linear-gradient(90deg,#10b981,#34d399);font-size:9px;justify-content:flex-end;padding-right:4px">${Math.round(a.ticketReduction * 100)}% reduced</div></div></div>
+              <div class="text-xs text-[#64748b] leading-relaxed pt-1">What your organization spends annually on <strong class="text-[#0A1C60]">reactive application packaging, cross-platform delivery, and support ticket resolution</strong>. A significant share is duplicated effort — the same application packaged separately for every platform and environment.</div>
             </div>
-            <div class="section-card p-4 rounded-2xl dash-animate">
-              <div class="flex items-center gap-2 mb-3"><div class="h-7 w-7 rounded-lg grid place-items-center bg-blue-50"><i data-lucide="wrench" class="w-3.5 h-3.5 text-[#0070F3]"></i></div><div class="text-xs font-semibold text-[#0A1C60]">Engineering effort reduced</div></div>
-              <div class="space-y-2 text-xs text-[#475569]">
-                <div class="flex justify-between py-1 border-b border-slate-100"><span>Packaging hours returned/mo</span><span class="font-semibold text-[#0070F3]">${num(r.pkgHoursReturned)}</span></div>
-                <div class="flex justify-between py-1 border-b border-slate-100"><span>Patching hours returned/mo</span><span class="font-semibold text-[#0070F3]">${num(r.patchHoursReturned)}</span></div>
-                <div class="flex justify-between py-1"><span>Total engineering hours/mo</span><span class="font-semibold text-[#0070F3]">${num(r.pkgHoursReturned + r.patchHoursReturned)}</span></div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-slate-50 rounded-xl p-3.5">
+                <div class="text-lg font-bold text-[#0A1C60]">${fmtDollars(r.supportCostAnnual)}</div>
+                <div class="text-[10px] font-semibold text-[#64748b] mt-1">Support & ticket handling</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">~${num(supportHrsBefore)} hrs/mo at $90/hr</div>
               </div>
-              <div class="mt-2 grid grid-cols-2 gap-1">
-                <div class="compare-bar-track" style="height:14px"><div class="compare-bar-fill" style="width:${Math.round(a.pkgReduction * 100)}%;background:linear-gradient(90deg,#0070F3,#38bdf8);font-size:8px">Pkg -${Math.round(a.pkgReduction * 100)}%</div></div>
-                <div class="compare-bar-track" style="height:14px"><div class="compare-bar-fill" style="width:${Math.round(a.patchReduction * 100)}%;background:linear-gradient(90deg,#6366f1,#818cf8);font-size:8px">Patch -${Math.round(a.patchReduction * 100)}%</div></div>
+              <div class="bg-slate-50 rounded-xl p-3.5">
+                <div class="text-lg font-bold text-[#0A1C60]">${fmtDollars(r.engineeringCostAnnual)}</div>
+                <div class="text-[10px] font-semibold text-[#64748b] mt-1">Packaging & patching labor</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">~${num(pkgBefore + patchBefore)} hrs/mo at $120/hr</div>
               </div>
-            </div>
-            <div class="section-card p-4 rounded-2xl dash-animate">
-              <div class="flex items-center gap-2 mb-3"><div class="h-7 w-7 rounded-lg grid place-items-center bg-amber-50"><i data-lucide="target" class="w-3.5 h-3.5 text-amber-500"></i></div><div class="text-xs font-semibold text-[#0A1C60]">Strategic capacity unlocked</div></div>
-              <div class="space-y-2 text-xs text-[#475569]">
-                <div class="flex justify-between py-1 border-b border-slate-100"><span>Hours redirected to initiatives</span><span class="font-semibold text-amber-600">${num(r.strategicHours)}/yr</span></div>
-                <div class="flex justify-between py-1 border-b border-slate-100"><span>FTE-equivalent capacity</span><span class="font-semibold">${r.fteCapacity}</span></div>
-                ${r.reqsDeferred > 0 ? `<div class="flex justify-between py-1 border-b border-slate-100"><span>Open reqs deferred</span><span class="font-semibold text-amber-600">${r.reqsDeferred}</span></div>` : ''}
-                ${r.delayedInitiatives > 0 ? `<div class="flex justify-between py-1"><span>Initiatives unblocked</span><span class="font-semibold text-amber-600">Up to ${r.delayedInitiatives}</span></div>` : ''}
+              <div class="bg-slate-50 rounded-xl p-3.5">
+                <div class="text-lg font-bold text-[#0A1C60]">${fmtDollars(r.wasteCostAnnual)}</div>
+                <div class="text-[10px] font-semibold text-[#64748b] mt-1">Duplication & rework</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">Per-platform, per-environment redundancy</div>
               </div>
-              <div class="mt-2 text-[9px] text-slate-400">Capacity equivalent \u2014 not headcount reduction. This is time redirected from reactive work to strategic priorities.</div>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div class="section-card p-4 rounded-2xl dash-animate">
-              <div class="flex items-center gap-2 mb-3"><div class="h-7 w-7 rounded-lg grid place-items-center bg-indigo-50"><i data-lucide="minimize-2" class="w-3.5 h-3.5 text-indigo-500"></i></div><div class="text-xs font-semibold text-[#0A1C60]">Operational simplification</div></div>
-              <div class="flex items-center gap-4 mb-2"><div class="text-center flex-1"><div class="text-2xl font-bold text-red-400">${r.complexityBefore}</div><div class="text-[9px] text-slate-400 uppercase">Before</div></div><i data-lucide="arrow-right" class="w-5 h-5 text-slate-300"></i><div class="text-center flex-1"><div class="text-2xl font-bold text-emerald-500">${r.complexityAfter}</div><div class="text-[9px] text-slate-400 uppercase">After</div></div></div>
-              <div class="text-[10px] text-slate-500">Fewer delivery variations, fewer active versions, consistent experience across ${STATE.calcInputs.envs} environments.</div>
+
+          <!-- SECTION B: Before and After -->
+          <div class="dash-animate mt-4">
+            <div class="text-[10px] font-semibold text-[#0070F3] uppercase tracking-widest mb-2 px-1">Your team before and after</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="section-card p-4 rounded-2xl">
+                <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                  <div class="w-1 h-4 rounded-full bg-emerald-500"></div>
+                  <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider">Support Operations</div>
+                </div>
+                <div class="space-y-3 text-xs text-[#475569]">
+                  <div class="flex items-center justify-between">
+                    <span>App support hours / mo</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-400 line-through">${num(supportHrsBefore)}</span>
+                      <span class="text-slate-300">\u2192</span>
+                      <span class="font-semibold text-emerald-600">${num(supportHrsAfter)}</span>
+                      <span class="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.ticketReduction * 100)}%</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span>Tickets / month</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-400 line-through">${num(ticketsBefore)}</span>
+                      <span class="text-slate-300">\u2192</span>
+                      <span class="font-semibold text-emerald-600">${num(ticketsAfter)}</span>
+                      <span class="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.ticketReduction * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="section-card p-4 rounded-2xl">
+                <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                  <div class="w-1 h-4 rounded-full bg-[#0070F3]"></div>
+                  <div class="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider">Engineering Capacity</div>
+                </div>
+                <div class="space-y-3 text-xs text-[#475569]">
+                  <div class="flex items-center justify-between">
+                    <span>Packaging hours / mo</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-400 line-through">${num(pkgBefore)}</span>
+                      <span class="text-slate-300">\u2192</span>
+                      <span class="font-semibold text-[#0070F3]">${num(pkgAfter)}</span>
+                      <span class="text-[9px] font-semibold text-[#0070F3] bg-blue-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.pkgReduction * 100)}%</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span>Patching hours / mo</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-slate-400 line-through">${num(patchBefore)}</span>
+                      <span class="text-slate-300">\u2192</span>
+                      <span class="font-semibold text-[#0070F3]">${num(patchAfter)}</span>
+                      <span class="text-[9px] font-semibold text-[#0070F3] bg-blue-50 px-1.5 py-0.5 rounded">\u2212${Math.round(a.patchReduction * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="section-card p-4 rounded-2xl dash-animate">
-              <div class="flex items-center gap-2 mb-3"><div class="h-7 w-7 rounded-lg grid place-items-center bg-rose-50"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-rose-500"></i></div><div class="text-xs font-semibold text-[#0A1C60]">Risk & control posture</div></div>
-              <div class="flex items-center gap-4 mb-2"><div class="text-center flex-1"><div class="text-2xl font-bold text-red-400">${r.riskBefore}</div><div class="text-[9px] text-slate-400 uppercase">Before</div></div><i data-lucide="arrow-right" class="w-5 h-5 text-slate-300"></i><div class="text-center flex-1"><div class="text-2xl font-bold text-emerald-500">${r.riskAfter}</div><div class="text-[9px] text-slate-400 uppercase">After</div></div></div>
-              <div class="text-[10px] text-slate-500">${STATE.calcInputs.regulated ? 'Regulated environment \u2014 ' : ''}Better consistency, improved governance, stronger operational confidence.</div>
+          </div>
+
+          <!-- SECTION C: The Business Case -->
+          <div class="dash-animate mt-4">
+            <div class="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest mb-2 px-1">The business case</div>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="section-card p-5 rounded-2xl border-t-4 border-emerald-500">
+                <div class="text-[9px] font-semibold text-emerald-600 uppercase tracking-wider mb-3">Dollar Impact</div>
+                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">${fmtDollars(r.totalRecoveredAnnual)}</div>
+                <div class="text-xs font-semibold text-[#0A1C60] mb-1">Annual capacity recovered</div>
+                <div class="text-[10px] text-[#64748b] leading-relaxed">Dollar value of engineering and support hours returned to strategic work. Capacity freed \u2014 not headcount reduced.</div>
+              </div>
+              <div class="section-card p-5 rounded-2xl border-t-4 border-[#0070F3]">
+                <div class="text-[9px] font-semibold text-[#0070F3] uppercase tracking-wider mb-3">Time to Value</div>
+                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">4\u20136 wk</div>
+                <div class="text-xs font-semibold text-[#0A1C60] mb-1">Kickoff to full rollout</div>
+                <div class="text-[10px] text-[#64748b] leading-relaxed">No rip-and-replace. Connects to your existing stack. 1\u20132 engineers part-time. Live before your next patch cycle.</div>
+              </div>
+              <div class="section-card p-5 rounded-2xl border-t-4 border-indigo-500">
+                <div class="text-[9px] font-semibold text-indigo-500 uppercase tracking-wider mb-3">Platform Risk</div>
+                <div class="text-3xl font-bold text-[#0A1C60] leading-none mb-2">Zero</div>
+                <div class="text-xs font-semibold text-[#0A1C60] mb-1">No disruption to existing systems</div>
+                <div class="text-[10px] text-[#64748b] leading-relaxed">SOC 2 Type II. ISO 27001. 87 CSAT. 60M+ devices across 130 countries. Additive to your current environment.</div>
+              </div>
             </div>
+          </div>
+
+          <!-- SECTION D: Strategic Capacity Callout -->
+          <div class="section-card p-5 rounded-2xl dash-animate mt-4">
+            <div class="flex gap-5 items-start">
+              <div class="flex-shrink-0 pr-5 border-r border-slate-200">
+                <div class="text-[9px] font-semibold text-amber-600 uppercase tracking-wider mb-2">Capacity Unlocked</div>
+                <div class="text-4xl font-bold text-[#0A1C60] leading-none">${num(r.strategicHours)}</div>
+                <div class="text-[10px] text-slate-400 mt-1">hours / year</div>
+              </div>
+              <div class="pt-0.5">
+                <div class="text-sm font-semibold text-[#0A1C60] mb-2 leading-snug">Your strategic initiatives are stalled because your engineers are stuck packaging apps.</div>
+                <div class="text-xs text-[#64748b] leading-relaxed">Every organization has an AI and modernization roadmap. Almost none have the <strong class="text-[#0A1C60]">engineering capacity to execute it</strong> \u2014 because that capacity is trapped in reactive app delivery work. Application Workspace returns <strong class="text-[#0A1C60]">${r.fteCapacity} FTE-equivalents</strong> of engineering time.</div>
+                <div class="flex flex-wrap gap-3 mt-3">
+                  ${['Copilot & AI tool rollouts','Automation pipeline buildout','Endpoint modernization','Security posture projects'].map(t => '<div class="flex items-center gap-1.5 text-[10px] text-slate-500"><div class="w-1 h-1 rounded-full bg-amber-500"></div>'+t+'</div>').join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION E: Urgency Bar -->
+          <div class="section-card px-5 py-3 rounded-xl dash-animate mt-4 border-l-4 border-red-400">
+            <div class="flex items-center justify-between">
+              <div class="text-xs text-[#475569]">Every month you wait costs an estimated <strong class="text-red-500">${fmtDollars(r.monthlyCostOfWaiting)}</strong> in recoverable capacity \u2014 and another month your roadmap doesn\u2019t move.</div>
+              <div class="text-xs font-semibold text-red-500 whitespace-nowrap ml-4">${fmtDollars(r.totalRecoveredAnnual)}/yr recoverable</div>
+            </div>
+          </div>
+
+          <!-- SECTION F: Trust Strip -->
+          <div class="flex items-center justify-center gap-4 flex-wrap mt-3 dash-animate">
+            ${['SOC 2 Type II & ISO 27001','60M+ devices managed','87 CSAT','8,000+ pre-tested apps','130+ countries'].map(t => '<div class="text-[10px] text-slate-400"><span class="text-slate-300 mr-1">\u2014</span>'+t+'</div>').join('')}
           </div>
         `;
       }
@@ -2668,15 +2791,13 @@
         const strategicHours = Math.round(totalHoursYear * a.strategicRealloc);
         const reqsDeferred = ci.openReqs > 0 ? Math.min(ci.openReqs, Math.floor(fteCapacity)) : 0;
         const delayedInitiatives = ci.delayedInitiatives;
-        const envWeight = Math.min(ci.envs * 12, 50);
-        const appWeight = Math.min(ci.apps * 0.15, 30);
-        const customWeight = Math.min(ci.customApps * 0.5, 20);
-        const complexityBefore = Math.min(Math.round(envWeight + appWeight + customWeight), 95);
-        const complexityAfter = Math.max(Math.round(complexityBefore * (1 - a.pkgReduction * 0.8)), 10);
-        const riskBase = complexityBefore + (ci.regulated ? 15 : 0);
-        const riskBefore = Math.min(riskBase, 98);
-        const riskAfter = Math.max(Math.round(riskBefore * (1 - a.patchReduction * 0.7)), 12);
-        STATE.calcResult = { currentSupportHours, ticketHoursReturned, ticketsAvoided, pkgHoursReturned, patchHoursReturned, totalHoursMonth, totalHoursYear, fteCapacity, strategicHours, reqsDeferred, delayedInitiatives, complexityBefore, complexityAfter, riskBefore, riskAfter };
+        const supportCostAnnual = Math.round(currentSupportHours * 90 * 12);
+        const engineeringCostAnnual = Math.round((ci.pkgHours + ci.patchHours) * 120 * 12);
+        const wasteCostAnnual = Math.round((supportCostAnnual + engineeringCostAnnual) * 0.25);
+        const totalBurnAnnual = supportCostAnnual + engineeringCostAnnual + wasteCostAnnual;
+        const totalRecoveredAnnual = Math.round((ticketHoursReturned * 90 + (pkgHoursReturned + patchHoursReturned) * 120) * 12);
+        const monthlyCostOfWaiting = Math.round(totalRecoveredAnnual / 12);
+        STATE.calcResult = { currentSupportHours, ticketHoursReturned, ticketsAvoided, pkgHoursReturned, patchHoursReturned, totalHoursMonth, totalHoursYear, fteCapacity, strategicHours, reqsDeferred, delayedInitiatives, supportCostAnnual, engineeringCostAnnual, wasteCostAnnual, totalBurnAnnual, totalRecoveredAnnual, monthlyCostOfWaiting };
       }
 
       const USER_ID = String(window.APP_USER_ID || "guest");
@@ -2793,15 +2914,12 @@
           if (action === 'toggle-card') { const id = act.getAttribute('data-card'); const wasOpen = STATE.openCards[id]; Object.keys(STATE.openCards).forEach(k => STATE.openCards[k] = false); STATE.openCards[id] = !wasOpen; if (STATE.openCards[id] && !STATE.visitedCards.includes(id)) STATE.visitedCards.push(id); render(); if (STATE.openCards[id]) { setTimeout(() => act.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200); } return; }
           if (action === 'expand-all') { Object.keys(STATE.openCards).forEach(k => STATE.openCards[k] = true); STATE.visitedCards = ['core','onboarding','trust']; render(); return; }
           if (action === 'calculate-impact') { calculateImpact(); render(); return; }
-          if (action === 'set-scenario') { STATE.calcScenario = act.getAttribute('data-val'); if (STATE.calcResult) calculateImpact(); render(); return; }
-          if (action === 'toggle-assumptions') { STATE.showAssumptions = !STATE.showAssumptions; STATE.editingAssumptions = false; render(); return; }
-          if (action === 'edit-assumptions') { STATE.editingAssumptions = true; render(); return; }
-          if (action === 'cancel-edit-assumptions') { STATE.editingAssumptions = false; render(); return; }
+          if (action === 'toggle-assumptions') { STATE.showAssumptions = !STATE.showAssumptions; render(); return; }
           if (action === 'save-assumptions') {
             const sc = STATE.calcScenario; const clamp = (v) => Math.max(0, Math.min(100, cleanNum(v))) / 100;
             const t = document.getElementById('asn-ticket'); const p = document.getElementById('asn-pkg'); const pa = document.getElementById('asn-patch'); const s = document.getElementById('asn-strategic');
             if (t) ROI_ASSUMPTIONS[sc].ticketReduction = clamp(t.value); if (p) ROI_ASSUMPTIONS[sc].pkgReduction = clamp(p.value); if (pa) ROI_ASSUMPTIONS[sc].patchReduction = clamp(pa.value); if (s) ROI_ASSUMPTIONS[sc].strategicRealloc = clamp(s.value);
-            STATE.editingAssumptions = false; if (STATE.calcResult) calculateImpact(); render(); return;
+            calculateImpact(); STATE.showAssumptions = false; render(); return;
           }
           if (action === 'toggle-regulated') { STATE.calcInputs.regulated = act.getAttribute('data-val') === 'true'; render(); return; }
           if (action === 'select-device') { STATE.flowDevice = act.getAttribute('data-device'); startFlow(); return; }
@@ -2839,7 +2957,7 @@
             const a = ROI_ASSUMPTIONS[STATE.calcScenario];
             const ci = STATE.calcInputs;
 
-            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nHEADLINE METRICS\n  Hours Returned / Year:      ${num(r.totalHoursYear)}  (${num(r.totalHoursMonth)} / month)\n  Tickets Avoided / Month:    ${num(r.ticketsAvoided)}  (${num(r.ticketsAvoided * 12)} / year)\n  Strategic Hours Unlocked:   ${num(r.strategicHours)} / year\n  ${r.reqsDeferred > 0 ? 'Hires Deferred:             ' + r.reqsDeferred : 'FTE Capacity Returned:      ' + r.fteCapacity}\n\nSUPPORT BURDEN REDUCED\n  Current app support hrs/mo: ${num(r.currentSupportHours)}\n  Support hours returned/mo:  ${num(r.ticketHoursReturned)}\n  Tickets avoided/mo:         ${num(r.ticketsAvoided)}\n  Reduction:                  ${Math.round(a.ticketReduction * 100)}%\n\nENGINEERING EFFORT REDUCED\n  Packaging hours returned:   ${num(r.pkgHoursReturned)} / mo  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours returned:    ${num(r.patchHoursReturned)} / mo  (-${Math.round(a.patchReduction * 100)}%)\n  Total engineering hours/mo: ${num(r.pkgHoursReturned + r.patchHoursReturned)}\n\nSTRATEGIC CAPACITY UNLOCKED\n  Hours to initiatives:       ${num(r.strategicHours)} / year\n  FTE-equivalent capacity:    ${r.fteCapacity}\n\nOPERATIONAL SIMPLIFICATION:  ${r.complexityBefore} \u2192 ${r.complexityAfter}\nRISK & CONTROL POSTURE:      ${r.riskBefore} \u2192 ${r.riskAfter}\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
+            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nCURRENT ANNUAL COST\n  Total burn:                 ${fmtDollars(r.totalBurnAnnual)} / year\n  Support & tickets:          ${fmtDollars(r.supportCostAnnual)}\n  Packaging & patching:       ${fmtDollars(r.engineeringCostAnnual)}\n  Duplication & rework:       ${fmtDollars(r.wasteCostAnnual)}\n\nCAPACITY RECOVERED\n  Annual value recovered:     ${fmtDollars(r.totalRecoveredAnnual)}\n  Hours returned / year:      ${num(r.totalHoursYear)}  (${num(r.totalHoursMonth)} / month)\n  Tickets avoided / month:    ${num(r.ticketsAvoided)}\n  Strategic hours unlocked:   ${num(r.strategicHours)} / year\n  FTE-equivalent capacity:    ${r.fteCapacity}\n\nBEFORE / AFTER\n  Support hours/mo:           ${num(r.currentSupportHours)} \u2192 ${num(Math.round(r.currentSupportHours - r.ticketHoursReturned))}  (-${Math.round(a.ticketReduction * 100)}%)\n  Tickets/mo:                 ${num(ci.monthlyTickets)} \u2192 ${num(ci.monthlyTickets - r.ticketsAvoided)}  (-${Math.round(a.ticketReduction * 100)}%)\n  Packaging hours/mo:         ${num(ci.pkgHours)} \u2192 ${num(Math.round(ci.pkgHours - r.pkgHoursReturned))}  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours/mo:          ${num(ci.patchHours)} \u2192 ${num(Math.round(ci.patchHours - r.patchHoursReturned))}  (-${Math.round(a.patchReduction * 100)}%)\n\nMONTHLY COST OF WAITING:     ${fmtDollars(r.monthlyCostOfWaiting)}\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
 
             try {
               navigator.clipboard.writeText(plainText).then(function() {
@@ -2901,7 +3019,9 @@
           if (action === 'reset-sliders') { resetSliders(); return; }
         });
 
+        let _roiDebounce = null;
         root.addEventListener('input', (e) => {
+          if (e.target?.id === 'roi-employees') { const n = cleanNum(e.target.value); if (n > 0) { deriveFromEmployees(n); calculateImpact(); clearTimeout(_roiDebounce); _roiDebounce = setTimeout(() => render(), 600); } return; }
           if (e.target?.id === 'roi-users') { STATE.calcInputs.users = cleanNum(e.target.value); return; }
           if (e.target?.id === 'roi-endpoints') { STATE.calcInputs.endpoints = cleanNum(e.target.value); return; }
           if (e.target?.id === 'roi-envs') { STATE.calcInputs.envs = cleanNum(e.target.value); return; }
@@ -2939,6 +3059,8 @@
       STATE.currentDemandExponent = STATE.targetDemandExponent;
       STATE.currentCapacitySlope = STATE.targetCapacitySlope;
 
+      deriveFromEmployees(STATE.calcInputs.users);
+      calculateImpact();
       document.addEventListener('DOMContentLoaded', render);
       document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent)){ STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; render(); } });
     </script>
