@@ -250,6 +250,30 @@
       .mt-control.mt-lit { border-color: #10b981; background: #ecfdf5; color: #065f46; }
       .mt-callout { opacity: 0; transform: translateY(4px); transition: all 0.5s ease; font-size: 10px; font-weight: 600; }
       .mt-callout.mt-show { opacity: 1; transform: translateY(0); }
+      /* Dashboard & Reporting view */
+      .dr-zone { border-radius: 10px; padding: 10px; transition: opacity 0.5s ease, transform 0.5s ease; }
+      .dr-zone.dr-hidden { opacity: 0; transform: translateY(10px); }
+      .dr-zone.dr-visible { opacity: 1; transform: translateY(0); }
+      .dr-source { background: linear-gradient(135deg, #0A1C60 0%, #1e3a8a 100%); color: white; }
+      .dr-panel { background: white; border: 2px solid #0070F3; color: #0A1C60; }
+      .dr-feed-line { width: 2px; height: 0; background: linear-gradient(180deg, #0070F3, #8b5cf6); margin: 0 auto; transition: height 0.8s ease; border-radius: 2px; }
+      .dr-feed-line.dr-drawn { height: 28px; }
+      .dr-endpoint { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); transition: all 0.4s ease; }
+      .dr-endpoint.dr-lit { border-color: rgba(139,92,246,0.6); background: rgba(139,92,246,0.25); color: white; }
+      .dr-metric { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; font-size: 9px; border: 1px solid #e2e8f0; background: #f8fafc; color: #94a3b8; transition: all 0.3s ease; }
+      .dr-metric.dr-lit { border-color: #0070F3; background: #eff6ff; color: #0A1C60; }
+      .dr-callout { opacity: 0; transform: translateY(4px); transition: all 0.5s ease; font-size: 10px; font-weight: 600; }
+      .dr-callout.dr-show { opacity: 1; transform: translateY(0); }
+      .dr-bar { display: inline-block; width: 6px; border-radius: 2px 2px 0 0; background: #0070F3; transition: height 0.6s ease; }
+      .dr-bar.dr-grow { height: var(--h, 12px); }
+      .dr-bar:not(.dr-grow) { height: 0; }
+      .dr-zone-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: all 0.4s ease; }
+      .dr-zone-badge.dr-active { border-color: #8b5cf6; background: #f5f3ff; color: #6d28d9; }
+      .dr-global-badge { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; background: linear-gradient(135deg, #0070F3, #8b5cf6); color: white; box-shadow: 0 2px 8px rgba(0,112,243,0.3); }
+      .dr-arrow-line { width: 2px; height: 0; background: linear-gradient(180deg, #8b5cf6, #0070F3); margin: 0 auto; transition: height 0.6s ease; border-radius: 2px; }
+      .dr-arrow-line.dr-drawn { height: 20px; }
+      @keyframes drPulse { 0% { box-shadow: 0 0 0 0 rgba(0,112,243,0); } 50% { box-shadow: 0 0 12px 3px rgba(0,112,243,0.15); } 100% { box-shadow: 0 0 0 0 rgba(0,112,243,0); } }
+      .dr-pulse { animation: drPulse 2s ease-in-out infinite; }
       @keyframes finalGlow { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
       .final-glow { animation: finalGlow 2s ease-in-out; }
       .cfg-item { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; font-size: 10px; color: #475569; background: white; border: 1px solid #e2e8f0; transition: all 0.3s ease; opacity: 0; transform: translateX(-6px); }
@@ -445,6 +469,12 @@
         mtPaused: false,
         mtQueue: [],
         mtQueueIdx: 0,
+        drPhase: 'idle',
+        drRunning: false,
+        drPaused: false,
+        drQueue: [],
+        drQueueIdx: 0,
+        solutionViewDashboard: false,
         showLabels: false,
         showSolutionCards: true,
         openWhy: null,
@@ -1504,19 +1534,176 @@
         const intro = c.intro || c.short;
         const bullets = c.bullets || [];
         const closing = c.closing || '';
+        const isPlatformMult = c.id === 'too_many_tools';
+        const modalWidth = isPlatformMult ? 'max-w-6xl' : 'max-w-4xl';
+        const modalStyle = isPlatformMult ? 'max-height:95vh;display:flex;flex-direction:column' : '';
+        const bodyStyle = isPlatformMult ? 'flex:1;min-height:0;overflow-y:auto' : '';
         return `
           <div class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" role="dialog" aria-modal="true" aria-labelledby="insight-modal-title">
-            <div class="w-full max-w-4xl mx-4 rounded-2xl overflow-hidden transform modal-content glass">
-              <div class="bg-white/40 backdrop-blur-lg px-8 py-6 flex items-center justify-between" style="border-bottom:1px solid var(--border-subtle)">
+            <div class="w-full ${modalWidth} mx-4 rounded-2xl overflow-hidden transform modal-content glass" style="${modalStyle}">
+              <div class="bg-white/40 backdrop-blur-lg px-8 py-6 flex items-center justify-between flex-shrink-0" style="border-bottom:1px solid var(--border-subtle)">
                 <div class="flex items-center gap-3"><i data-lucide="lightbulb" class="w-8 h-8 text-[#0A1C60]" aria-hidden="true"></i><h2 id="insight-modal-title" class="text-3xl font-bold tracking-tight text-[#0A1C60]">${title}</h2></div>
                 <button type="button" class="text-slate-500 hover:text-slate-700 focus-ring p-2" data-action="close-insight-modal" aria-label="Close"><i data-lucide="x" class="w-6 h-6"></i></button>
               </div>
-              <div class="p-8 bg-white/35 backdrop-blur-lg">
+              <div class="${isPlatformMult ? 'px-6 py-4' : 'p-8'} bg-white/35 backdrop-blur-lg" style="${bodyStyle}">
+                ${isPlatformMult ? renderPlatformSiloDiagram(intro) : `
                 ${intro ? `<p class="text-base leading-relaxed text-[#4A5568] mb-4">${intro}</p>` : ''}
                 <div class="space-y-4">${bullets.map(b=>`<div class="bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"><i data-lucide="check-circle" class="w-5 h-5 text-[#0070F3] flex-shrink-0 mt-0.5"></i><p class="text-base leading-relaxed text-[#4A5568]">${b}</p></div>`).join('')}</div>
                 ${closing ? `<div class="mt-6 bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-start gap-3"><i data-lucide="sparkles" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-base italic text-[#4A5568]">${closing}</p></div>` : ''}
+                `}
               </div>
             </div>
+          </div>
+        `;
+      }
+
+      function renderPlatformSiloDiagram(intro){
+        const silos = [
+          {name:'Microsoft Intune', sub:'Cloud Endpoints', color:'#5B53D6', pkg:'.intunewin', deploy:'Intune Portal', test:'Manual / per-platform', patch:'Manual cycle'},
+          {name:'SCCM / ConfigMgr', sub:'On-Prem / Co-Mgmt', color:'#E84D1A', pkg:'.msi / .application', deploy:'Task Sequences', test:'Manual / per-platform', patch:'Manual cycle'},
+          {name:'Citrix Apps', sub:'Published / VDI', color:'#374151', pkg:'App Layers / Profile', deploy:'StoreFront', test:'Manual / per-platform', patch:'Manual cycle'},
+          {name:'Azure VD / W365', sub:'Virtual Desktops', color:'#4B5563', pkg:'MSIX / Image Mgmt', deploy:'Host Pools', test:'Manual / per-platform', patch:'Manual cycle'},
+          {name:'Jamf Pro', sub:'macOS Endpoints', color:'#6B7280', pkg:'.pkg / .dmg', deploy:'Self Service', test:'Manual / per-platform', patch:'Manual cycle'},
+        ];
+        const ops = ['Package','Deploy','Test','Patch'];
+        const businessReqs = ['New hire onboarding','AI / Copilot rollout','Security patch (CVE)','Cloud migration','App retirement','New LOB app'];
+        const identitySources = [{label:'Active Directory', color:'bg-blue-600'},{label:'Entra ID (Azure AD)', color:'bg-blue-500'},{label:'Okta / IdP', color:'bg-indigo-500'}];
+        const supportItems = [{label:'ServiceNow / ITSM', color:'bg-teal-500'},{label:'Help Desk Tickets', color:'bg-amber-500'},{label:'Manual Provisioning', color:'bg-orange-500'},{label:'Tribal Knowledge', color:'bg-red-400'}];
+        const devices = ['Windows Laptop','Windows Desktop','macOS','VDI Session','Cloud PC / W365','BYOD / Remote'];
+        const impacts = [
+          {stat:'5\u00d7', label:'packaging duplication', desc:'Same app rebuilt per platform'},
+          {stat:'5\u201310 day', label:'patch cycles', desc:'Each platform patched separately'},
+          {stat:'30\u201365%', label:'reactive work', desc:'Engineers stuck firefighting'},
+          {stat:'Manual', label:'compliance evidence', desc:'Spreadsheets & memory'},
+          {stat:'Single points of failure', label:'', desc:'Tribal knowledge dependencies'},
+          {stat:'No single pane of glass', label:'', desc:'Visibility gaps across tools'},
+          {stat:'Onboarding delays', label:'', desc:'Days for new hires to be productive'},
+        ];
+
+        return `
+          ${intro ? `<p class="text-sm leading-relaxed text-[#4A5568] mb-3">${intro}</p>` : ''}
+          <div class="rounded-xl border border-slate-200 bg-white/80 p-4">
+
+            <!-- Title -->
+            <div class="text-[11px] font-bold text-[#0A1C60] text-center uppercase tracking-wider mb-3">Without a Unified Application Management Layer &mdash; Every Platform Is a Silo</div>
+
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_190px] gap-3">
+              <!-- LEFT: Diagram rows -->
+              <div>
+
+                <!-- Business Requests -->
+                <div class="mb-1">
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Business Requests</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${businessReqs.map(r => `<span class="px-2 py-0.5 rounded-full text-[9px] font-medium bg-slate-100 text-slate-600 border border-slate-200">${r}</span>`).join('')}
+                  </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
+
+                <!-- Identity Sources -->
+                <div class="mb-1">
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Identity Sources</div>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    ${identitySources.map(s => `<span class="px-2 py-0.5 rounded-lg text-[9px] font-medium ${s.color} text-white">${s.label}</span>`).join('')}
+                    <span class="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-red-50 text-red-600 border border-dashed border-red-300 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> NO UNIFIED IDENTITY LAYER</span>
+                  </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
+
+                <!-- Management Tools (SILOED) - THE CORE -->
+                <div class="mb-1">
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Management Tools <span class="text-red-400">(Siloed)</span></div>
+                  <div class="overflow-x-auto">
+                    <div class="relative" style="min-width:560px">
+                      <div class="grid grid-cols-5 gap-1.5">
+                        ${silos.map(s => `
+                          <div class="border-2 border-dashed border-red-300 rounded-lg p-2 bg-white flex flex-col">
+                            <div class="rounded-md px-2 py-1.5 text-center mb-2" style="background:${s.color}">
+                              <div class="text-[10px] font-bold text-white leading-tight">${s.name}</div>
+                              <div class="text-[8px] text-white/70">${s.sub}</div>
+                            </div>
+                            <div class="space-y-0.5 flex-1">
+                              ${ops.map((op, oi) => {
+                                const val = oi === 0 ? s.pkg : oi === 1 ? s.deploy : oi === 2 ? s.test : s.patch;
+                                return `<div class="flex items-center justify-between px-1.5 py-0.5 rounded text-[8px] ${oi % 2 === 0 ? 'bg-slate-50' : ''}"><span class="font-semibold text-slate-500">${op}</span><span class="font-mono text-red-400 text-right ml-1">${val}</span></div>`;
+                              }).join('')}
+                            </div>
+                          </div>
+                        `).join('')}
+                      </div>
+                      <!-- X indicators between silos -->
+                      <div class="hidden md:flex absolute inset-0 pointer-events-none" style="z-index:2">
+                        ${[1,2,3,4].map(n => `<div class="absolute flex items-center justify-center" style="left:calc(${n * 20}% - 7px);top:50%;transform:translateY(-50%)"><div class="w-3.5 h-3.5 rounded-full bg-red-100 border border-red-300 flex items-center justify-center"><i data-lucide="x" class="w-2.5 h-2.5 text-red-500"></i></div></div>`).join('')}
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Red callout below silos -->
+                  <div class="text-center mt-1.5">
+                    <span class="text-[9px] italic text-red-500 font-medium">Same application (e.g. Chrome) &rarr; packaged, tested, deployed, and patched separately through each tool</span>
+                  </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
+
+                <!-- Support Layer -->
+                <div class="mb-1">
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Support Layer</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${supportItems.map(s => `<span class="px-2.5 py-1 rounded-lg text-[9px] font-medium ${s.color} text-white">${s.label}</span>`).join('')}
+                  </div>
+                </div>
+
+                <!-- Connector -->
+                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
+
+                <!-- End User Devices -->
+                <div>
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">End User Devices</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${devices.map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border border-slate-200 bg-white text-[9px] text-[#475569] font-medium">${d}</span>`).join('')}
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- RIGHT: Operational Impact sidebar -->
+              <div class="rounded-xl border border-red-200 bg-red-50/50 p-3 h-fit">
+                <div class="flex items-center gap-1.5 mb-3">
+                  <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>
+                  <span class="text-[11px] font-bold text-red-700 uppercase tracking-wide">Operational Impact</span>
+                </div>
+                <div class="space-y-2.5">
+                  ${impacts.map(imp => `
+                    <div class="flex items-start gap-2">
+                      <div class="w-2 h-2 rounded-sm bg-red-400 mt-1 flex-shrink-0"></div>
+                      <div>
+                        <div class="text-[11px] font-bold text-red-700 leading-tight">${imp.stat}${imp.label ? ' ' + imp.label : ''}</div>
+                        <div class="text-[9px] text-red-500 leading-tight">${imp.desc}</div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Bottom quote -->
+            <div class="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+              <p class="text-[11px] italic text-[#4A5568]"><i data-lucide="quote" class="w-3.5 h-3.5 inline text-slate-300 mr-1"></i>The ceiling is structural, not operational. Your team isn&rsquo;t underperforming &mdash; the per-platform model was built for two platforms. Most organizations now manage five or six.</p>
+            </div>
+
+            <!-- Legend -->
+            <div class="flex flex-wrap items-center justify-center gap-4 mt-2 text-[8px] text-slate-400">
+              <div class="flex items-center gap-1.5"><span class="inline-block w-6 border-t-2 border-dashed border-red-300"></span> Silo boundary (no cross-platform communication)</div>
+              <div class="flex items-center gap-1.5"><i data-lucide="x" class="w-3 h-3 text-red-400"></i> No integration between tools</div>
+              <div class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3 h-3 text-red-400"></i> Manual / duplicated workflow</div>
+            </div>
+
           </div>
         `;
       }
@@ -2092,6 +2279,17 @@
       ];
       const MT_CONTROLS = ['Entitlements','Scoped deployments','Reporting','Governance'];
 
+      const DR_ENDPOINTS = ['deployments','devices','events','identities','licenses','packages','servers','users','workspaces'];
+      const DR_DASHBOARDS = [
+        {id:'userEvents', label:'User Events', icon:'users', metrics:['Successful Logins','Denied Logins','Failed Logins','Logoff Activity'], bars:[18,12,4,8]},
+        {id:'appEvents', label:'App Events', icon:'app-window', metrics:['Install Health %','Launch Health %','Distribution Success'], bars:[20,16,14]},
+        {id:'licensing', label:'Licensing', icon:'key', metrics:['Install Counts','Launch Counts','Total Cost'], bars:[22,18,10]},
+        {id:'devices', label:'Devices', icon:'monitor', metrics:['Install Health','OS Version','Manufacturer'], bars:[16,20,12]},
+        {id:'endpoint', label:'Endpoint Info', icon:'hard-drive', metrics:['Device Metadata','Event Data','App Status'], bars:[14,18,22]},
+        {id:'agents', label:'Agent Info', icon:'cpu', metrics:['Version Dist.','Last Seen','Package Status'], bars:[10,20,16]},
+      ];
+      const DR_ZONES_LIST = ['Zone A','Zone B','Zone C'];
+
       function renderMultiTenantView(){
         const p = STATE.mtPhase;
         const past = (target) => {
@@ -2213,6 +2411,197 @@
         `;
       }
 
+      /* ========== DASHBOARD & REPORTING VIEW ========== */
+      function renderDashboardView(){
+        const p = STATE.drPhase;
+        const past = (target) => {
+          const order = ['idle','source','endpoints','flowing','dashboards','aggregation','done'];
+          return order.indexOf(p) >= order.indexOf(target);
+        };
+
+        return `
+          <div class="section-card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="bts-label bts-label-platform"><i data-lucide="bar-chart-3" class="w-3 h-3"></i> Dashboard & Reporting</div>
+              <div class="flex items-center gap-2 text-[12px]">
+                ${STATE.drRunning ? `
+                  <button type="button" data-action="pause-dr" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${STATE.drPaused ? 'play' : 'pause'}" class="w-3 h-3"></i> ${STATE.drPaused ? 'Resume' : 'Pause'}</button>
+                ` : `
+                  <button type="button" data-action="start-dr" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Auto</button>
+                  <button type="button" data-action="step-dr" class="bg-white text-[#0070F3] border border-[#0070F3] px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#eff6ff] inline-flex items-center gap-1"><i data-lucide="skip-forward" class="w-3 h-3"></i> Step</button>
+                `}
+                <button type="button" data-action="reset-dr" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+              </div>
+            </div>
+
+            ${!past('source') ? `
+              <div class="text-center py-6 text-sm text-slate-400">
+                <i data-lucide="bar-chart-3" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                <div>Press <strong>Auto</strong> or <strong>Step</strong> to see the reporting architecture</div>
+                <div class="text-[10px] text-slate-300 mt-1">See how OData feeds power dashboards across every zone</div>
+              </div>
+            ` : `
+
+              <!-- OData API SOURCE -->
+              <div class="dr-zone dr-source ${past('source') ? 'dr-visible' : 'dr-hidden'} mb-2">
+                <div class="flex items-center gap-2 mb-2">
+                  <i data-lucide="database" class="w-4 h-4 text-blue-300"></i>
+                  <span class="text-xs font-bold tracking-wide">Application Workspace — OData API</span>
+                  <span class="ml-auto text-[9px] text-blue-300 font-medium dr-callout ${past('done') ? 'dr-show' : ''}">JSON over OData · Any reporting tool</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <!-- Auth info -->
+                  <div class="rounded-lg bg-white/10 p-2.5 ${past('source') ? '' : 'opacity-30'}">
+                    <div class="text-[10px] font-semibold text-blue-200 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                      <i data-lucide="shield-check" class="w-3 h-3"></i> Authentication
+                    </div>
+                    <div class="space-y-1 text-[10px] text-blue-100">
+                      <div class="flex items-center gap-1.5"><i data-lucide="fingerprint" class="w-3 h-3 text-blue-300"></i> Zone ID (GUID)</div>
+                      <div class="flex items-center gap-1.5"><i data-lucide="key" class="w-3 h-3 text-blue-300"></i> Client Secret (configurable expiry)</div>
+                      <div class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3 h-3 text-blue-300"></i> Snapshot on refresh — cached data</div>
+                    </div>
+                  </div>
+                  <!-- Data endpoints -->
+                  <div class="rounded-lg bg-white/10 p-2.5 ${past('endpoints') ? '' : 'opacity-30'}">
+                    <div class="text-[10px] font-semibold text-blue-200 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                      <i data-lucide="layout-grid" class="w-3 h-3"></i> API Endpoints
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                      ${DR_ENDPOINTS.map((ep, i) => `<div class="dr-endpoint ${past('endpoints') ? 'dr-lit' : ''}" style="transition-delay:${i * 0.06}s"><i data-lucide="circle-dot" class="w-2.5 h-2.5"></i> ${ep}</div>`).join('')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DATA FLOW LINES -->
+              ${past('flowing') ? `
+                <div class="flex justify-around px-8 my-1">
+                  ${[0,1,2].map(i => `
+                    <div class="flex flex-col items-center">
+                      <div class="dr-feed-line ${past('flowing') ? 'dr-drawn' : ''}" style="transition-delay:${i * 0.2}s"></div>
+                      <span class="text-[8px] text-slate-400 font-medium mt-0.5">OData Feed</span>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+
+              <!-- DASHBOARD PANELS -->
+              ${past('dashboards') ? `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                  ${DR_DASHBOARDS.map((d, i) => `
+                    <div class="dr-zone dr-panel ${past('dashboards') ? 'dr-visible' : 'dr-hidden'} ${past('done') ? 'dr-pulse' : ''}" style="transition-delay:${i * 0.12}s">
+                      <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                          <i data-lucide="${d.icon}" class="w-3.5 h-3.5 text-[#0070F3]"></i>
+                          <span class="text-[11px] font-bold text-[#0A1C60]">${d.label}</span>
+                        </div>
+                        <div class="flex items-end gap-1" style="height:22px">
+                          ${d.bars.map((h, bi) => `<div class="dr-bar ${past('dashboards') ? 'dr-grow' : ''}" style="--h:${h}px;transition-delay:${(i * 0.12) + (bi * 0.1)}s;opacity:${0.5 + bi * 0.15}"></div>`).join('')}
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-1">
+                        ${d.metrics.map(m => `<div class="dr-metric ${past('dashboards') ? 'dr-lit' : ''}">${m}</div>`).join('')}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+
+              <!-- MULTI-ZONE AGGREGATION -->
+              ${past('aggregation') ? `
+                <div class="mt-3 text-center">
+                  <div class="text-[9px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Multi-Zone Aggregation</div>
+                  <div class="flex justify-center gap-4 mb-1">
+                    ${DR_ZONES_LIST.map((z, i) => `<div class="dr-zone-badge ${past('aggregation') ? 'dr-active' : ''}" style="transition-delay:${i * 0.15}s"><i data-lucide="server" class="w-3 h-3"></i> ${z}</div>`).join('')}
+                  </div>
+                  <div class="flex justify-center gap-12 px-8">
+                    ${[0,1,2].map(i => `
+                      <div class="flex flex-col items-center">
+                        <div class="dr-arrow-line ${past('aggregation') ? 'dr-drawn' : ''}" style="transition-delay:${i * 0.15 + 0.3}s"></div>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <div class="flex justify-center mt-1">
+                    <div class="dr-global-badge"><i data-lucide="globe" class="w-4 h-4"></i> Unified Global View</div>
+                  </div>
+                  <div class="text-[9px] text-slate-400 mt-1.5">Hourly per-zone refresh · Daily global rollup</div>
+                </div>
+              ` : ''}
+
+              <!-- Callouts -->
+              ${past('done') ? `
+                <div class="flex flex-wrap justify-center gap-4 mt-3">
+                  <div class="dr-callout dr-show text-[#0070F3] flex items-center gap-1.5"><i data-lucide="plug" class="w-3.5 h-3.5"></i> OData feed connects to any reporting tool</div>
+                  <div class="dr-callout dr-show text-emerald-600 flex items-center gap-1.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i> Adapt to custom reporting visualizations</div>
+                </div>
+              ` : ''}
+
+            `}
+          </div>
+        `;
+      }
+
+      /* ========== DR ANIMATION ENGINE ========== */
+      function buildDrQueue(){
+        const phases = ['source','endpoints','flowing','dashboards','aggregation','done'];
+        const delays = [800, 1200, 1000, 1500, 1400, 1500];
+        const queue = [];
+        phases.forEach((phase, i) => {
+          queue.push({ delay: delays[i], fn(){ STATE.drPhase = phase; render(); } });
+        });
+        queue.push({ delay: 2000, fn(){ STATE.drRunning = false; STATE.drPaused = false; render(); } });
+        return queue;
+      }
+
+      function runDrQueue(){
+        if (STATE.drPaused || STATE.drQueueIdx >= STATE.drQueue.length) return;
+        const step = STATE.drQueue[STATE.drQueueIdx];
+        const tid = setTimeout(() => {
+          if (STATE.drPaused) return;
+          step.fn();
+          STATE.drQueueIdx++;
+          runDrQueue();
+        }, step.delay);
+        STATE.flowTimers.timeouts.push(tid);
+      }
+
+      function startDr(){
+        if (STATE.drRunning) return;
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        STATE.drRunning = true;
+        STATE.drPaused = false;
+        STATE.drPhase = 'idle';
+        STATE.drQueue = buildDrQueue();
+        STATE.drQueueIdx = 0;
+        render();
+        runDrQueue();
+      }
+
+      function stepDr(){
+        if (STATE.drRunning) return;
+        if (!STATE.drQueue || STATE.drQueue.length === 0) {
+          STATE.drQueue = buildDrQueue();
+          STATE.drQueueIdx = 0;
+          STATE.drPhase = 'idle';
+        }
+        if (STATE.drQueueIdx >= STATE.drQueue.length) return;
+        const step = STATE.drQueue[STATE.drQueueIdx];
+        step.fn();
+        STATE.drQueueIdx++;
+      }
+
+      function resetDr(){
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        STATE.drPhase = 'idle';
+        STATE.drRunning = false;
+        STATE.drPaused = false;
+        STATE.drQueue = [];
+        STATE.drQueueIdx = 0;
+        render();
+      }
+
       /* ========== MT ANIMATION ENGINE ========== */
       function buildMtQueue(){
         const phases = ['primary','catalog','syncing','customers','controls','done'];
@@ -2279,7 +2668,7 @@
         const sc = STATE.flowScenarioIdx;
         const phase = STATE.flowPhase;
         const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
-        const activeViewCount = [STATE.solutionViewUser, STATE.solutionViewAdmin, STATE.solutionViewMultiTenant].filter(Boolean).length;
+        const activeViewCount = [STATE.solutionViewUser, STATE.solutionViewAdmin, STATE.solutionViewMultiTenant, STATE.solutionViewDashboard].filter(Boolean).length;
         const multiCol = activeViewCount >= 2;
 
         return `
@@ -2299,6 +2688,7 @@
                   <button type="button" data-action="toggle-solution-view" data-view="user" class="view-toggle ${STATE.solutionViewUser ? 'active' : ''}"><i data-lucide="monitor-smartphone" class="w-3.5 h-3.5"></i> User Experience</button>
                   <button type="button" data-action="toggle-solution-view" data-view="admin" class="view-toggle ${STATE.solutionViewAdmin ? 'active' : ''}"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console</button>
                   <button type="button" data-action="toggle-solution-view" data-view="multitenant" class="view-toggle ${STATE.solutionViewMultiTenant ? 'active' : ''}"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Multi-Tenant</button>
+                  <button type="button" data-action="toggle-solution-view" data-view="dashboard" class="view-toggle ${STATE.solutionViewDashboard ? 'active' : ''}"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dashboard & Reporting</button>
                 </div>
                 <!-- Flow controls -->
                 <div class="flex items-center gap-2 text-[12px]">
@@ -2314,6 +2704,7 @@
               ${STATE.solutionViewUser ? renderUserView() : ''}
               ${STATE.solutionViewAdmin ? renderAdminConsole() : ''}
               ${STATE.solutionViewMultiTenant ? renderMultiTenantView() : ''}
+              ${STATE.solutionViewDashboard ? renderDashboardView() : ''}
             </div>
 
             <div class="flex flex-col items-end gap-2 mt-2">
@@ -2896,17 +3287,19 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
           if (action === 'toggle-solution-view') {
             const view = act.getAttribute('data-view');
             if (view === 'user') STATE.solutionViewUser = !STATE.solutionViewUser;
             if (view === 'admin') STATE.solutionViewAdmin = !STATE.solutionViewAdmin;
             if (view === 'multitenant') STATE.solutionViewMultiTenant = !STATE.solutionViewMultiTenant;
-            if (!STATE.solutionViewUser && !STATE.solutionViewAdmin && !STATE.solutionViewMultiTenant) {
+            if (view === 'dashboard') STATE.solutionViewDashboard = !STATE.solutionViewDashboard;
+            if (!STATE.solutionViewUser && !STATE.solutionViewAdmin && !STATE.solutionViewMultiTenant && !STATE.solutionViewDashboard) {
               if (view === 'user') STATE.solutionViewUser = true;
               else if (view === 'admin') STATE.solutionViewAdmin = true;
-              else STATE.solutionViewMultiTenant = true;
+              else if (view === 'multitenant') STATE.solutionViewMultiTenant = true;
+              else STATE.solutionViewDashboard = true;
             }
             render(); return;
           }
@@ -2914,6 +3307,10 @@
           if (action === 'step-mt') { stepMt(); return; }
           if (action === 'reset-mt') { resetMt(); return; }
           if (action === 'pause-mt') { if (STATE.mtPaused) { STATE.mtPaused = false; render(); runMtQueue(); } else { STATE.mtPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
+          if (action === 'start-dr') { startDr(); return; }
+          if (action === 'step-dr') { stepDr(); return; }
+          if (action === 'reset-dr') { resetDr(); return; }
+          if (action === 'pause-dr') { if (STATE.drPaused) { STATE.drPaused = false; render(); runDrQueue(); } else { STATE.drPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
           if (action === 'open-analyst-modal') { STATE.showAnalystModal = true; render(); return; }
