@@ -461,7 +461,7 @@
         copied: false,
         flippedCards: { card0: false, card1: false, card2: false, card3: false },
         visitedTabs: [],
-        solutionViewUser: true,
+        solutionViewUser: false,
         solutionViewAdmin: false,
         solutionViewMultiTenant: false,
         mtPhase: 'idle',
@@ -1493,7 +1493,7 @@
           const lblW = 160;
           const lblG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
           lblG.classList.add('label-element','chart-element');
-          lblG.innerHTML = '<rect x="'+(x+6)+'" y="'+(yScale(1)-14)+'" width="'+lblW+'" height="24" rx="12" fill="#0A1C60" opacity="0.9"/><text x="'+(x+6+lblW/2)+'" y="'+(yScale(1)+2)+'" text-anchor="middle" font-size="10" font-weight="600" fill="white" font-family="Inter, system-ui, sans-serif">Operational Breaking Point</text>';
+          lblG.innerHTML = '<rect x="'+(x+6)+'" y="'+(yScale(1)-14)+'" width="'+lblW+'" height="24" rx="12" fill="#dc2626" opacity="0.9"/><text x="'+(x+6+lblW/2)+'" y="'+(yScale(1)+2)+'" text-anchor="middle" font-size="10" font-weight="600" fill="white" font-family="Inter, system-ui, sans-serif">Operational Breaking Point</text>';
           svg.appendChild(lblG);
           const hit = document.createElementNS('http://www.w3.org/2000/svg', 'g');
           hit.setAttribute('role','button'); hit.setAttribute('tabindex','0'); hit.setAttribute('aria-label','Learn more about Projected Tipping Point');
@@ -1535,6 +1535,7 @@
         const bullets = c.bullets || [];
         const closing = c.closing || '';
         const isPlatformMult = c.id === 'too_many_tools';
+        const isTippingPoint = c.title === 'Inflection Point';
         const modalWidth = isPlatformMult ? 'max-w-6xl' : 'max-w-4xl';
         const modalStyle = isPlatformMult ? 'max-height:95vh;display:flex;flex-direction:column' : '';
         const bodyStyle = isPlatformMult ? 'flex:1;min-height:0;overflow-y:auto' : '';
@@ -1546,7 +1547,20 @@
                 <button type="button" class="text-slate-500 hover:text-slate-700 focus-ring p-2" data-action="close-insight-modal" aria-label="Close"><i data-lucide="x" class="w-6 h-6"></i></button>
               </div>
               <div class="${isPlatformMult ? 'px-6 py-4' : 'p-8'} bg-white/35 backdrop-blur-lg" style="${bodyStyle}">
-                ${isPlatformMult ? renderPlatformSiloDiagram(intro) : `
+                ${isPlatformMult ? renderPlatformSiloDiagram(intro) : isTippingPoint ? `
+                <div class="space-y-4">
+                  ${bullets.map(b=>`<div class="bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i><p class="text-base leading-relaxed text-[#4A5568]">${b}</p></div>`).join('')}
+                </div>
+                ${closing ? `<div class="mt-4 bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3"><i data-lucide="sparkles" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-base italic text-[#4A5568]">${closing}</p></div>` : ''}
+                <div class="mt-6">
+                  <div class="flex items-center gap-2 mb-4"><i data-lucide="quote" class="w-5 h-5 text-slate-400"></i><span class="text-sm font-bold text-[#0A1C60]">What Analysts Are Saying</span></div>
+                  <div class="space-y-3">
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#0070F3">Gartner, 2025</div><div class="text-sm text-[#475569] italic">"By 2027, organizations that fail to modernize application delivery will spend 40% more on operational overhead than those that do."</div></div>
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#006B3F">Forrester, 2025</div><div class="text-sm text-[#475569] italic">"Application complexity has overtaken infrastructure as the primary bottleneck in IT operations. The breaking point is not a staffing issue — it's architectural."</div></div>
+                    <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#D4213D">IDC, 2025</div><div class="text-sm text-[#475569] italic">"Application sprawl across hybrid environments is now the leading driver of unplanned IT work, consuming up to 60% of IT operations capacity."</div></div>
+                  </div>
+                </div>
+                ` : `
                 ${intro ? `<p class="text-base leading-relaxed text-[#4A5568] mb-4">${intro}</p>` : ''}
                 <div class="space-y-4">${bullets.map(b=>`<div class="bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"><i data-lucide="check-circle" class="w-5 h-5 text-[#0070F3] flex-shrink-0 mt-0.5"></i><p class="text-base leading-relaxed text-[#4A5568]">${b}</p></div>`).join('')}</div>
                 ${closing ? `<div class="mt-6 bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-start gap-3"><i data-lucide="sparkles" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-base italic text-[#4A5568]">${closing}</p></div>` : ''}
@@ -1868,45 +1882,6 @@
 
         return `
           <div class="section-card p-4">
-            <!-- The Centralized Platform (top) -->
-            <div class="flex items-center gap-3 mb-2">
-              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
-              <div class="bts-label bts-label-platform"><i data-lucide="boxes" class="w-3 h-3"></i> The Centralized Platform</div>
-              <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
-            </div>
-
-            <div class="platform-bar" style="padding:10px 14px">
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                  <i data-lucide="layout-grid" class="w-4 h-4 text-blue-200"></i>
-                  <span class="text-sm font-bold tracking-wide">Application Workspace</span>
-                </div>
-                <div class="flex items-center gap-1">
-                  <div class="platform-stat"><div class="platform-stat-value">8,000+</div><div class="platform-stat-label">Pre-Tested Apps</div></div>
-                  <div class="platform-divider"></div>
-                  <div class="platform-stat"><div class="platform-stat-value">5</div><div class="platform-stat-label">Delivery Paths</div></div>
-                  <div class="platform-divider"></div>
-                  <div class="platform-stat"><div class="platform-stat-value">1</div><div class="platform-stat-label">Definition</div></div>
-                </div>
-              </div>
-              <div class="flex flex-wrap gap-1.5">
-                <div class="platform-cap"><i data-lucide="package" class="w-3 h-3"></i> Custom App Packaging</div>
-                <div class="platform-cap"><i data-lucide="building-2" class="w-3 h-3"></i> Multi-Tenant</div>
-                <div class="platform-cap"><i data-lucide="monitor-smartphone" class="w-3 h-3"></i> Multi-Device</div>
-                <div class="platform-cap"><i data-lucide="bot" class="w-3 h-3"></i> Automated Patching</div>
-                <div class="platform-cap"><i data-lucide="user-check" class="w-3 h-3"></i> Identity-Based Access</div>
-                <div class="platform-cap"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Self-Service Catalog</div>
-                <div class="platform-cap"><i data-lucide="shield" class="w-3 h-3"></i> CVE Auto-Patching</div>
-                <div class="platform-cap"><i data-lucide="eye" class="w-3 h-3"></i> Central Governance</div>
-              </div>
-              <div class="mt-2 text-[10px] text-blue-200 tracking-wide text-center">
-                Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit -  across every environment from one place
-              </div>
-            </div>
-
-            <!-- Connector: Platform → User -->
-            <div class="flex justify-center py-1"><div style="width:2px;height:16px;background:linear-gradient(180deg,#0070F3,#6366f1);border-radius:2px;position:relative"><div style="position:absolute;bottom:-3px;left:-3px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #6366f1"></div></div></div>
-
             <!-- What the user sees -->
             <div class="flex items-center gap-2 mb-3">
               ${['done','final'].includes(phase) ? '<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i><span class="text-xs font-semibold text-emerald-700">Same experience. Every device. Every time.</span></div>' : '<div class="bts-label bts-label-user"><i data-lucide="user" class="w-3 h-3"></i> What the user sees</div>'}
@@ -2679,22 +2654,61 @@
               ${NEW_CARDS.map(card => compactCard(card)).join('')}
             </div>
 
+            <!-- THE CENTRALIZED PLATFORM (always visible) -->
+            <div class="section-card p-4">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
+                <div class="bts-label bts-label-platform"><i data-lucide="boxes" class="w-3 h-3"></i> The Centralized Platform</div>
+                <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
+              </div>
+              <div class="platform-bar" style="padding:10px 14px">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="layout-grid" class="w-4 h-4 text-blue-200"></i>
+                    <span class="text-sm font-bold tracking-wide">Application Workspace</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <div class="platform-stat"><div class="platform-stat-value">8,000+</div><div class="platform-stat-label">Pre-Tested Apps</div></div>
+                    <div class="platform-divider"></div>
+                    <div class="platform-stat"><div class="platform-stat-value">5</div><div class="platform-stat-label">Delivery Paths</div></div>
+                    <div class="platform-divider"></div>
+                    <div class="platform-stat"><div class="platform-stat-value">1</div><div class="platform-stat-label">Definition</div></div>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <div class="platform-cap"><i data-lucide="package" class="w-3 h-3"></i> Custom App Packaging</div>
+                  <div class="platform-cap"><i data-lucide="building-2" class="w-3 h-3"></i> Multi-Tenant</div>
+                  <div class="platform-cap"><i data-lucide="monitor-smartphone" class="w-3 h-3"></i> Multi-Device</div>
+                  <div class="platform-cap"><i data-lucide="bot" class="w-3 h-3"></i> Automated Patching</div>
+                  <div class="platform-cap"><i data-lucide="user-check" class="w-3 h-3"></i> Identity-Based Access</div>
+                  <div class="platform-cap"><i data-lucide="shopping-bag" class="w-3 h-3"></i> Self-Service Catalog</div>
+                  <div class="platform-cap"><i data-lucide="shield" class="w-3 h-3"></i> CVE Auto-Patching</div>
+                  <div class="platform-cap"><i data-lucide="eye" class="w-3 h-3"></i> Central Governance</div>
+                </div>
+                <div class="mt-2 text-[10px] text-blue-200 tracking-wide text-center">
+                  Package &middot; Deliver &middot; Update &middot; Configure &middot; Audit -  across every environment from one place
+                </div>
+              </div>
+            </div>
+
             <!-- ZONE A: Control strip -->
             <div class="section-card p-3">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <!-- View toggles -->
                 <div class="flex items-center gap-2">
-                  <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">View:</span>
+                  <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">Select a view:</span>
                   <button type="button" data-action="toggle-solution-view" data-view="user" class="view-toggle ${STATE.solutionViewUser ? 'active' : ''}"><i data-lucide="monitor-smartphone" class="w-3.5 h-3.5"></i> User Experience</button>
                   <button type="button" data-action="toggle-solution-view" data-view="admin" class="view-toggle ${STATE.solutionViewAdmin ? 'active' : ''}"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console</button>
                   <button type="button" data-action="toggle-solution-view" data-view="multitenant" class="view-toggle ${STATE.solutionViewMultiTenant ? 'active' : ''}"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Multi-Tenant</button>
                   <button type="button" data-action="toggle-solution-view" data-view="dashboard" class="view-toggle ${STATE.solutionViewDashboard ? 'active' : ''}"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dashboard & Reporting</button>
                 </div>
+                ${(STATE.solutionViewUser || STATE.solutionViewAdmin || STATE.solutionViewMultiTenant || STATE.solutionViewDashboard) ? `
                 <!-- Flow controls -->
                 <div class="flex items-center gap-2 text-[12px]">
                   <button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white w-7 h-7 rounded-full hover:bg-[#005AD0] inline-flex items-center justify-center"><i data-lucide="${STATE.flowRunning && !STATE.flowPaused ? 'pause' : 'play'}" class="w-3.5 h-3.5"></i></button>
                   <button type="button" data-action="reset-flow" class="bg-[#0A1C60] text-white w-7 h-7 rounded-full hover:bg-[#0070F3] inline-flex items-center justify-center" title="Reset"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
                 </div>
+                ` : ''}
               </div>
 
             </div>
@@ -3295,12 +3309,6 @@
             if (view === 'admin') STATE.solutionViewAdmin = !STATE.solutionViewAdmin;
             if (view === 'multitenant') STATE.solutionViewMultiTenant = !STATE.solutionViewMultiTenant;
             if (view === 'dashboard') STATE.solutionViewDashboard = !STATE.solutionViewDashboard;
-            if (!STATE.solutionViewUser && !STATE.solutionViewAdmin && !STATE.solutionViewMultiTenant && !STATE.solutionViewDashboard) {
-              if (view === 'user') STATE.solutionViewUser = true;
-              else if (view === 'admin') STATE.solutionViewAdmin = true;
-              else if (view === 'multitenant') STATE.solutionViewMultiTenant = true;
-              else STATE.solutionViewDashboard = true;
-            }
             render(); return;
           }
           if (action === 'start-mt') { startMt(); return; }
