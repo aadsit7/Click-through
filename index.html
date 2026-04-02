@@ -274,6 +274,29 @@
       .dr-arrow-line.dr-drawn { height: 20px; }
       @keyframes drPulse { 0% { box-shadow: 0 0 0 0 rgba(0,112,243,0); } 50% { box-shadow: 0 0 12px 3px rgba(0,112,243,0.15); } 100% { box-shadow: 0 0 0 0 rgba(0,112,243,0); } }
       .dr-pulse { animation: drPulse 2s ease-in-out infinite; }
+      /* Onboarding view */
+      .ob-device { border-radius: 12px; padding: 12px; transition: opacity 0.5s ease, transform 0.5s ease; }
+      .ob-device.ob-hidden { opacity: 0; transform: translateY(10px); }
+      .ob-device.ob-visible { opacity: 1; transform: translateY(0); }
+      .ob-left { background: white; border: 2px solid #fca5a5; border-top: 4px solid #ef4444; }
+      .ob-right { background: white; border: 2px solid #86efac; border-top: 4px solid #10b981; }
+      .ob-app { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; border: 1px solid #e2e8f0; background: #f8fafc; color: #94a3b8; transition: all 0.4s ease; }
+      .ob-app.ob-installed { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+      .ob-app.ob-failed { border-color: #ef4444; background: #fef2f2; color: #991b1b; }
+      .ob-app.ob-waiting { border-color: #e2e8f0; background: #f8fafc; color: #94a3b8; }
+      .ob-app.ob-active { border-color: #0070F3; background: #eff6ff; color: #0A1C60; }
+      .ob-callout { opacity: 0; transform: translateY(4px); transition: all 0.5s ease; font-size: 10px; font-weight: 600; }
+      .ob-callout.ob-show { opacity: 1; transform: translateY(0); }
+      .ob-step { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 10px; color: #94a3b8; transition: all 0.3s ease; }
+      .ob-step.ob-done { color: #065f46; }
+      .ob-step.ob-active { color: #0A1C60; font-weight: 600; }
+      .ob-step.ob-fail { color: #991b1b; }
+      .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; transition: all 0.3s; }
+      .ob-step.ob-done .ob-dot { background: #10b981; }
+      .ob-step.ob-active .ob-dot { background: #0070F3; box-shadow: 0 0 0 3px rgba(0,112,243,0.2); }
+      .ob-step.ob-fail .ob-dot { background: #ef4444; }
+      @keyframes obPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+      .ob-pulse { animation: obPulse 1.5s ease-in-out infinite; }
       @keyframes finalGlow { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
       .final-glow { animation: finalGlow 2s ease-in-out; }
       .cfg-item { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; font-size: 10px; color: #475569; background: white; border: 1px solid #e2e8f0; transition: all 0.3s ease; opacity: 0; transform: translateX(-6px); }
@@ -475,6 +498,12 @@
         drQueue: [],
         drQueueIdx: 0,
         solutionViewDashboard: false,
+        solutionViewOnboarding: false,
+        obPhase: 'idle',
+        obRunning: false,
+        obPaused: false,
+        obQueue: [],
+        obQueueIdx: 0,
         showLabels: false,
         showSolutionCards: true,
         openWhy: null,
@@ -516,20 +545,20 @@
         showTippingPoint: false,
         currentState: {
           change: {
-            intro: "Your team isn't underperforming. They're hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
+            intro: "",
             bullets: [
-              "Per-platform = per-problem = Every app is packaged, tested, and maintained separately for each environment. Five platforms means five times the work - per app.",
-              "It compounds, not levels off = Every new migration, security mandate, or tool adoption fans out across every platform. The workload multiplies.",
-              "The team isn't the bottleneck - the model is = Most organizations have already optimized within the current approach. The ceiling is structural, not operational."
+              "The challenge has changed. = Hardware is stable, networks are solid \u2014 but apps keep IT teams running in circles.",
+              "The volume and pace are overwhelming. = You can\u2019t keep thousands of apps current and secure with the same tools and headcount you\u2019ve always had.",
+              "Big plans keep getting delayed. = You want to move from Citrix to AVD, shift from SCCM to Intune, Windows on ARM Pilots, AI Projects \u2014 but app readiness keeps blocking progress."
             ],
             analyst: "The organizations pulling ahead aren't working harder - they're changing the model. (Forrester, Gartner, McKinsey)"
           },
           now: {
-            intro: "This has been building for years - but 2026 is where the math stops working for most teams.",
+            intro: "",
             bullets: [
-              "Three forces hitting at once = Platform sprawl, AI adoption pressure, and continuous security patching - any one is absorbable. Together, they break the model.",
-              "Your workarounds are now your risk = Tribal knowledge, manual rebuilds, heroic effort - they don't scale, don't transfer, and create single points of failure.",
-              "The window is narrowing = Organizations that fix app delivery now absorb the next wave. The ones that wait spend the next three years reacting."
+              "The math doesn\u2019t add up. = Most IT teams haven\u2019t doubled in size, but the workload has. Teams are being asked to manage twice as much with the same hands.",
+              "People work everywhere now. = Apps have to follow them \u2014 securely \u2014 no matter what device or network they\u2019re on.",
+              "Falling behind has consequences. = Every delayed update is another open door for attackers and another roadblock for your users."
             ],
             analyst: "Everyone else hits a capacity wall - and strategy doesn't fix a capacity problem. (Gartner, 2024)"
           },
@@ -549,20 +578,20 @@
         defaultsCurrentState() {
           return JSON.parse(JSON.stringify({
             change: {
-              intro: "Your team isn't underperforming. They're hitting the structural ceiling of a delivery model that was built for two platforms. Most organizations now manage five or six.",
+              intro: "",
               bullets: [
-                "Per-platform = per-problem = Every app is packaged, tested, and maintained separately for each environment. Five platforms means five times the work - per app.",
-                "It compounds, not levels off = Every new migration, security mandate, or tool adoption fans out across every platform. The workload multiplies.",
-                "The team isn't the bottleneck - the model is = Most organizations have already optimized within the current approach. The ceiling is structural, not operational."
+                "The challenge has changed. = Hardware is stable, networks are solid \u2014 but apps keep IT teams running in circles.",
+                "The volume and pace are overwhelming. = You can\u2019t keep thousands of apps current and secure with the same tools and headcount you\u2019ve always had.",
+                "Big plans keep getting delayed. = You want to move from Citrix to AVD, shift from SCCM to Intune, Windows on ARM Pilots, AI Projects \u2014 but app readiness keeps blocking progress."
               ],
               analyst: "The organizations pulling ahead aren't working harder - they're changing the model. (Forrester, Gartner, McKinsey)"
             },
             now: {
-              intro: "This has been building for years - but 2026 is where the math stops working for most teams.",
+              intro: "",
               bullets: [
-                "Three forces hitting at once = Platform sprawl, AI adoption pressure, and continuous security patching - any one is absorbable. Together, they break the model.",
-                "Your workarounds are now your risk = Tribal knowledge, manual rebuilds, heroic effort - they don't scale, don't transfer, and create single points of failure.",
-                "The window is narrowing = Organizations that fix app delivery now absorb the next wave. The ones that wait spend the next three years reacting."
+                "The math doesn\u2019t add up. = Most IT teams haven\u2019t doubled in size, but the workload has. Teams are being asked to manage twice as much with the same hands.",
+                "People work everywhere now. = Apps have to follow them \u2014 securely \u2014 no matter what device or network they\u2019re on.",
+                "Falling behind has consequences. = Every delayed update is another open door for attackers and another roadblock for your users."
               ],
               analyst: "Everyone else hits a capacity wall - and strategy doesn't fix a capacity problem. (Gartner, 2024)"
             },
@@ -1536,7 +1565,8 @@
         const closing = c.closing || '';
         const isPlatformMult = c.id === 'too_many_tools';
         const isTippingPoint = c.title === 'Inflection Point';
-        const modalWidth = isPlatformMult ? 'max-w-6xl' : 'max-w-4xl';
+        const isChangeVelocity = c.id === 'constant_updates';
+        const modalWidth = isPlatformMult ? 'max-w-6xl' : isChangeVelocity ? 'max-w-5xl' : 'max-w-4xl';
         const modalStyle = isPlatformMult ? 'max-height:95vh;display:flex;flex-direction:column' : '';
         const bodyStyle = isPlatformMult ? 'flex:1;min-height:0;overflow-y:auto' : '';
         return `
@@ -1547,18 +1577,12 @@
                 <button type="button" class="text-slate-500 hover:text-slate-700 focus-ring p-2" data-action="close-insight-modal" aria-label="Close"><i data-lucide="x" class="w-6 h-6"></i></button>
               </div>
               <div class="${isPlatformMult ? 'px-6 py-4' : 'p-8'} bg-white/35 backdrop-blur-lg" style="${bodyStyle}">
-                ${isPlatformMult ? renderPlatformSiloDiagram(intro) : isTippingPoint ? `
-                <div class="space-y-4">
-                  ${bullets.map(b=>`<div class="bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></i><p class="text-base leading-relaxed text-[#4A5568]">${b}</p></div>`).join('')}
-                </div>
-                ${closing ? `<div class="mt-4 bg-white/70 backdrop-blur-lg p-4 rounded-lg shadow-sm flex items-start gap-3"><i data-lucide="sparkles" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-base italic text-[#4A5568]">${closing}</p></div>` : ''}
-                <div class="mt-6">
-                  <div class="flex items-center gap-2 mb-4"><i data-lucide="quote" class="w-5 h-5 text-slate-400"></i><span class="text-sm font-bold text-[#0A1C60]">What Analysts Are Saying</span></div>
-                  <div class="space-y-3">
-                    <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#0070F3">Gartner, 2025</div><div class="text-sm text-[#475569] italic">"By 2027, organizations that fail to modernize application delivery will spend 40% more on operational overhead than those that do."</div></div>
-                    <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#006B3F">Forrester, 2025</div><div class="text-sm text-[#475569] italic">"Application complexity has overtaken infrastructure as the primary bottleneck in IT operations. The breaking point is not a staffing issue — it's architectural."</div></div>
-                    <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#D4213D">IDC, 2025</div><div class="text-sm text-[#475569] italic">"Application sprawl across hybrid environments is now the leading driver of unplanned IT work, consuming up to 60% of IT operations capacity."</div></div>
-                  </div>
+                ${isPlatformMult ? renderPlatformSiloDiagram(intro) : isChangeVelocity ? renderChangeVelocityChart() : isTippingPoint ? `
+                <div class="flex items-center gap-2 mb-4"><i data-lucide="quote" class="w-5 h-5 text-slate-400"></i><span class="text-sm font-bold text-[#0A1C60]">What Analysts Are Saying</span></div>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#0070F3">Gartner, 2025</div><div class="text-sm text-[#475569] italic">"By 2027, organizations that fail to modernize application delivery will spend 40% more on operational overhead than those that do."</div></div>
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#006B3F">Forrester, 2025</div><div class="text-sm text-[#475569] italic">"Application complexity has overtaken infrastructure as the primary bottleneck in IT operations. The breaking point is not a staffing issue — it's architectural."</div></div>
+                  <div class="flex items-start gap-4 p-4 rounded-xl bg-white/70 backdrop-blur-lg shadow-sm hover:shadow-md transition-shadow"><div class="text-sm font-bold min-w-[120px] flex-shrink-0" style="color:#D4213D">IDC, 2025</div><div class="text-sm text-[#475569] italic">"Application sprawl across hybrid environments is now the leading driver of unplanned IT work, consuming up to 60% of IT operations capacity."</div></div>
                 </div>
                 ` : `
                 ${intro ? `<p class="text-base leading-relaxed text-[#4A5568] mb-4">${intro}</p>` : ''}
@@ -1580,18 +1604,12 @@
           {name:'Jamf Pro', sub:'macOS Endpoints', color:'#6B7280', pkg:'.pkg / .dmg', deploy:'Self Service', test:'Manual / per-platform', patch:'Manual cycle'},
         ];
         const ops = ['Package','Deploy','Test','Patch'];
-        const businessReqs = ['New hire onboarding','AI / Copilot rollout','Security patch (CVE)','Cloud migration','App retirement','New LOB app'];
-        const identitySources = [{label:'Active Directory', color:'bg-blue-600'},{label:'Entra ID (Azure AD)', color:'bg-blue-500'},{label:'Okta / IdP', color:'bg-indigo-500'}];
-        const supportItems = [{label:'ServiceNow / ITSM', color:'bg-teal-500'},{label:'Help Desk Tickets', color:'bg-amber-500'},{label:'Manual Provisioning', color:'bg-orange-500'},{label:'Tribal Knowledge', color:'bg-red-400'}];
-        const devices = ['Windows Laptop','Windows Desktop','macOS','VDI Session','Cloud PC / W365','BYOD / Remote'];
         const impacts = [
-          {stat:'5\u00d7', label:'packaging duplication', desc:'Same app rebuilt per platform'},
-          {stat:'5\u201310 day', label:'patch cycles', desc:'Each platform patched separately'},
-          {stat:'30\u201365%', label:'reactive work', desc:'Engineers stuck firefighting'},
-          {stat:'Manual', label:'compliance evidence', desc:'Spreadsheets & memory'},
-          {stat:'Single points of failure', label:'', desc:'Tribal knowledge dependencies'},
-          {stat:'No single pane of glass', label:'', desc:'Visibility gaps across tools'},
-          {stat:'Onboarding delays', label:'', desc:'Days for new hires to be productive'},
+          {stat:'5\u00d7', desc:'packaging duplication'},
+          {stat:'5\u201310 day', desc:'patch cycles'},
+          {stat:'30\u201365%', desc:'reactive work'},
+          {stat:'Manual', desc:'compliance evidence'},
+          {stat:'No', desc:'single pane of glass'},
         ];
 
         return `
@@ -1601,44 +1619,26 @@
             <!-- Title -->
             <div class="text-[11px] font-bold text-[#0A1C60] text-center uppercase tracking-wider mb-3">Without a Unified Application Management Layer &mdash; Every Platform Is a Silo</div>
 
-            <div class="grid grid-cols-1 md:grid-cols-[1fr_190px] gap-3">
-              <!-- LEFT: Diagram rows -->
+            <!-- Compact context row: Business Requests → Identity → Devices -->
+            <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-3 text-[9px] text-slate-400">
+              <div class="flex items-center gap-1.5"><i data-lucide="briefcase" class="w-3 h-3"></i> <span class="font-semibold text-slate-500">Requests:</span> New hires, AI rollouts, patches, migrations, new apps</div>
+              <div class="flex items-center gap-1.5"><i data-lucide="user-check" class="w-3 h-3"></i> <span class="font-semibold text-slate-500">Identity:</span> AD, Entra ID, Okta <span class="text-red-400 font-bold">&mdash; no unified layer</span></div>
+              <div class="flex items-center gap-1.5"><i data-lucide="monitor" class="w-3 h-3"></i> <span class="font-semibold text-slate-500">Devices:</span> Windows, macOS, VDI, Cloud PC, BYOD</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_170px] gap-3">
+              <!-- LEFT: The 5 Silos (the focal point) -->
               <div>
-
-                <!-- Business Requests -->
-                <div class="mb-1">
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Business Requests</div>
-                  <div class="flex flex-wrap gap-1.5">
-                    ${businessReqs.map(r => `<span class="px-2 py-0.5 rounded-full text-[9px] font-medium bg-slate-100 text-slate-600 border border-slate-200">${r}</span>`).join('')}
-                  </div>
-                </div>
-
-                <!-- Connector -->
-                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
-
-                <!-- Identity Sources -->
-                <div class="mb-1">
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Identity Sources</div>
-                  <div class="flex flex-wrap items-center gap-1.5">
-                    ${identitySources.map(s => `<span class="px-2 py-0.5 rounded-lg text-[9px] font-medium ${s.color} text-white">${s.label}</span>`).join('')}
-                    <span class="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-red-50 text-red-600 border border-dashed border-red-300 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> NO UNIFIED IDENTITY LAYER</span>
-                  </div>
-                </div>
-
-                <!-- Connector -->
-                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
-
-                <!-- Management Tools (SILOED) - THE CORE -->
-                <div class="mb-1">
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Management Tools <span class="text-red-400">(Siloed)</span></div>
+                <div class="rounded-xl p-3" style="background:linear-gradient(135deg, #fef2f2 0%, #fff7ed 50%, #fefce8 100%); border:1px solid #fecaca">
+                  <div class="text-[9px] font-bold uppercase tracking-widest text-red-500 mb-2 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Management Tools &mdash; Each Operating as Its Own Silo</div>
                   <div class="overflow-x-auto">
-                    <div class="relative" style="min-width:560px">
-                      <div class="grid grid-cols-5 gap-1.5">
+                    <div class="relative" style="min-width:520px">
+                      <div class="grid grid-cols-5 gap-2">
                         ${silos.map(s => `
-                          <div class="border-2 border-dashed border-red-300 rounded-lg p-2 bg-white flex flex-col">
+                          <div class="border-2 border-dashed border-red-300 rounded-lg p-2 bg-white flex flex-col shadow-sm">
                             <div class="rounded-md px-2 py-1.5 text-center mb-2" style="background:${s.color}">
                               <div class="text-[10px] font-bold text-white leading-tight">${s.name}</div>
-                              <div class="text-[8px] text-white/70">${s.sub}</div>
+                              <div class="text-[7px] text-white/70">${s.sub}</div>
                             </div>
                             <div class="space-y-0.5 flex-1">
                               ${ops.map((op, oi) => {
@@ -1655,50 +1655,30 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Red callout below silos -->
-                  <div class="text-center mt-1.5">
-                    <span class="text-[9px] italic text-red-500 font-medium">Same application (e.g. Chrome) &rarr; packaged, tested, deployed, and patched separately through each tool</span>
+                  <!-- Red callout -->
+                  <div class="text-center mt-2 px-2 py-1.5 rounded-lg bg-white/80 border border-red-200">
+                    <span class="text-[10px] italic text-red-600 font-medium">Same application (e.g. Chrome) &rarr; packaged, tested, deployed, and patched separately through each tool</span>
                   </div>
                 </div>
 
-                <!-- Connector -->
-                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
-
-                <!-- Support Layer -->
-                <div class="mb-1">
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Support Layer</div>
-                  <div class="flex flex-wrap gap-1.5">
-                    ${supportItems.map(s => `<span class="px-2.5 py-1 rounded-lg text-[9px] font-medium ${s.color} text-white">${s.label}</span>`).join('')}
-                  </div>
+                <!-- Support layer as compact inline -->
+                <div class="flex flex-wrap items-center gap-1.5 mt-2.5 text-[9px]">
+                  <span class="font-semibold text-slate-400 uppercase tracking-wider text-[8px]">Support:</span>
+                  ${['ServiceNow / ITSM','Help Desk Tickets','Manual Provisioning','Tribal Knowledge'].map(s => `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-medium">${s}</span>`).join('')}
                 </div>
-
-                <!-- Connector -->
-                <div class="flex justify-center my-1"><div style="width:60%;height:8px;border:1px dashed #cbd5e1;border-top:none;border-radius:0 0 6px 6px"></div></div>
-
-                <!-- End User Devices -->
-                <div>
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">End User Devices</div>
-                  <div class="flex flex-wrap gap-1.5">
-                    ${devices.map(d => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border border-slate-200 bg-white text-[9px] text-[#475569] font-medium">${d}</span>`).join('')}
-                  </div>
-                </div>
-
               </div>
 
-              <!-- RIGHT: Operational Impact sidebar -->
+              <!-- RIGHT: Operational Impact sidebar (streamlined) -->
               <div class="rounded-xl border border-red-200 bg-red-50/50 p-3 h-fit">
-                <div class="flex items-center gap-1.5 mb-3">
-                  <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>
-                  <span class="text-[11px] font-bold text-red-700 uppercase tracking-wide">Operational Impact</span>
+                <div class="flex items-center gap-1.5 mb-2.5">
+                  <i data-lucide="trending-up" class="w-3.5 h-3.5 text-red-500"></i>
+                  <span class="text-[10px] font-bold text-red-700 uppercase tracking-wide">Impact</span>
                 </div>
-                <div class="space-y-2.5">
+                <div class="space-y-2">
                   ${impacts.map(imp => `
-                    <div class="flex items-start gap-2">
-                      <div class="w-2 h-2 rounded-sm bg-red-400 mt-1 flex-shrink-0"></div>
-                      <div>
-                        <div class="text-[11px] font-bold text-red-700 leading-tight">${imp.stat}${imp.label ? ' ' + imp.label : ''}</div>
-                        <div class="text-[9px] text-red-500 leading-tight">${imp.desc}</div>
-                      </div>
+                    <div class="flex items-baseline gap-1.5">
+                      <span class="text-[12px] font-bold text-red-600 leading-none">${imp.stat}</span>
+                      <span class="text-[9px] text-red-500 leading-tight">${imp.desc}</span>
                     </div>
                   `).join('')}
                 </div>
@@ -1711,13 +1691,108 @@
               <p class="text-[11px] italic text-[#4A5568]"><i data-lucide="quote" class="w-3.5 h-3.5 inline text-slate-300 mr-1"></i>The ceiling is structural, not operational. Your team isn&rsquo;t underperforming &mdash; the per-platform model was built for two platforms. Most organizations now manage five or six.</p>
             </div>
 
-            <!-- Legend -->
-            <div class="flex flex-wrap items-center justify-center gap-4 mt-2 text-[8px] text-slate-400">
-              <div class="flex items-center gap-1.5"><span class="inline-block w-6 border-t-2 border-dashed border-red-300"></span> Silo boundary (no cross-platform communication)</div>
-              <div class="flex items-center gap-1.5"><i data-lucide="x" class="w-3 h-3 text-red-400"></i> No integration between tools</div>
-              <div class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3 h-3 text-red-400"></i> Manual / duplicated workflow</div>
+          </div>
+        `;
+      }
+
+      function renderChangeVelocityChart(){
+        // Stacked area chart: 5 workload layers growing over 2015-2026, flat capacity line
+        // Chart dimensions: viewBox 700x320, margin left 40, right 10, top 10, bottom 35
+        const W = 700, H = 320, ml = 45, mr = 10, mt = 10, mb = 40;
+        const cw = W - ml - mr, ch = H - mt - mb;
+        // X positions for years 2015-2026 (12 points)
+        const years = [2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+        const x = years.map((y,i) => ml + (i / (years.length - 1)) * cw);
+        const yP = v => mt + ch - v * ch; // value 0-1 to y pixel
+
+        // 5 layers (values at each year, stacked from bottom). Each value is the layer's own height (not cumulative).
+        // Layer 1: Platform management (steady base)
+        const L1 = [0.08,0.09,0.10,0.11,0.13,0.15,0.17,0.19,0.21,0.23,0.25,0.27];
+        // Layer 2: Packaging workload (grows from 2018+)
+        const L2 = [0.04,0.04,0.05,0.06,0.08,0.10,0.13,0.16,0.19,0.22,0.24,0.26];
+        // Layer 3: Security & compliance (accelerates from 2019+)
+        const L3 = [0.02,0.02,0.03,0.03,0.04,0.07,0.09,0.11,0.13,0.15,0.17,0.19];
+        // Layer 4: Migration projects (spikes from 2020+)
+        const L4 = [0.01,0.01,0.01,0.02,0.02,0.04,0.06,0.09,0.11,0.13,0.14,0.15];
+        // Layer 5: New tool adoption (adds from 2021+)
+        const L5 = [0.00,0.00,0.01,0.01,0.01,0.02,0.04,0.06,0.08,0.10,0.12,0.13];
+
+        // Cumulative stacks
+        const S1 = L1.map(v => v);
+        const S2 = L1.map((v,i) => v + L2[i]);
+        const S3 = L1.map((v,i) => v + L2[i] + L3[i]);
+        const S4 = L1.map((v,i) => v + L2[i] + L3[i] + L4[i]);
+        const S5 = L1.map((v,i) => v + L2[i] + L3[i] + L4[i] + L5[i]);
+
+        // Build area path between two stacks (bottom, top)
+        function areaPath(bot, top) {
+          let d = 'M ' + x[0] + ' ' + yP(top[0]);
+          for (let i = 1; i < x.length; i++) d += ' L ' + x[i] + ' ' + yP(top[i]);
+          for (let i = x.length - 1; i >= 0; i--) d += ' L ' + x[i] + ' ' + yP(bot[i]);
+          return d + ' Z';
+        }
+        const zero = years.map(() => 0);
+
+        const colors = [
+          {fill:'rgba(26,107,138,0.8)', stroke:'#1a6b8a', label:'Platform management'},
+          {fill:'rgba(45,138,94,0.8)', stroke:'#2d8a5e', label:'Packaging workload'},
+          {fill:'rgba(184,134,11,0.75)', stroke:'#b8860b', label:'Security & compliance'},
+          {fill:'rgba(158,74,90,0.75)', stroke:'#9e4a5a', label:'Migration projects'},
+          {fill:'rgba(124,90,166,0.7)', stroke:'#7c5aa6', label:'New tool adoption'},
+        ];
+        const stacks = [[zero,S1],[S1,S2],[S2,S3],[S3,S4],[S4,S5]];
+
+        // Milestones (year index, label, detail)
+        const milestones = [
+          {yi:4, year:2019, label:'AVD launches', detail:'Azure Virtual Desktop goes GA. IT adds virtual desktop app delivery \u2014 golden images, host pools, session management. Platform count: 3+.', dotColor:'#7c5aa6'},
+          {yi:5, year:2020, label:'COVID / remote shift', detail:'Remote work explodes. Every app must work from anywhere. VPN, cloud apps, BYOD support all multiply the packaging and testing workload.', dotColor:'#9e4a5a'},
+          {yi:7, year:2022, label:'W365 + Intune co-mgmt', detail:'Windows 365 and Intune co-management go mainstream. IT adds cloud PC delivery alongside SCCM and Citrix. Platform count: 4+. Every app now requires testing across all environments.', dotColor:'#2d8a5e'},
+        ];
+
+        // Capacity line at 0.22 (flat)
+        const capY = 0.22;
+
+        return `
+          <div class="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <svg viewBox="0 0 ${W} ${H}" class="w-full" style="max-height:360px" aria-label="Stacked area chart showing IT workload growth from 2015 to 2026">
+              <defs>
+                <clipPath id="cv-clip"><rect x="${ml}" y="${mt}" width="${cw}" height="${ch}"/></clipPath>
+              </defs>
+              <!-- Background -->
+              <rect x="${ml}" y="${mt}" width="${cw}" height="${ch}" fill="#f9fafb" rx="4"/>
+              <!-- Grid lines -->
+              ${[0.2,0.4,0.6,0.8].map(v => `<line x1="${ml}" y1="${yP(v)}" x2="${ml+cw}" y2="${yP(v)}" stroke="#e5e7eb" stroke-width="0.5"/>`).join('')}
+              <!-- Stacked areas (clip to chart area) -->
+              <g clip-path="url(#cv-clip)">
+                ${stacks.map(([bot,top],i) => `<path d="${areaPath(bot,top)}" fill="${colors[i].fill}" stroke="${colors[i].stroke}" stroke-width="1.5"/>`).join('')}
+              </g>
+              <!-- Capacity line (dashed red) -->
+              <line x1="${ml}" y1="${yP(capY)}" x2="${ml+cw}" y2="${yP(capY)}" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="8 5" opacity="0.7"/>
+              <text x="${ml+4}" y="${yP(capY)-6}" font-size="9" fill="#dc2626" font-weight="600" font-family="Inter, system-ui, sans-serif">IT capacity (headcount)</text>
+              <!-- Milestone dots -->
+              ${milestones.map(m => {
+                const mx = x[m.yi];
+                const my = yP(S5[m.yi]);
+                return `<circle cx="${mx}" cy="${my}" r="5" fill="${m.dotColor}" stroke="white" stroke-width="2.5"/>
+                  <text x="${mx+8}" y="${my+3}" font-size="8" fill="#64748b" font-weight="600" font-family="Inter, system-ui, sans-serif">${m.label}</text>`;
+              }).join('')}
+              <!-- X axis labels -->
+              ${years.filter((y,i) => i % 2 === 0).map((y,i) => `<text x="${x[i*2]}" y="${mt+ch+20}" text-anchor="middle" font-size="10" fill="#94a3b8" font-weight="500" font-family="Inter, system-ui, sans-serif">${y}</text>`).join('')}
+              <!-- Y axis label -->
+              <text x="14" y="${mt + ch/2}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="600" font-family="Inter, system-ui, sans-serif" transform="rotate(-90,14,${mt+ch/2})">WORKLOAD</text>
+            </svg>
+
+            <!-- Milestone detail card -->
+            <div class="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <div class="text-xs font-bold text-[#0A1C60] mb-1">2022 &mdash; W365 + Intune co-management goes mainstream</div>
+              <div class="text-[11px] text-[#64748b] leading-relaxed">IT adds cloud PC delivery alongside existing SCCM, Citrix, and Intune. Platform count: 4+. Every app now requires testing across all environments.</div>
             </div>
 
+            <!-- Legend -->
+            <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-3">
+              ${colors.map(c => `<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-sm" style="background:${c.stroke}"></div><span class="text-[10px] text-slate-500 font-medium">${c.label}</span></div>`).join('')}
+              <div class="flex items-center gap-1.5"><span class="inline-block w-5 border-t-2 border-dashed border-red-500"></span><span class="text-[10px] text-slate-500 font-medium">IT capacity (headcount)</span></div>
+            </div>
           </div>
         `;
       }
@@ -1783,7 +1858,7 @@
         if(!STATE.openWhyModal) return '';
         const id = STATE.openWhyModal;
         const iconMap = { change: 'alert-triangle', now: 'clock-4', recast: 'sparkles' };
-        const labelMap = { change: 'Why Change', now: 'Why Now', recast: 'Why Recast' };
+        const labelMap = { change: 'Why Change \u2014 Apps Have Become the Hardest Part of IT', now: 'Why Now \u2014 The Pace Has Outrun the People', recast: 'Why Recast' };
         const data = STATE.currentState[id];
         const currentIdx = whyOrder.indexOf(id);
         const prev = currentIdx > 0 ? whyOrder[currentIdx - 1] : null;
@@ -1841,8 +1916,8 @@
                   </div>
                 ` : `
                   <p class="text-sm leading-relaxed text-[#4A5568] mb-5">${data.intro}</p>
-                  <div class="space-y-3">${data.bullets.map(b=>{const parts=b.split(' = ');const hasTitle=parts.length>1;return '<div class="bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">'+(hasTitle?'<div class="text-sm font-bold text-[#0A1C60] mb-1">'+parts[0]+'</div>':'')+'<p class="text-sm leading-relaxed text-[#64748b]">'+(hasTitle?parts.slice(1).join(' = '):b)+'</p></div>';}).join('')}</div>
-                  <div class="mt-5 bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm flex items-start gap-3"><i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-sm italic text-[#64748b]">${data.analyst}</p></div>
+                  <div class="space-y-3">${data.bullets.map(b=>{const parts=b.split(' = ');const hasTitle=parts.length>1;return '<div class="bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border-l-4 border-[#0070F3]">'+'<div class="flex items-start gap-3">'+'<i data-lucide="check-circle" class="w-5 h-5 text-[#0070F3] flex-shrink-0 mt-0.5"></i>'+'<div>'+(hasTitle?'<div class="text-sm font-bold text-[#0A1C60] mb-1">'+parts[0]+'</div>':'')+'<p class="text-sm leading-relaxed text-[#64748b]">'+(hasTitle?parts.slice(1).join(' = '):b)+'</p></div></div></div>';}).join('')}</div>
+                  <div class="mt-5 bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm flex items-start gap-3 border-l-4 border-amber-400"><i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-sm italic text-[#64748b]">${data.analyst}</p></div>
                 `}
                 <div class="mt-4 flex flex-col items-center gap-3 w-full">
                   ${!next ? '<div class="text-xs italic text-[#64748b]">You\'ve seen why the model breaks. Now see what replaces it.</div>' : ''}
@@ -2265,6 +2340,14 @@
       ];
       const DR_ZONES_LIST = ['Zone A','Zone B','Zone C'];
 
+      const OB_APPS = [
+        {id:'security', label:'Security Agent', icon:'shield'},
+        {id:'vpn', label:'VPN Client', icon:'lock'},
+        {id:'m365', label:'Microsoft 365', icon:'file-text'},
+        {id:'teams', label:'Teams', icon:'message-circle'},
+        {id:'lob', label:'LOB App', icon:'briefcase'},
+      ];
+
       function renderMultiTenantView(){
         const p = STATE.mtPhase;
         const past = (target) => {
@@ -2516,6 +2599,227 @@
         `;
       }
 
+      /* ========== ONBOARDING VIEW ========== */
+      function renderOnboardingView(){
+        const p = STATE.obPhase;
+        const past = (target) => {
+          const order = ['idle','setup','autopilot','diverge','deploying','result','done'];
+          return order.indexOf(p) >= order.indexOf(target);
+        };
+
+        // Left side (Intune only) app states per phase
+        function leftAppState(appIdx){
+          if (!past('deploying')) return 'ob-waiting';
+          if (past('result')) return appIdx < 3 ? 'ob-installed' : 'ob-failed';
+          // During deploying: first 2 installed, rest waiting
+          return appIdx < 2 ? 'ob-installed' : appIdx === 2 ? 'ob-active ob-pulse' : 'ob-waiting';
+        }
+        // Right side (AW) app states per phase
+        function rightAppState(appIdx){
+          if (!past('deploying')) return 'ob-waiting';
+          if (past('result')) return 'ob-installed';
+          // During deploying: sequential install
+          return appIdx < 4 ? 'ob-installed' : 'ob-active ob-pulse';
+        }
+
+        function stepIcon(state){ return state === 'ob-done' ? 'check' : state === 'ob-active' ? 'loader' : state === 'ob-fail' ? 'x' : 'circle'; }
+
+        // Left timeline steps
+        const leftSteps = [
+          {label:'Autopilot enrollment', state: past('autopilot') ? 'ob-done' : past('setup') ? 'ob-active' : ''},
+          {label:'Desktop appears', state: past('diverge') ? 'ob-done' : past('autopilot') ? 'ob-active' : ''},
+          {label:'Waiting for apps... (60 min)', state: past('result') ? 'ob-fail' : past('diverge') ? 'ob-active' : ''},
+          {label:'Apps trickle in randomly', state: past('result') ? 'ob-fail' : past('deploying') ? 'ob-active' : ''},
+          {label:'User calls help desk', state: past('result') ? 'ob-fail' : ''},
+        ];
+        // Right timeline steps
+        const rightSteps = [
+          {label:'Autopilot + AW Agent installs', state: past('autopilot') ? 'ob-done' : past('setup') ? 'ob-active' : ''},
+          {label:'First sign-in triggers agent', state: past('diverge') ? 'ob-done' : past('autopilot') ? 'ob-active' : ''},
+          {label:'Security \u2192 VPN \u2192 Productivity', state: past('deploying') ? 'ob-done' : past('diverge') ? 'ob-active' : ''},
+          {label:'All apps sequenced & configured', state: past('result') ? 'ob-done' : past('deploying') ? 'ob-active' : ''},
+          {label:'User productive immediately', state: past('result') ? 'ob-done' : ''},
+        ];
+
+        return `
+          <div class="section-card p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="bts-label bts-label-platform"><i data-lucide="user-plus" class="w-3 h-3"></i> Onboarding: Day 1 Experience</div>
+              <div class="flex items-center gap-2 text-[12px]">
+                ${STATE.obRunning ? `
+                  <button type="button" data-action="pause-ob" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="${STATE.obPaused ? 'play' : 'pause'}" class="w-3 h-3"></i> ${STATE.obPaused ? 'Resume' : 'Pause'}</button>
+                ` : `
+                  <button type="button" data-action="start-ob" class="bg-[#0070F3] text-white px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#005AD0] inline-flex items-center gap-1"><i data-lucide="play" class="w-3 h-3"></i> Auto</button>
+                  <button type="button" data-action="step-ob" class="bg-white text-[#0070F3] border border-[#0070F3] px-2.5 py-1.5 text-[12px] font-semibold rounded hover:bg-[#eff6ff] inline-flex items-center gap-1"><i data-lucide="skip-forward" class="w-3 h-3"></i> Step</button>
+                `}
+                <button type="button" data-action="reset-ob" class="bg-transparent text-[#0A1C60] border-2 border-[#0A1C60] px-2.5 py-1.5 rounded hover:text-[#0070F3] hover:border-[#0070F3]">Reset</button>
+              </div>
+            </div>
+
+            ${!past('setup') ? `
+              <div class="text-center py-6 text-sm text-slate-400">
+                <i data-lucide="user-plus" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                <div>Press <strong>Auto</strong> or <strong>Step</strong> to compare onboarding approaches</div>
+                <div class="text-[10px] text-slate-300 mt-1">Intune-only vs. Application Workspace \u2014 same new hire, different experience</div>
+              </div>
+            ` : `
+
+              <!-- SIDE-BY-SIDE COMPARISON -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                <!-- LEFT: Intune Only -->
+                <div class="ob-device ob-left ${past('setup') ? 'ob-visible' : 'ob-hidden'}">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-md grid place-items-center" style="background:#ef4444"><i data-lucide="monitor" class="w-3.5 h-3.5 text-white"></i></div>
+                      <div>
+                        <div class="text-[11px] font-bold text-[#0A1C60]">Intune Only</div>
+                        <div class="text-[8px] text-slate-400">Traditional Autopilot</div>
+                      </div>
+                    </div>
+                    ${past('result') ? '<span class="text-[10px] font-bold text-red-500 px-2 py-0.5 rounded-full bg-red-50 border border-red-200">3+ hours</span>' : past('diverge') ? '<span class="text-[9px] text-red-400 ob-pulse font-semibold">Waiting...</span>' : ''}
+                  </div>
+
+                  <!-- Timeline steps -->
+                  <div class="space-y-1 mb-3">
+                    ${leftSteps.map(s => s.state ? `<div class="ob-step ${s.state}"><div class="ob-dot"></div><span>${s.label}</span></div>` : `<div class="ob-step"><div class="ob-dot"></div><span>${s.label}</span></div>`).join('')}
+                  </div>
+
+                  <!-- Apps -->
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Applications</div>
+                  <div class="space-y-1">
+                    ${OB_APPS.map((a, i) => `
+                      <div class="ob-app ${leftAppState(i)}" style="transition-delay:${i * 0.08}s">
+                        <i data-lucide="${a.icon}" class="w-3 h-3 flex-shrink-0"></i>
+                        <span class="flex-1">${a.label}</span>
+                        ${leftAppState(i).includes('installed') ? '<i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>' : leftAppState(i).includes('failed') ? '<i data-lucide="x" class="w-3 h-3 text-red-500"></i>' : leftAppState(i).includes('active') ? '<i data-lucide="loader" class="w-3 h-3 text-blue-500 ob-pulse"></i>' : '<i data-lucide="clock" class="w-3 h-3"></i>'}
+                      </div>
+                    `).join('')}
+                  </div>
+
+                  ${past('result') ? `
+                    <div class="mt-2 p-2 rounded-lg bg-red-50 border border-red-200 text-[9px] text-red-600 flex items-start gap-1.5">
+                      <i data-lucide="alert-triangle" class="w-3.5 h-3.5 flex-shrink-0 mt-0.5"></i>
+                      <span>User waiting 60+ min. 2 apps failed silently. No install ordering. Help desk ticket opened.</span>
+                    </div>
+                  ` : ''}
+                </div>
+
+                <!-- RIGHT: With Application Workspace -->
+                <div class="ob-device ob-right ${past('setup') ? 'ob-visible' : 'ob-hidden'}" style="transition-delay:0.15s">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-md grid place-items-center" style="background:linear-gradient(135deg,#0070F3,#10b981)"><i data-lucide="zap" class="w-3.5 h-3.5 text-white"></i></div>
+                      <div>
+                        <div class="text-[11px] font-bold text-[#0A1C60]">With Application Workspace</div>
+                        <div class="text-[8px] text-slate-400">Autopilot + AW Agent</div>
+                      </div>
+                    </div>
+                    ${past('result') ? '<span class="text-[10px] font-bold text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">~20 min</span>' : past('diverge') ? '<span class="text-[9px] text-emerald-500 font-semibold">Deploying...</span>' : ''}
+                  </div>
+
+                  <!-- Timeline steps -->
+                  <div class="space-y-1 mb-3">
+                    ${rightSteps.map(s => s.state ? `<div class="ob-step ${s.state}"><div class="ob-dot"></div><span>${s.label}</span></div>` : `<div class="ob-step"><div class="ob-dot"></div><span>${s.label}</span></div>`).join('')}
+                  </div>
+
+                  <!-- Apps -->
+                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Applications <span class="text-emerald-500">(sequenced)</span></div>
+                  <div class="space-y-1">
+                    ${OB_APPS.map((a, i) => `
+                      <div class="ob-app ${rightAppState(i)}" style="transition-delay:${i * 0.08}s">
+                        <i data-lucide="${a.icon}" class="w-3 h-3 flex-shrink-0"></i>
+                        <span class="flex-1">${a.label}</span>
+                        ${rightAppState(i).includes('installed') ? '<i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>' : rightAppState(i).includes('active') ? '<i data-lucide="loader" class="w-3 h-3 text-blue-500 ob-pulse"></i>' : '<i data-lucide="clock" class="w-3 h-3"></i>'}
+                      </div>
+                    `).join('')}
+                  </div>
+
+                  ${past('result') ? `
+                    <div class="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 flex items-start gap-1.5">
+                      <i data-lucide="check-circle" class="w-3.5 h-3.5 flex-shrink-0 mt-0.5"></i>
+                      <span>All 5 apps installed in sequence. Identity-based persona applied. User productive in under 20 minutes.</span>
+                    </div>
+                  ` : ''}
+                </div>
+
+              </div>
+
+              <!-- Bottom callouts -->
+              ${past('done') ? `
+                <div class="flex flex-wrap justify-center gap-3 mt-3">
+                  <div class="ob-callout ob-show text-[#0A1C60] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="timer" class="w-3.5 h-3.5"></i> 3+ hours \u2192 20 minutes</div>
+                  <div class="ob-callout ob-show text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200" style="transition-delay:0.15s"><i data-lucide="trending-down" class="w-3.5 h-3.5"></i> 30\u201360 IT hours/month saved</div>
+                  <div class="ob-callout ob-show text-[#0070F3] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200" style="transition-delay:0.3s"><i data-lucide="phone-off" class="w-3.5 h-3.5"></i> Zero \u201cwhere are my apps?\u201d calls</div>
+                </div>
+              ` : ''}
+
+            `}
+          </div>
+        `;
+      }
+
+      /* ========== OB ANIMATION ENGINE ========== */
+      function buildObQueue(){
+        const phases = ['setup','autopilot','diverge','deploying','result','done'];
+        const delays = [800, 1500, 1200, 2000, 1500, 1500];
+        const queue = [];
+        phases.forEach((phase, i) => {
+          queue.push({ delay: delays[i], fn(){ STATE.obPhase = phase; render(); } });
+        });
+        queue.push({ delay: 2000, fn(){ STATE.obRunning = false; STATE.obPaused = false; render(); } });
+        return queue;
+      }
+
+      function runObQueue(){
+        if (STATE.obPaused || STATE.obQueueIdx >= STATE.obQueue.length) return;
+        const step = STATE.obQueue[STATE.obQueueIdx];
+        const tid = setTimeout(() => {
+          if (STATE.obPaused) return;
+          step.fn();
+          STATE.obQueueIdx++;
+          runObQueue();
+        }, step.delay);
+        STATE.flowTimers.timeouts.push(tid);
+      }
+
+      function startOb(){
+        if (STATE.obRunning) return;
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        STATE.obRunning = true;
+        STATE.obPaused = false;
+        STATE.obPhase = 'idle';
+        STATE.obQueue = buildObQueue();
+        STATE.obQueueIdx = 0;
+        render();
+        runObQueue();
+      }
+
+      function stepOb(){
+        if (STATE.obRunning) return;
+        if (!STATE.obQueue || STATE.obQueue.length === 0) {
+          STATE.obQueue = buildObQueue();
+          STATE.obQueueIdx = 0;
+          STATE.obPhase = 'idle';
+        }
+        if (STATE.obQueueIdx >= STATE.obQueue.length) return;
+        const step = STATE.obQueue[STATE.obQueueIdx];
+        step.fn();
+        STATE.obQueueIdx++;
+      }
+
+      function resetOb(){
+        STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
+        STATE.flowTimers.timeouts = [];
+        STATE.obPhase = 'idle';
+        STATE.obRunning = false;
+        STATE.obPaused = false;
+        STATE.obQueue = [];
+        STATE.obQueueIdx = 0;
+        render();
+      }
+
       /* ========== DR ANIMATION ENGINE ========== */
       function buildDrQueue(){
         const phases = ['source','endpoints','flowing','dashboards','aggregation','done'];
@@ -2643,7 +2947,7 @@
         const sc = STATE.flowScenarioIdx;
         const phase = STATE.flowPhase;
         const scenario = sc >= 0 && sc < SCENARIOS.length ? SCENARIOS[sc] : null;
-        const activeViewCount = [STATE.solutionViewUser, STATE.solutionViewAdmin, STATE.solutionViewMultiTenant, STATE.solutionViewDashboard].filter(Boolean).length;
+        const activeViewCount = [STATE.solutionViewUser, STATE.solutionViewAdmin, STATE.solutionViewMultiTenant, STATE.solutionViewDashboard, STATE.solutionViewOnboarding].filter(Boolean).length;
         const multiCol = activeViewCount >= 2;
 
         return `
@@ -2701,8 +3005,9 @@
                   <button type="button" data-action="toggle-solution-view" data-view="admin" class="view-toggle ${STATE.solutionViewAdmin ? 'active' : ''}"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console</button>
                   <button type="button" data-action="toggle-solution-view" data-view="multitenant" class="view-toggle ${STATE.solutionViewMultiTenant ? 'active' : ''}"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Multi-Tenant</button>
                   <button type="button" data-action="toggle-solution-view" data-view="dashboard" class="view-toggle ${STATE.solutionViewDashboard ? 'active' : ''}"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dashboard & Reporting</button>
+                  <button type="button" data-action="toggle-solution-view" data-view="onboarding" class="view-toggle ${STATE.solutionViewOnboarding ? 'active' : ''}"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Onboarding</button>
                 </div>
-                ${(STATE.solutionViewUser || STATE.solutionViewAdmin || STATE.solutionViewMultiTenant || STATE.solutionViewDashboard) ? `
+                ${(STATE.solutionViewUser || STATE.solutionViewAdmin || STATE.solutionViewMultiTenant || STATE.solutionViewDashboard || STATE.solutionViewOnboarding) ? `
                 <!-- Flow controls -->
                 <div class="flex items-center gap-2 text-[12px]">
                   <button type="button" data-action="toggle-flow" class="bg-[#0070F3] text-white w-7 h-7 rounded-full hover:bg-[#005AD0] inline-flex items-center justify-center"><i data-lucide="${STATE.flowRunning && !STATE.flowPaused ? 'pause' : 'play'}" class="w-3.5 h-3.5"></i></button>
@@ -2719,6 +3024,7 @@
               ${STATE.solutionViewAdmin ? renderAdminConsole() : ''}
               ${STATE.solutionViewMultiTenant ? renderMultiTenantView() : ''}
               ${STATE.solutionViewDashboard ? renderDashboardView() : ''}
+              ${STATE.solutionViewOnboarding ? renderOnboardingView() : ''}
             </div>
 
             <div class="flex flex-col items-end gap-2 mt-2">
@@ -3036,8 +3342,17 @@
           <section id="panel-roi" class="space-y-4">
 
             <!-- BRIDGE CARD -->
-            <div class="section-card px-5 py-3 rounded-xl border-l-4 border-[#0070F3]">
-              <div class="text-xs text-[#475569] leading-relaxed">What you just saw -  self-service delivery, automatic patching, zero per-platform rebuilds -  eliminates hours of repetitive work per app, per update, per environment. Enter your employee count to see what that adds up to.</div>
+            <div class="section-card px-5 py-4 rounded-2xl" style="background:linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border:1px solid #dbeafe">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-[#0070F3]"></i>
+                <span class="text-sm font-semibold text-[#0A1C60]">What you just saw eliminates hours of repetitive work</span>
+              </div>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-blue-200 text-[11px] font-semibold text-[#0A1C60] shadow-sm"><i data-lucide="shopping-bag" class="w-3 h-3 text-[#0070F3]"></i> Self-Service Delivery</span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-blue-200 text-[11px] font-semibold text-[#0A1C60] shadow-sm"><i data-lucide="bot" class="w-3 h-3 text-[#0070F3]"></i> Automatic Patching</span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-blue-200 text-[11px] font-semibold text-[#0A1C60] shadow-sm"><i data-lucide="repeat" class="w-3 h-3 text-[#0070F3]"></i> Zero Per-Platform Rebuilds</span>
+              </div>
+              <div class="text-xs text-[#64748b]">per app, per update, per environment. Enter your employee count below to see what that adds up to.</div>
             </div>
 
             <!-- EMPLOYEE COUNT INPUT -  HERO -->
@@ -3301,7 +3616,7 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
           if (action === 'toggle-solution-view') {
             const view = act.getAttribute('data-view');
@@ -3309,6 +3624,7 @@
             if (view === 'admin') STATE.solutionViewAdmin = !STATE.solutionViewAdmin;
             if (view === 'multitenant') STATE.solutionViewMultiTenant = !STATE.solutionViewMultiTenant;
             if (view === 'dashboard') STATE.solutionViewDashboard = !STATE.solutionViewDashboard;
+            if (view === 'onboarding') STATE.solutionViewOnboarding = !STATE.solutionViewOnboarding;
             render(); return;
           }
           if (action === 'start-mt') { startMt(); return; }
@@ -3319,6 +3635,10 @@
           if (action === 'step-dr') { stepDr(); return; }
           if (action === 'reset-dr') { resetDr(); return; }
           if (action === 'pause-dr') { if (STATE.drPaused) { STATE.drPaused = false; render(); runDrQueue(); } else { STATE.drPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
+          if (action === 'start-ob') { startOb(); return; }
+          if (action === 'step-ob') { stepOb(); return; }
+          if (action === 'reset-ob') { resetOb(); return; }
+          if (action === 'pause-ob') { if (STATE.obPaused) { STATE.obPaused = false; render(); runObQueue(); } else { STATE.obPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
           if (action === 'open-analyst-modal') { STATE.showAnalystModal = true; render(); return; }
