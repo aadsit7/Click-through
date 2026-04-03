@@ -688,9 +688,12 @@
         autopilotAppCount: 0,
         csAnimPhase: 'idle',
         csAnimStartTime: null,
-        csAnimCameraX: 0,
         csAnimHasPlayed: false,
-        csAnimRAF: null
+        csAnimRAF: null,
+        csBlockStates: [],
+        csPileRows: [],
+        csParticles: [],
+        csPrevTs: null
       };
 
       STATE.recastMode = false;
@@ -724,34 +727,33 @@
 
       const onboardingMiniTimelineEnabled = true;
 
-      /* ── Side-Scroller Obstacle & Phase Data ── */
-      const CS_OBSTACLES = [
-        // Phase 1: small app requests (0-3s)
-        { t: 0.8, w: 26, h: 26, label: 'O365', color: '#D83B01' },
-        { t: 1.3, w: 26, h: 26, label: 'Teams', color: '#5B53D6' },
-        { t: 1.9, w: 26, h: 28, label: 'Slack', color: '#4A154B' },
-        { t: 2.4, w: 26, h: 26, label: 'Zoom', color: '#2D8CFF' },
-        { t: 2.8, w: 26, h: 26, label: 'Chrome', color: '#4285F4' },
-        // Phase 2: medium platform challenges (3-6s)
-        { t: 3.2, w: 30, h: 50, label: 'VDI', color: '#0A1C60' },
-        { t: 3.7, w: 30, h: 46, label: 'Patch', color: '#dc2626' },
-        { t: 4.1, w: 30, h: 54, label: 'macOS', color: '#333333' },
-        { t: 4.5, w: 28, h: 42, label: 'Intune', color: '#0078D4' },
-        { t: 4.9, w: 30, h: 50, label: 'SCCM', color: '#107C10' },
-        { t: 5.3, w: 28, h: 44, label: 'ARM', color: '#5B53D6' },
-        { t: 5.7, w: 30, h: 48, label: 'AVD', color: '#0A1C60' },
-        // Phase 3: large compliance/security walls (6-9s)
-        { t: 6.2, w: 34, h: 74, label: 'Audit', color: '#b91c1c' },
-        { t: 6.5, w: 34, h: 66, label: 'CVE', color: '#dc2626' },
-        { t: 6.9, w: 30, h: 58, label: 'Cloud', color: '#0070F3' },
-        { t: 7.2, w: 34, h: 70, label: 'SOC 2', color: '#92400e' },
-        { t: 7.5, w: 30, h: 62, label: 'Win11', color: '#0078D4' },
-        { t: 7.8, w: 34, h: 74, label: 'BYOD', color: '#7c3aed' },
-        { t: 8.1, w: 30, h: 66, label: 'AI Proj', color: '#059669' },
-        { t: 8.4, w: 34, h: 70, label: 'Citrix', color: '#0A1C60' },
-        // Phase 4: the wall (9s)
-        { t: 9.0, w: 140, h: 320, label: '', color: '#1e293b', isWall: true }
+      /* ── Rising Wall Block Data ── */
+      const CS_BLOCKS = [
+        // Phase 1 (0-3s): small app blocks
+        { t: 0.6,  w: 70,  h: 22, label: 'O365',       color: '#D83B01', phase: 1 },
+        { t: 1.1,  w: 70,  h: 22, label: 'Teams',      color: '#5B53D6', phase: 1 },
+        { t: 1.6,  w: 65,  h: 22, label: 'Slack',      color: '#4A154B', phase: 1 },
+        { t: 2.1,  w: 60,  h: 22, label: 'Zoom',       color: '#2D8CFF', phase: 1 },
+        { t: 2.6,  w: 65,  h: 22, label: 'Chrome',     color: '#4285F4', phase: 1 },
+        // Phase 2 (3-6s): medium platform blocks
+        { t: 3.2,  w: 80,  h: 30, label: 'VDI',        color: '#0A1C60', phase: 2 },
+        { t: 3.7,  w: 80,  h: 30, label: 'Patch Mgmt', color: '#dc2626', phase: 2 },
+        { t: 4.1,  w: 80,  h: 30, label: 'macOS',      color: '#333333', phase: 2 },
+        { t: 4.6,  w: 75,  h: 30, label: 'Intune',     color: '#0078D4', phase: 2 },
+        { t: 5.1,  w: 80,  h: 30, label: 'SCCM',       color: '#107C10', phase: 2 },
+        { t: 5.6,  w: 75,  h: 32, label: 'ARM / AVD',  color: '#5B53D6', phase: 2 },
+        // Phase 3 (6-9s): large compliance/security blocks
+        { t: 6.2,  w: 90,  h: 38, label: 'Audit',      color: '#b91c1c', phase: 3 },
+        { t: 6.6,  w: 85,  h: 36, label: 'CVE Fixes',  color: '#dc2626', phase: 3 },
+        { t: 7.0,  w: 90,  h: 38, label: 'SOC 2',      color: '#92400e', phase: 3 },
+        { t: 7.4,  w: 85,  h: 36, label: 'BYOD',       color: '#7c3aed', phase: 3 },
+        { t: 7.8,  w: 90,  h: 40, label: 'Win 11',     color: '#0078D4', phase: 3 },
+        { t: 8.2,  w: 85,  h: 36, label: 'AI Proj',    color: '#059669', phase: 3 },
+        { t: 8.6,  w: 80,  h: 38, label: 'Citrix',     color: '#0A1C60', phase: 3 },
+        // Phase 4 (9s): final massive block
+        { t: 9.3,  w: 120, h: 50, label: 'CAPACITY WALL', color: '#1e293b', phase: 4, isFinal: true }
       ];
+      const CS_BLOCK_SPEEDS = { 1: 350, 2: 550, 3: 850, 4: 420 };
       const CS_PHASE_TEXT = [
         { t: 0, text: 'Your team handles app delivery' },
         { t: 3, text: 'Platforms multiply. Workload compounds.' },
@@ -759,9 +761,9 @@
         { t: 9, text: 'Your roadmap hits a wall.' },
         { t: 11, text: 'What if the model itself could change?' }
       ];
-      const CS_WALL_LABELS = ['App Sprawl', 'Tool Fragmentation', 'Manual Rework', 'Update Velocity', 'Security Debt'];
       const CS_TOTAL_DURATION = 12;
-      const CS_WORLD_SPEED = 240; // pixels per second base scroll speed
+      const CS_PILE_BASE_X = 220;
+      const CS_PILE_MAX_W = 500;
 
       function cx(...a){ return a.filter(Boolean).join(' '); }
       function round(n){ return Math.round(n*100)/100; }
@@ -1288,7 +1290,7 @@
       }
 
       /* ══════════════════════════════════════════════════
-         Current-State Side-Scroller Animation
+         Current-State "Rising Wall" Animation
          ══════════════════════════════════════════════════ */
 
       // roundRect polyfill for older browsers
@@ -1305,37 +1307,74 @@
         };
       }
 
-      function initCSAnimation(){
-        const container = document.getElementById('cs-animation-container');
-        const canvas = document.getElementById('cs-animation-canvas');
+      function csInitBlockStates() {
+        STATE.csBlockStates = CS_BLOCKS.map(function(b) {
+          return { t: b.t, w: b.w, h: b.h, label: b.label, color: b.color, phase: b.phase,
+            isFinal: !!b.isFinal, arrived: false, x: 1000, targetX: 0, y: 0, targetY: 0,
+            landed: false, landTime: null };
+        });
+        STATE.csPileRows = [];
+        STATE.csParticles = [];
+        STATE.csPrevTs = null;
+      }
+
+      function csComputeStackTarget(block) {
+        const rows = STATE.csPileRows;
+        const groundY = 300;
+        const gap = 2; // small gap between blocks
+        if (rows.length === 0) {
+          rows.push({ y: groundY, height: block.h, usedWidth: 0 });
+        }
+        var curRow = rows[rows.length - 1];
+        if (curRow.usedWidth + block.w + gap > CS_PILE_MAX_W) {
+          // Start new row on top
+          var newY = curRow.y - curRow.height;
+          rows.push({ y: newY, height: block.h, usedWidth: 0 });
+          curRow = rows[rows.length - 1];
+        }
+        block.targetX = CS_PILE_BASE_X + curRow.usedWidth;
+        block.targetY = curRow.y - block.h;
+        curRow.usedWidth += block.w + gap;
+        if (block.h > curRow.height) curRow.height = block.h;
+      }
+
+      function csGetPileTopY() {
+        var rows = STATE.csPileRows;
+        if (rows.length === 0) return 300;
+        var last = rows[rows.length - 1];
+        return last.y - last.height;
+      }
+
+      function initCSAnimation() {
+        var container = document.getElementById('cs-animation-container');
+        var canvas = document.getElementById('cs-animation-canvas');
         if (!canvas || !container) return;
-        // Respect reduced-motion
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           drawCSStaticFinal(canvas); return;
         }
         if (STATE.csAnimPhase === 'done') { drawCSStaticFinal(canvas); return; }
-        if (STATE.csAnimPhase === 'running') return; // already running
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
+        if (STATE.csAnimPhase === 'running') return;
+        var dpr = window.devicePixelRatio || 1;
         canvas.width = 960 * dpr;
         canvas.height = 360 * dpr;
-        const ctx = canvas.getContext('2d');
+        var ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
         canvas.style.width = '100%';
         canvas.style.height = '100%';
+        csInitBlockStates();
         STATE.csAnimPhase = 'running';
         STATE.csAnimStartTime = null;
-        STATE.csAnimCameraX = 0;
-        // Show skip, hide replay
-        const skipBtn = container.querySelector('.cs-skip-btn');
-        const replayBtn = container.querySelector('.cs-replay-btn');
+        var skipBtn = container.querySelector('.cs-skip-btn');
+        var replayBtn = container.querySelector('.cs-replay-btn');
         if (skipBtn) skipBtn.style.display = '';
         if (replayBtn) replayBtn.style.display = 'none';
-        function loop(ts){
+        function loop(ts) {
           if (STATE.csAnimPhase !== 'running') return;
-          if (!STATE.csAnimStartTime) STATE.csAnimStartTime = ts;
-          const elapsed = (ts - STATE.csAnimStartTime) / 1000;
-          csGameLoop(ctx, elapsed, 960, 360);
+          if (!STATE.csAnimStartTime) { STATE.csAnimStartTime = ts; STATE.csPrevTs = ts; }
+          var elapsed = (ts - STATE.csAnimStartTime) / 1000;
+          var dt = Math.min((ts - (STATE.csPrevTs || ts)) / 1000, 0.05);
+          STATE.csPrevTs = ts;
+          csGameLoop(ctx, elapsed, dt, 960, 360);
           if (elapsed >= CS_TOTAL_DURATION) {
             STATE.csAnimPhase = 'done';
             STATE.csAnimHasPlayed = true;
@@ -1348,302 +1387,382 @@
         STATE.csAnimRAF = requestAnimationFrame(loop);
       }
 
-      function csGameLoop(ctx, elapsed, W, H){
-        const groundY = H - 60;
-        // Phase index (0-4)
-        const phase = elapsed < 3 ? 0 : elapsed < 6 ? 1 : elapsed < 9 ? 2 : elapsed < 11 ? 3 : 4;
-        // Camera position — accumulate distance across phases with different speeds
-        let camX = 0;
-        if (elapsed <= 3) {
-          camX = elapsed * CS_WORLD_SPEED;
-        } else if (elapsed <= 6) {
-          camX = 3 * CS_WORLD_SPEED + (elapsed - 3) * CS_WORLD_SPEED * 0.85;
-        } else if (elapsed <= 9) {
-          camX = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + (elapsed - 6) * CS_WORLD_SPEED * 0.55;
-        } else if (elapsed <= 9.8) {
-          camX = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + 3 * CS_WORLD_SPEED * 0.55 + (elapsed - 9) * CS_WORLD_SPEED * 0.15;
-        } else {
-          camX = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + 3 * CS_WORLD_SPEED * 0.55 + 0.8 * CS_WORLD_SPEED * 0.15;
+      function csGameLoop(ctx, elapsed, dt, W, H) {
+        var groundY = 300;
+        var phase = elapsed < 3 ? 0 : elapsed < 6 ? 1 : elapsed < 9 ? 2 : elapsed < 11 ? 3 : 4;
+        var blocks = STATE.csBlockStates;
+
+        // Update blocks
+        for (var i = 0; i < blocks.length; i++) {
+          var b = blocks[i];
+          if (elapsed >= b.t && !b.arrived) {
+            b.arrived = true;
+            b.x = W + 20;
+            b.y = groundY - b.h; // temporary, updated when stack target computed
+            csComputeStackTarget(b);
+            b.y = b.targetY;
+          }
+          if (b.arrived && !b.landed) {
+            var speed = CS_BLOCK_SPEEDS[b.phase] || 500;
+            b.x -= speed * dt;
+            if (b.x <= b.targetX) {
+              b.x = b.targetX;
+              b.landed = true;
+              b.landTime = elapsed;
+            }
+          }
         }
-        STATE.csAnimCameraX = camX;
+
+        // Compute screen shake from final block
+        var shakeX = 0, shakeY = 0;
+        var finalBlock = blocks[blocks.length - 1];
+        if (finalBlock && finalBlock.landed && finalBlock.landTime !== null) {
+          var st = elapsed - finalBlock.landTime;
+          if (st >= 0 && st < 0.4) {
+            var decay = 1 - (st / 0.4);
+            shakeX = Math.sin(st * 25) * 4 * decay;
+            shakeY = Math.cos(st * 33) * 2 * decay;
+          }
+        }
 
         ctx.clearRect(0, 0, W, H);
-        drawCSBackground(ctx, camX, phase, elapsed, W, H, groundY);
-        drawCSGround(ctx, camX, W, H, groundY);
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
 
-        // Draw obstacles — world position is charX + camera at spawn time + small lead offset
-        CS_OBSTACLES.forEach(function(obs){
-          // Place obstacle so it appears at screen right edge (~960) at its spawn time
-          let obsCamAtSpawn = 0;
-          const ot = obs.t;
-          if (ot <= 3) obsCamAtSpawn = ot * CS_WORLD_SPEED;
-          else if (ot <= 6) obsCamAtSpawn = 3 * CS_WORLD_SPEED + (ot - 3) * CS_WORLD_SPEED * 0.85;
-          else if (ot <= 9) obsCamAtSpawn = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + (ot - 6) * CS_WORLD_SPEED * 0.55;
-          else obsCamAtSpawn = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + 3 * CS_WORLD_SPEED * 0.55 + (ot - 9) * CS_WORLD_SPEED * 0.15;
-          const obsWorldX = obsCamAtSpawn + (obs.isWall ? 240 : 700);
-          const screenX = obsWorldX - camX;
-          if (screenX < -150 || screenX > W + 50) return;
-          if (obs.isWall) {
-            drawCSWall(ctx, screenX, groundY, obs, elapsed);
-          } else {
-            drawCSObstacle(ctx, screenX, groundY, obs);
-          }
-        });
+        // Background
+        drawCSBackground(ctx, phase, W, H, groundY);
+        drawCSGround(ctx, W, H, groundY);
 
-        // Ticket rain particles in phase 3
-        if (phase === 2) { drawCSTicketRain(ctx, elapsed, W, groundY); }
+        // Pile shadow
+        var pileTopY = csGetPileTopY();
+        var pileHeight = groundY - pileTopY;
+        if (pileHeight > 0) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.12, pileHeight / 2000);
+          ctx.fillStyle = '#0A1C60';
+          ctx.beginPath();
+          ctx.ellipse(CS_PILE_BASE_X + CS_PILE_MAX_W / 2, groundY + 4, CS_PILE_MAX_W / 2 + 20, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Draw landed blocks (back to front = bottom to top)
+        for (var i = 0; i < blocks.length; i++) {
+          var b = blocks[i];
+          if (!b.arrived) continue;
+          drawCSBlock(ctx, b, elapsed);
+        }
+
+        // Warning particles (phase 3+)
+        if (phase >= 2) {
+          csUpdateParticles(elapsed, dt, pileTopY, W);
+          csDrawParticles(ctx);
+        }
 
         // Character
-        const charX = 160;
-        const stressed = phase >= 2;
-        const stopped = elapsed >= 9.8;
-        const shake = (elapsed >= 9.8 && elapsed < 10.3) ? Math.sin((elapsed - 9.8) * 30) * 3 : 0;
-        drawCSCharacter(ctx, charX + shake, groundY, elapsed, stressed, stopped);
+        drawCSCharacter(ctx, phase, elapsed, groundY, pileHeight);
 
-        // HUD
-        const capPct = phase === 0 ? 80 : phase === 1 ? Math.max(55, 80 - (elapsed - 0) * 4) : phase === 2 ? Math.max(15, 55 - (elapsed - 3) * 13) : phase === 3 ? Math.max(0, 15 - (elapsed - 9) * 8) : 0;
+        ctx.restore(); // undo shake
+
+        // HUD (no shake)
+        var capPct;
+        if (elapsed < 3) capPct = 85 - (elapsed / 3) * 20;
+        else if (elapsed < 6) capPct = 65 - ((elapsed - 3) / 3) * 35;
+        else if (elapsed < 9) capPct = 30 - ((elapsed - 6) / 3) * 25;
+        else if (elapsed < 11) capPct = 5 - ((elapsed - 9) / 2) * 5;
+        else capPct = 0;
+        capPct = Math.max(0, capPct);
         drawCSCapacityMeter(ctx, capPct, phase, elapsed, W);
 
         // Phase text
-        let phaseText = '';
-        let textAlpha = 1;
-        for (let i = CS_PHASE_TEXT.length - 1; i >= 0; i--) {
-          if (elapsed >= CS_PHASE_TEXT[i].t) { phaseText = CS_PHASE_TEXT[i].text; break; }
+        var phaseText = '', textAlpha = 1;
+        for (var j = CS_PHASE_TEXT.length - 1; j >= 0; j--) {
+          if (elapsed >= CS_PHASE_TEXT[j].t) { phaseText = CS_PHASE_TEXT[j].text; break; }
         }
-        // Fade in during first 0.5s of each phase
-        for (let i = 0; i < CS_PHASE_TEXT.length; i++) {
-          if (elapsed >= CS_PHASE_TEXT[i].t && elapsed < CS_PHASE_TEXT[i].t + 0.5) {
-            textAlpha = (elapsed - CS_PHASE_TEXT[i].t) / 0.5;
+        for (var j = 0; j < CS_PHASE_TEXT.length; j++) {
+          if (elapsed >= CS_PHASE_TEXT[j].t && elapsed < CS_PHASE_TEXT[j].t + 0.4) {
+            textAlpha = (elapsed - CS_PHASE_TEXT[j].t) / 0.4;
           }
         }
-        drawCSPhaseText(ctx, phaseText, textAlpha, W);
+        drawCSPhaseText(ctx, phaseText, textAlpha);
 
-        // Down-arrow hint in phase 5
+        // Down arrow (phase 5)
         if (phase === 4) {
-          const arrowAlpha = Math.min(1, (elapsed - 11) / 0.5);
+          var arrowAlpha = Math.min(1, (elapsed - 11) / 0.5);
           ctx.save();
           ctx.globalAlpha = arrowAlpha * (0.5 + 0.5 * Math.sin(elapsed * 3));
           ctx.fillStyle = '#0070F3';
           ctx.beginPath();
-          const ax = W / 2, ay = H - 22;
+          var ax = W / 2, ay = H - 18;
           ctx.moveTo(ax - 8, ay - 6); ctx.lineTo(ax + 8, ay - 6); ctx.lineTo(ax, ay + 4);
           ctx.fill();
           ctx.restore();
         }
       }
 
-      function drawCSBackground(ctx, camX, phase, elapsed, W, H, groundY){
-        // Sky gradient shifts warmer with phase
-        const grad = ctx.createLinearGradient(0, 0, 0, groundY);
-        if (phase <= 1) { grad.addColorStop(0, '#dbeafe'); grad.addColorStop(1, '#f0f9ff'); }
+      function drawCSBackground(ctx, phase, W, H, groundY) {
+        var grad = ctx.createLinearGradient(0, 0, 0, groundY);
+        if (phase <= 1) { grad.addColorStop(0, '#f0f4f8'); grad.addColorStop(1, '#e2e8f0'); }
         else if (phase === 2) { grad.addColorStop(0, '#fef3c7'); grad.addColorStop(1, '#fefce8'); }
         else { grad.addColorStop(0, '#fee2e2'); grad.addColorStop(1, '#fef2f2'); }
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, groundY);
-
-        // Clouds (parallax 0.2x)
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        const clouds = [{x:100,y:40,w:80,h:24},{x:350,y:60,w:60,h:18},{x:600,y:35,w:90,h:26},{x:900,y:55,w:70,h:20},{x:1200,y:45,w:85,h:22}];
-        clouds.forEach(function(c){
-          const sx = ((c.x - camX * 0.15) % (W + 200)) - 100;
-          ctx.beginPath();
-          ctx.ellipse(sx, c.y, c.w / 2, c.h / 2, 0, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        // Server silhouettes (parallax 0.4x) — density increases with phase
-        ctx.fillStyle = phase <= 1 ? '#cbd5e1' : phase === 2 ? '#94a3b8' : '#64748b';
-        const serverCount = phase <= 1 ? 5 : phase === 2 ? 9 : 12;
-        for (let i = 0; i < serverCount; i++) {
-          const baseX = i * 180 + 50;
-          const sx = ((baseX - camX * 0.4) % (W + 300)) - 150;
-          const sh = 40 + (i % 3) * 20;
-          ctx.fillRect(sx, groundY - sh, 18, sh);
-          // LED dots
-          ctx.fillStyle = phase >= 2 ? '#ef4444' : '#22c55e';
-          ctx.fillRect(sx + 3, groundY - sh + 6, 3, 3);
-          ctx.fillRect(sx + 3, groundY - sh + 14, 3, 3);
-          ctx.fillStyle = phase <= 1 ? '#cbd5e1' : phase === 2 ? '#94a3b8' : '#64748b';
-        }
       }
 
-      function drawCSGround(ctx, camX, W, H, groundY){
+      function drawCSGround(ctx, W, H, groundY) {
         ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(0, groundY, W, H - groundY);
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(0, groundY); ctx.lineTo(W, groundY);
-        ctx.stroke();
-        // Grid lines on ground
-        ctx.strokeStyle = '#d1d5db';
-        ctx.lineWidth = 0.5;
-        for (let x = -(camX % 60); x < W; x += 60) {
-          ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x, H); ctx.stroke();
-        }
-      }
-
-      function drawCSObstacle(ctx, screenX, groundY, obs){
-        const x = screenX;
-        const y = groundY - obs.h;
-        // Block body
-        ctx.fillStyle = obs.color;
-        const r = 4;
-        ctx.beginPath();
-        ctx.moveTo(x + r, y); ctx.lineTo(x + obs.w - r, y); ctx.quadraticCurveTo(x + obs.w, y, x + obs.w, y + r);
-        ctx.lineTo(x + obs.w, y + obs.h); ctx.lineTo(x, y + obs.h);
-        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
-        ctx.fill();
-        // Highlight edge
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillRect(x + 1, y + 1, obs.w - 2, 3);
-        // Label
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 8px Inter, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(obs.label, x + obs.w / 2, y + obs.h / 2);
-        ctx.textAlign = 'start';
-      }
-
-      function drawCSWall(ctx, screenX, groundY, obs, elapsed){
-        const x = screenX;
-        const y = groundY - obs.h;
-        // Main wall body with gradient
-        const wGrad = ctx.createLinearGradient(x, y, x + obs.w, y);
-        wGrad.addColorStop(0, '#1e293b'); wGrad.addColorStop(1, '#334155');
-        ctx.fillStyle = wGrad;
-        ctx.fillRect(x, y, obs.w, obs.h);
-        // Brick pattern
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-        ctx.lineWidth = 1;
-        const brickH = 24;
-        const brickW = obs.w / 2;
-        for (let row = 0; row < obs.h / brickH; row++) {
-          const by = y + row * brickH;
-          ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x + obs.w, by); ctx.stroke();
-          const offset = (row % 2) * (brickW / 2);
-          for (let col = 0; col < 3; col++) {
-            const bx = x + offset + col * brickW;
-            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + brickH); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
+        // Dot grid on ground
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
+        for (var gx = 20; gx < W; gx += 40) {
+          for (var gy = groundY + 15; gy < H; gy += 15) {
+            ctx.fillRect(gx, gy, 1, 1);
           }
         }
-        // Red glow on left edge
-        const glowGrad = ctx.createLinearGradient(x - 20, 0, x + 10, 0);
-        glowGrad.addColorStop(0, 'rgba(239,68,68,0)'); glowGrad.addColorStop(1, 'rgba(239,68,68,0.15)');
-        ctx.fillStyle = glowGrad;
-        ctx.fillRect(x - 20, y, 30, obs.h);
-        // Title
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px Inter, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('THE CAPACITY', x + obs.w / 2, groundY - obs.h / 2 - 10);
-        ctx.fillText('WALL', x + obs.w / 2, groundY - obs.h / 2 + 10);
-        // Sub-labels on bricks
-        ctx.font = '9px Inter, system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        CS_WALL_LABELS.forEach(function(lbl, i){
-          ctx.fillText(lbl, x + obs.w / 2, groundY - 40 - i * 28);
-        });
-        ctx.textAlign = 'start';
       }
 
-      function drawCSCharacter(ctx, charX, groundY, elapsed, stressed, stopped){
-        const frame = stopped ? 0 : Math.floor(elapsed * 6) % 4;
-        const y = groundY;
+      function drawCSBlock(ctx, b, elapsed) {
+        var x = b.x, y = b.targetY, w = b.w, h = b.h;
+        // Landing micro-bounce
+        if (b.landed && b.landTime !== null) {
+          var bt = elapsed - b.landTime;
+          if (bt < 0.15) {
+            x -= Math.sin(bt / 0.15 * Math.PI) * 3;
+          }
+        }
+        // Shadow under block
+        ctx.save();
+        ctx.globalAlpha = 0.06;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x + 2, y + h, w, 3);
+        ctx.restore();
+        // Block body (rounded rect)
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 4);
+        ctx.fill();
+        // Top highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(x + 2, y + 1, w - 4, Math.min(3, h * 0.15));
+        // Label
+        ctx.fillStyle = '#ffffff';
+        var fontSize = b.isFinal ? 11 : (b.phase <= 1 ? 9 : b.phase === 2 ? 10 : 11);
+        ctx.font = 'bold ' + fontSize + 'px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.label, x + w / 2, y + h / 2);
+        ctx.textAlign = 'start';
+        ctx.textBaseline = 'alphabetic';
+      }
+
+      function drawCSCharacter(ctx, phase, elapsed, groundY, pileHeight) {
+        var cx = 120, y = groundY;
+        // Phase-based posture adjustments
+        var bodyOffsetY = 0;
+        var lean = 0; // tilt angle in radians
+        if (phase === 1) { lean = -0.04; }
+        else if (phase === 2) { lean = -0.07; }
+        else if (phase >= 3) { lean = -0.1; bodyOffsetY = 4; } // crouching
+
+        // Idle breathing
+        var breathe = (phase <= 1) ? Math.sin(elapsed * 2) * 0.8 : 0;
+
+        ctx.save();
+        ctx.translate(cx, y + bodyOffsetY);
+        ctx.rotate(lean);
+
+        // Legs
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(-6, -8, 4, 8);
+        ctx.fillRect(2, -8, 4, 8);
+
         // Body
         ctx.fillStyle = '#0A1C60';
         ctx.beginPath();
-        ctx.moveTo(charX - 8, y - 28); ctx.lineTo(charX + 8, y - 28);
-        ctx.quadraticCurveTo(charX + 10, y - 28, charX + 10, y - 24);
-        ctx.lineTo(charX + 10, y - 10);
-        ctx.quadraticCurveTo(charX + 10, y - 8, charX + 8, y - 8);
-        ctx.lineTo(charX - 8, y - 8);
-        ctx.quadraticCurveTo(charX - 10, y - 8, charX - 10, y - 10);
-        ctx.lineTo(charX - 10, y - 24);
-        ctx.quadraticCurveTo(charX - 10, y - 28, charX - 8, y - 28);
+        ctx.roundRect(-10, -30 + breathe, 20, 22, 3);
         ctx.fill();
+
+        // Arms based on phase
+        ctx.fillStyle = '#0A1C60';
+        if (phase <= 0) {
+          // Arms at sides
+          ctx.fillRect(-13, -26 + breathe, 3, 14);
+          ctx.fillRect(10, -26 + breathe, 3, 14);
+        } else if (phase === 1) {
+          // One hand up to chin
+          ctx.fillRect(-13, -26 + breathe, 3, 14);
+          ctx.save();
+          ctx.translate(10, -26 + breathe);
+          ctx.rotate(-0.8);
+          ctx.fillRect(0, 0, 3, 12);
+          ctx.restore();
+        } else if (phase === 2) {
+          // Hands up defensively
+          ctx.save();
+          ctx.translate(-12, -26 + breathe);
+          ctx.rotate(-0.6);
+          ctx.fillRect(0, 0, 3, 12);
+          ctx.restore();
+          ctx.save();
+          ctx.translate(10, -26 + breathe);
+          ctx.rotate(0.6);
+          ctx.fillRect(0, 0, 3, 12);
+          ctx.restore();
+        } else {
+          // Hands on head
+          ctx.save();
+          ctx.translate(-8, -34 + breathe);
+          ctx.rotate(-0.3);
+          ctx.fillRect(0, 0, 3, 10);
+          ctx.restore();
+          ctx.save();
+          ctx.translate(6, -34 + breathe);
+          ctx.rotate(0.3);
+          ctx.fillRect(0, 0, 3, 10);
+          ctx.restore();
+        }
+
         // Head
         ctx.fillStyle = '#f8b84e';
         ctx.beginPath();
-        ctx.arc(charX, y - 34, 8, 0, Math.PI * 2);
+        ctx.arc(0, -36 + breathe, 8, 0, Math.PI * 2);
         ctx.fill();
+
         // Hardhat
         ctx.fillStyle = '#0070F3';
         ctx.beginPath();
-        ctx.ellipse(charX, y - 38, 10, 4, 0, Math.PI, 0);
+        ctx.ellipse(0, -40 + breathe, 10, 4, 0, Math.PI, 0);
         ctx.fill();
-        ctx.fillRect(charX - 11, y - 38, 22, 2);
-        // Eyes
+        ctx.fillRect(-11, -40 + breathe, 22, 2);
+
+        // Eyes — change with phase
         ctx.fillStyle = '#1e293b';
-        ctx.fillRect(charX - 3, y - 36, 2, 2);
-        ctx.fillRect(charX + 2, y - 36, 2, 2);
-        // Legs (animated)
-        ctx.fillStyle = '#334155';
-        if (stopped) {
-          ctx.fillRect(charX - 6, y - 8, 4, 8);
-          ctx.fillRect(charX + 2, y - 8, 4, 8);
+        if (phase <= 1) {
+          // Normal eyes
+          ctx.fillRect(-3, -38 + breathe, 2, 2);
+          ctx.fillRect(2, -38 + breathe, 2, 2);
+        } else if (phase === 2) {
+          // Wide eyes
+          ctx.beginPath();
+          ctx.arc(-2, -37 + breathe, 2, 0, Math.PI * 2);
+          ctx.arc(3, -37 + breathe, 2, 0, Math.PI * 2);
+          ctx.fill();
         } else {
-          const legAngle = Math.sin(elapsed * 12) * 0.4;
-          ctx.save();
-          ctx.translate(charX - 4, y - 8);
-          ctx.rotate(legAngle);
-          ctx.fillRect(-2, 0, 4, 8);
-          ctx.restore();
-          ctx.save();
-          ctx.translate(charX + 4, y - 8);
-          ctx.rotate(-legAngle);
-          ctx.fillRect(-2, 0, 4, 8);
-          ctx.restore();
-        }
-        // Sweat drops when stressed
-        if (stressed && !stopped) {
-          ctx.fillStyle = 'rgba(59,130,246,0.6)';
-          const dropY = y - 30 + ((elapsed * 3) % 1) * 12;
+          // Very wide eyes
           ctx.beginPath();
-          ctx.ellipse(charX + 12, dropY, 2, 3, 0, 0, Math.PI * 2);
-          ctx.fill();
-          const dropY2 = y - 26 + ((elapsed * 2.5 + 0.5) % 1) * 12;
-          ctx.beginPath();
-          ctx.ellipse(charX + 15, dropY2, 1.5, 2.5, 0, 0, Math.PI * 2);
+          ctx.arc(-2, -37 + breathe, 2.5, 0, Math.PI * 2);
+          ctx.arc(3, -37 + breathe, 2.5, 0, Math.PI * 2);
           ctx.fill();
         }
-        // Exclamation mark when stopped at wall
-        if (stopped && elapsed < 11) {
+
+        // Mouth
+        if (phase <= 0) {
+          ctx.fillRect(-2, -32 + breathe, 4, 1); // neutral line
+        } else if (phase === 1) {
+          // Slight frown
+          ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(0.5, -30 + breathe, 3, 0.2, Math.PI - 0.2);
+          ctx.stroke();
+        } else {
+          // Open mouth (O shape)
+          ctx.beginPath();
+          ctx.ellipse(0.5, -31 + breathe, 2.5, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Eyebrows (phase 2+)
+        if (phase >= 1) {
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-5, -41 + breathe); ctx.lineTo(-1, -40 + breathe);
+          ctx.moveTo(6, -41 + breathe); ctx.lineTo(2, -40 + breathe);
+          ctx.stroke();
+        }
+
+        ctx.restore(); // undo lean+translate
+
+        // Sweat drops (outside the transform so they don't lean)
+        if (phase >= 1) {
+          ctx.fillStyle = 'rgba(59,130,246,0.5)';
+          var dropCount = phase >= 3 ? 3 : phase >= 2 ? 2 : 1;
+          for (var d = 0; d < dropCount; d++) {
+            var dy = y - 32 + ((elapsed * (2 + d * 0.7) + d * 0.3) % 1) * 16;
+            ctx.beginPath();
+            ctx.ellipse(cx + 13 + d * 5, dy, 1.5, 2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Exclamation mark (phase 4)
+        if (phase >= 3 && elapsed < 11) {
+          var bangAlpha = Math.min(1, (elapsed - 9) / 0.3);
+          if (phase === 3) bangAlpha = Math.min(1, bangAlpha);
+          ctx.save();
+          ctx.globalAlpha = bangAlpha;
           ctx.fillStyle = '#ef4444';
-          ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+          ctx.font = 'bold 18px Inter, system-ui, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('!', charX, y - 48);
+          ctx.fillText('!', cx, y - 54 + bodyOffsetY);
           ctx.textAlign = 'start';
-        }
-      }
-
-      function drawCSTicketRain(ctx, elapsed, W, groundY){
-        ctx.fillStyle = 'rgba(239,68,68,0.15)';
-        const seed = 42;
-        for (let i = 0; i < 20; i++) {
-          const px = ((i * 137 + seed) % W);
-          const py = ((elapsed * 40 + i * 73) % (groundY + 20)) - 10;
-          ctx.save();
-          ctx.translate(px, py);
-          ctx.rotate(((i * 31) % 60 - 30) * Math.PI / 180);
-          ctx.fillRect(-4, -6, 8, 12);
-          ctx.strokeStyle = 'rgba(239,68,68,0.25)';
-          ctx.lineWidth = 0.5;
-          ctx.strokeRect(-4, -6, 8, 12);
-          // Lines on ticket
-          ctx.fillStyle = 'rgba(239,68,68,0.3)';
-          ctx.fillRect(-2, -3, 4, 1);
-          ctx.fillRect(-2, -0.5, 3, 1);
-          ctx.fillStyle = 'rgba(239,68,68,0.15)';
           ctx.restore();
         }
       }
 
-      function drawCSCapacityMeter(ctx, pct, phase, elapsed, W){
-        const mx = W - 140, my = 14, mw = 120, mh = 14;
-        // Label
+      function csUpdateParticles(elapsed, dt, pileTopY, W) {
+        var particles = STATE.csParticles;
+        // Spawn new particles
+        if (particles.length < 18) {
+          particles.push({
+            x: CS_PILE_BASE_X + Math.random() * CS_PILE_MAX_W,
+            y: pileTopY + Math.random() * 20,
+            vx: (Math.random() - 0.5) * 30,
+            vy: -20 - Math.random() * 40,
+            life: 0,
+            maxLife: 1.5 + Math.random() * 1.5,
+            size: 2 + Math.random() * 3
+          });
+        }
+        // Update
+        for (var i = particles.length - 1; i >= 0; i--) {
+          var p = particles[i];
+          p.life += dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          if (p.life >= p.maxLife) {
+            // Respawn
+            p.x = CS_PILE_BASE_X + Math.random() * CS_PILE_MAX_W;
+            p.y = pileTopY + Math.random() * 20;
+            p.vx = (Math.random() - 0.5) * 30;
+            p.vy = -20 - Math.random() * 40;
+            p.life = 0;
+            p.maxLife = 1.5 + Math.random() * 1.5;
+            p.size = 2 + Math.random() * 3;
+          }
+        }
+      }
+
+      function csDrawParticles(ctx) {
+        var particles = STATE.csParticles;
+        for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+          var alpha = 1 - (p.life / p.maxLife);
+          ctx.save();
+          ctx.globalAlpha = alpha * 0.25;
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawCSCapacityMeter(ctx, pct, phase, elapsed, W) {
+        var mx = W - 155, my = 14, mw = 120, mh = 14;
         ctx.fillStyle = '#475569';
         ctx.font = '600 9px Inter, system-ui, sans-serif';
         ctx.textAlign = 'right';
@@ -1655,17 +1774,15 @@
         ctx.roundRect(mx, my, mw, mh, 4);
         ctx.fill();
         // Fill bar
-        const fillW = (pct / 100) * mw;
-        const barColor = pct > 50 ? '#22c55e' : pct > 25 ? '#eab308' : '#ef4444';
-        // Blink when at 0
-        const show = pct > 0 || Math.floor(elapsed * 3) % 2 === 0;
-        if (fillW > 0 && show) {
+        var fillW = (pct / 100) * mw;
+        var barColor = pct > 50 ? '#22c55e' : pct > 25 ? '#eab308' : '#ef4444';
+        if (fillW > 0) {
           ctx.fillStyle = barColor;
           ctx.beginPath();
           ctx.roundRect(mx, my, Math.max(fillW, 4), mh, 4);
           ctx.fill();
         }
-        // Blinking red outline at 0
+        // Blinking at 0
         if (pct <= 0 && Math.floor(elapsed * 3) % 2 === 0) {
           ctx.strokeStyle = '#ef4444';
           ctx.lineWidth = 1.5;
@@ -1679,7 +1796,7 @@
         ctx.fillText(Math.round(pct) + '%', mx + mw + 6, my + 11);
       }
 
-      function drawCSPhaseText(ctx, text, alpha, W){
+      function drawCSPhaseText(ctx, text, alpha) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = '#0A1C60';
@@ -1689,65 +1806,101 @@
         ctx.restore();
       }
 
-      function drawCSStaticFinal(canvas){
-        const dpr = window.devicePixelRatio || 1;
+      function drawCSStaticFinal(canvas) {
+        var dpr = window.devicePixelRatio || 1;
         canvas.width = 960 * dpr;
         canvas.height = 360 * dpr;
-        const ctx = canvas.getContext('2d');
+        var ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
         canvas.style.width = '100%';
         canvas.style.height = '100%';
-        const W = 960, H = 360, groundY = H - 60;
-        // Draw final scene: character at wall
+        var W = 960, H = 360, groundY = 300;
         ctx.clearRect(0, 0, W, H);
-        // Red-tinted sky
-        const grad = ctx.createLinearGradient(0, 0, 0, groundY);
+        // Red sky
+        var grad = ctx.createLinearGradient(0, 0, 0, groundY);
         grad.addColorStop(0, '#fee2e2'); grad.addColorStop(1, '#fef2f2');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, groundY);
-        // Ground
-        drawCSGround(ctx, 0, W, H, groundY);
-        // Wall
-        const wallX = 260;
-        drawCSWall(ctx, wallX, groundY, { w: 140, h: 320, isWall: true }, 12);
-        // Character
-        drawCSCharacter(ctx, 200, groundY, 12, true, true);
-        // Text
+        drawCSGround(ctx, W, H, groundY);
+        // Precompute all block final positions
+        var fakeRows = [];
+        var fakeBlocks = CS_BLOCKS.map(function(b) {
+          return { w: b.w, h: b.h, label: b.label, color: b.color, phase: b.phase,
+            isFinal: !!b.isFinal, targetX: 0, targetY: 0 };
+        });
+        for (var i = 0; i < fakeBlocks.length; i++) {
+          var fb = fakeBlocks[i];
+          if (fakeRows.length === 0) fakeRows.push({ y: groundY, height: fb.h, usedWidth: 0 });
+          var curRow = fakeRows[fakeRows.length - 1];
+          if (curRow.usedWidth + fb.w + 2 > CS_PILE_MAX_W) {
+            fakeRows.push({ y: curRow.y - curRow.height, height: fb.h, usedWidth: 0 });
+            curRow = fakeRows[fakeRows.length - 1];
+          }
+          fb.targetX = CS_PILE_BASE_X + curRow.usedWidth;
+          fb.targetY = curRow.y - fb.h;
+          curRow.usedWidth += fb.w + 2;
+          if (fb.h > curRow.height) curRow.height = fb.h;
+        }
+        // Draw all blocks
+        for (var i = 0; i < fakeBlocks.length; i++) {
+          var fb = fakeBlocks[i];
+          ctx.fillStyle = fb.color;
+          ctx.beginPath();
+          ctx.roundRect(fb.targetX, fb.targetY, fb.w, fb.h, 4);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.18)';
+          ctx.fillRect(fb.targetX + 2, fb.targetY + 1, fb.w - 4, Math.min(3, fb.h * 0.15));
+          ctx.fillStyle = '#fff';
+          var fs = fb.isFinal ? 11 : (fb.phase <= 1 ? 9 : fb.phase === 2 ? 10 : 11);
+          ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(fb.label, fb.targetX + fb.w / 2, fb.targetY + fb.h / 2);
+        }
+        ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+        // Character (overwhelmed pose)
+        var pileH = groundY - (fakeRows.length > 0 ? fakeRows[fakeRows.length - 1].y - fakeRows[fakeRows.length - 1].height : groundY);
+        drawCSCharacter(ctx, 4, 12, groundY, pileH);
+        // Phase text
         ctx.fillStyle = '#0A1C60';
         ctx.font = '600 14px Inter, system-ui, sans-serif';
         ctx.fillText('What if the model itself could change?', 16, 24);
+        // Capacity meter at 0
+        drawCSCapacityMeter(ctx, 0, 4, 12, W);
         // Down arrow
         ctx.fillStyle = '#0070F3';
         ctx.globalAlpha = 0.7;
         ctx.beginPath();
-        const ax = W / 2, ay = H - 22;
+        var ax = W / 2, ay = H - 18;
         ctx.moveTo(ax - 8, ay - 6); ctx.lineTo(ax + 8, ay - 6); ctx.lineTo(ax, ay + 4);
         ctx.fill();
         ctx.globalAlpha = 1;
-        // Show replay button
-        const container = document.getElementById('cs-animation-container');
+        // Show replay
+        var container = document.getElementById('cs-animation-container');
         if (container) {
-          const skipBtn = container.querySelector('.cs-skip-btn');
-          const replayBtn = container.querySelector('.cs-replay-btn');
+          var skipBtn = container.querySelector('.cs-skip-btn');
+          var replayBtn = container.querySelector('.cs-replay-btn');
           if (skipBtn) skipBtn.style.display = 'none';
           if (replayBtn) replayBtn.style.display = '';
         }
       }
 
-      function skipCSAnimation(){
+      function skipCSAnimation() {
         if (STATE.csAnimRAF) { cancelAnimationFrame(STATE.csAnimRAF); STATE.csAnimRAF = null; }
         STATE.csAnimPhase = 'done';
         STATE.csAnimHasPlayed = true;
-        const canvas = document.getElementById('cs-animation-canvas');
+        var canvas = document.getElementById('cs-animation-canvas');
         if (canvas) drawCSStaticFinal(canvas);
       }
 
-      function replayCSAnimation(){
+      function replayCSAnimation() {
         if (STATE.csAnimRAF) { cancelAnimationFrame(STATE.csAnimRAF); STATE.csAnimRAF = null; }
         STATE.csAnimPhase = 'idle';
         STATE.csAnimStartTime = null;
-        STATE.csAnimCameraX = 0;
         STATE.csAnimHasPlayed = false;
+        STATE.csBlockStates = [];
+        STATE.csPileRows = [];
+        STATE.csParticles = [];
+        STATE.csPrevTs = null;
         initCSAnimation();
       }
 
@@ -4505,7 +4658,7 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; STATE.csAnimPhase = 'idle'; STATE.csAnimStartTime = null; STATE.csAnimCameraX = 0; STATE.csAnimHasPlayed = false; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; STATE.csAnimPhase = 'idle'; STATE.csAnimStartTime = null; STATE.csBlockStates = []; STATE.csPileRows = []; STATE.csParticles = []; STATE.csAnimHasPlayed = false; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
           if (action === 'toggle-solution-view') {
             const view = act.getAttribute('data-view');
