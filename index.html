@@ -1460,6 +1460,9 @@
                 </div>
               </div>
             </div>
+            <div class="mt-3">
+              <button type="button" data-action="open-currentstate-editor" class="w-9 h-9 rounded-full border-2 border-gray-300 bg-transparent text-gray-400 inline-flex items-center justify-center hover:text-[#0070F3] hover:border-[#0070F3] transition" title="Edit Current State"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+            </div>
           </section>
         `;
       }
@@ -3779,9 +3782,6 @@
 
             <div class="flex items-center justify-between">
               <div class="flex gap-3">
-                <button type="button" data-action="open-currentstate-editor" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition">
-                  <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Current State
-                </button>
                 ${r ? (STATE.pdfCompanyInput ? `
                   <div class="flex items-center gap-3" style="animation:dashSlideUp 0.3s ease forwards">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0000CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
@@ -4100,12 +4100,15 @@
               now: { intro: (formData.now.intro || '').trim() || fallback.now.intro, bullets: parseLines(formData.now.bullets) || fallback.now.bullets, analyst: (formData.now.analyst || '').trim() || fallback.now.analyst },
               recast: { intro: (formData.recast.intro || '').trim() || fallback.recast.intro, bullets: parseLines(formData.recast.bullets) || fallback.recast.bullets, analyst: (formData.recast.analyst || '').trim() || fallback.recast.analyst }
             };
-            const raw = STATE.editChartBuffer || readChartFieldsRaw();
             const pick = (v, keep) => (typeof v === 'string' && v.trim()) ? v.trim() : keep;
-            const fallbackChart = STATE.defaultsChartConfig(); const cfg = raw?.chartConfig || {};
-            STATE.chartConfig = { yAxis: pick(cfg.yAxis, STATE.chartConfig.yAxis || fallbackChart.yAxis), xAxis: pick(cfg.xAxis, STATE.chartConfig.xAxis || fallbackChart.xAxis), center: pick(cfg.center, STATE.chartConfig.center || fallbackChart.center), footer: pick(cfg.footer, STATE.chartConfig.footer || fallbackChart.footer), tipping: pick(cfg.tipping, STATE.chartConfig.tipping || fallbackChart.tipping) };
-            const fallbackDrivers = STATE.defaultsDrivers(); const dRaw = raw?.drivers || [];
-            STATE.drivers.forEach((d, i) => { d.label = pick(dRaw[i]?.label, d.label || fallbackDrivers[i].label); const bulletsRaw = dRaw[i]?.bullets; if (typeof bulletsRaw === 'string') { const b = parseLines(bulletsRaw, 3); d.bullets = b.length === 3 ? b : (d.bullets || fallbackDrivers[i].bullets); } else { d.bullets = d.bullets || fallbackDrivers[i].bullets; } });
+            // Only apply chart/driver changes if the user actually edited the chart tab
+            if (STATE.editChartBuffer) {
+              const cfg = STATE.editChartBuffer.chartConfig || {};
+              const fallbackChart = STATE.defaultsChartConfig();
+              STATE.chartConfig = { yAxis: pick(cfg.yAxis, STATE.chartConfig.yAxis || fallbackChart.yAxis), xAxis: pick(cfg.xAxis, STATE.chartConfig.xAxis || fallbackChart.xAxis), center: pick(cfg.center, STATE.chartConfig.center || fallbackChart.center), footer: pick(cfg.footer, STATE.chartConfig.footer || fallbackChart.footer), tipping: pick(cfg.tipping, STATE.chartConfig.tipping || fallbackChart.tipping) };
+              const fallbackDrivers = STATE.defaultsDrivers(); const dRaw = STATE.editChartBuffer.drivers || [];
+              STATE.drivers.forEach((d, i) => { d.label = pick(dRaw[i]?.label, d.label || fallbackDrivers[i].label); const bulletsRaw = dRaw[i]?.bullets; if (typeof bulletsRaw === 'string') { const b = parseLines(bulletsRaw, 3); d.bullets = b.length === 3 ? b : (d.bullets || fallbackDrivers[i].bullets); } else { d.bullets = d.bullets || fallbackDrivers[i].bullets; } });
+            }
             saveDraft({ ...formData, chartConfig: { ...STATE.chartConfig }, drivers: STATE.drivers.map(d => ({ label: d.label, bullets: d.bullets.join('\n') })) });
             STATE.modalOpen = false; STATE.activeTab = 'problems'; render(); return;
           }
