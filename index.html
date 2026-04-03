@@ -3945,23 +3945,21 @@
         const buf = STATE.editBuffers;
         const toLines = arr => arr.join('\n');
         const ensure = v => v ?? '';
-        const editTabs = [ {id: 'change', label: 'Why Change'}, {id: 'now', label: 'Why Now'}, {id: 'recast', label: 'Why Recast'}, {id: 'chart', label: 'Chart Config'} ];
+        const editTabs = [ {id: 'change', label: 'Why Change'}, {id: 'now', label: 'Why Now'} ];
         return `
           <div role="dialog" aria-modal="true" aria-labelledby="cs-editor-title" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay overflow-auto p-4 md:p-8">
             <div class="w-[95vw] h-[95vh] rounded-2xl shadow-2xl p-8 overflow-y-auto glass">
               <div class="flex items-center justify-between">
-                <h2 id="cs-editor-title" class="text-xl font-semibold tracking-normal">Edit Current State</h2>
+                <h2 id="cs-editor-title" class="text-xl font-semibold tracking-normal">Edit Narrative</h2>
                 <button type="button" class="bg-transparent text-[#0A1C60] p-2 focus-ring rounded" data-action="close-modal" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
               </div>
-              <p class="mt-1 text-sm text-[#4A5568]">Edit the introduction, bullets (one per line, max 4), and analyst trend for each section.</p>
+              <p class="mt-1 text-sm text-[#4A5568]">Edit the bullet cards and analyst insight for each section. Format: <strong>Title = Description</strong> (one per line).</p>
               <div role="tablist" aria-label="Edit sections" class="flex w-full flex-wrap gap-2 rounded bg-white/60 backdrop-blur-lg p-1 ring-1 ring-slate-200 mt-4">
                 ${editTabs.map(t=>`<button type="button" class="${cx('inline-flex items-center gap-2 px-3.5 py-1.5 text-sm focus-ring transition', STATE.editTab===t.id ? 'bg-[#0070F3] text-white hover:bg-[#005AD0] rounded' : 'text-[#0A1C60] hover:bg-slate-100 rounded')}" data-action="switch-edit-tab" data-tab="${t.id}" aria-selected="${STATE.editTab===t.id}"><span>${t.label}</span></button>`).join('')}
               </div>
               <div class="mt-4">
                 ${STATE.editTab === 'change' ? editorSection('change','Why Change', ensure(buf.change.intro) || STATE.currentState.change.intro, ensure(buf.change.bullets) || toLines(STATE.currentState.change.bullets), ensure(buf.change.analyst) || STATE.currentState.change.analyst) : ''}
                 ${STATE.editTab === 'now' ? editorSection('now','Why Now', ensure(buf.now.intro) || STATE.currentState.now.intro, ensure(buf.now.bullets) || toLines(STATE.currentState.now.bullets), ensure(buf.now.analyst) || STATE.currentState.now.analyst) : ''}
-                ${STATE.editTab === 'recast' ? editorSection('recast','Why Recast', ensure(buf.recast.intro) || STATE.currentState.recast.intro, ensure(buf.recast.bullets) || toLines(STATE.currentState.recast.bullets), ensure(buf.recast.analyst) || STATE.currentState.recast.analyst) : ''}
-                ${STATE.editTab === 'chart' ? editorSectionChart() : ''}
               </div>
               <div class="mt-5 flex flex-wrap gap-2">
                 <button id="btnSaveCurrentState" type="button" data-action="save-currentstate" class="inline-flex items-center gap-2 bg-[#0070F3] text-white px-4 py-2 text-sm font-semibold focus-ring rounded hover:bg-[#005AD0]"><i data-lucide="save" class="w-4 h-4"></i> Save</button>
@@ -3979,7 +3977,43 @@
       }
 
       function editorSection(key,label,introValue,bulletsValue,analystValue){
-        return `<div class="flex flex-col gap-4"><span class="text-sm font-semibold">${label}</span><label class="flex flex-col gap-1"><span class="text-xs text-[#4A5568]">Introduction</span><textarea id="${key}Intro" data-action="edit-buffer" data-key="${key}" data-subkey="intro" class="min-h-[80px] rounded-[2px] border border-slate-200 bg-white p-3 text-sm leading-5 focus-ring" rows="2">${introValue}</textarea></label><label class="flex flex-col gap-1"><div class="flex items-center gap-2 text-xs text-[#4A5568]"><i data-lucide="check-circle" class="w-4 h-4 text-[#0070F3]"></i>Bullets (one per line, max 4)</div><textarea id="${key}Bullets" data-action="edit-buffer" data-key="${key}" data-subkey="bullets" class="min-h-[160px] rounded-[2px] border border-slate-200 bg-white p-3 text-sm leading-5 focus-ring" rows="6">${bulletsValue}</textarea></label><label class="flex flex-col gap-1"><span class="text-xs text-[#4A5568]">Analyst Trend</span><textarea id="${key}Analyst" data-action="edit-buffer" data-key="${key}" data-subkey="analyst" class="min-h-[80px] rounded-[2px] border border-slate-200 bg-white p-3 text-sm leading-5 focus-ring" rows="2">${analystValue}</textarea></label></div>`;
+        const iconMap = { change: 'alert-triangle', now: 'clock-4' };
+        const labelMap = { change: 'Why Change \u2014 Apps Have Become the Hardest Part of IT', now: 'Why Now \u2014 The Pace Has Outrun the People' };
+        const bullets = (bulletsValue || '').split('\n').filter(l => l.trim());
+        // Preview the cards exactly like renderWhyModal
+        const previewCards = bullets.map(b => {
+          const parts = b.split(' = ');
+          const hasTitle = parts.length > 1;
+          return '<div class="bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm border-l-4 border-[#0070F3]"><div class="flex items-start gap-3"><i data-lucide="check-circle" class="w-5 h-5 text-[#0070F3] flex-shrink-0 mt-0.5"></i><div>'+(hasTitle?'<div class="text-sm font-bold text-[#0A1C60] mb-1">'+parts[0]+'</div>':'')+'<p class="text-sm leading-relaxed text-[#64748b]">'+(hasTitle?parts.slice(1).join(' = '):b)+'</p></div></div></div>';
+        }).join('');
+        return `
+          <div class="flex flex-col gap-5">
+            <!-- Header matching Why modal -->
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-200">
+              <i data-lucide="${iconMap[key] || 'edit-3'}" class="w-6 h-6 text-[#0A1C60]"></i>
+              <span class="text-lg font-bold text-[#0A1C60]">${labelMap[key] || label}</span>
+            </div>
+
+            <!-- Live preview -->
+            <div class="space-y-3">
+              ${previewCards}
+              ${analystValue ? '<div class="bg-white/70 backdrop-blur-lg p-4 rounded-xl shadow-sm flex items-start gap-3 border-l-4 border-amber-400"><i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i><p class="text-sm italic text-[#64748b]">'+analystValue+'</p></div>' : ''}
+            </div>
+
+            <!-- Editable fields -->
+            <div class="mt-2 p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div class="text-[10px] font-semibold text-[#0A1C60] uppercase tracking-wide mb-3">Edit Content</div>
+              <label class="flex flex-col gap-1 mb-3">
+                <div class="flex items-center gap-2 text-xs text-[#4A5568]"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-[#0070F3]"></i> Bullet cards <span class="text-[10px] text-slate-400">(one per line, format: Title = Description)</span></div>
+                <textarea id="${key}Bullets" data-action="edit-buffer" data-key="${key}" data-subkey="bullets" class="min-h-[140px] rounded-lg border border-slate-200 bg-white p-3 text-sm leading-6 focus-ring" rows="5">${bulletsValue}</textarea>
+              </label>
+              <label class="flex flex-col gap-1">
+                <div class="flex items-center gap-2 text-xs text-[#4A5568]"><i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-400"></i> Analyst insight</div>
+                <textarea id="${key}Analyst" data-action="edit-buffer" data-key="${key}" data-subkey="analyst" class="min-h-[60px] rounded-lg border border-slate-200 bg-white p-3 text-sm leading-5 focus-ring" rows="2">${analystValue}</textarea>
+              </label>
+              <input type="hidden" id="${key}Intro" data-action="edit-buffer" data-key="${key}" data-subkey="intro" value="${introValue}">
+            </div>
+          </div>`;
       }
 
       function parseLines(s, max=4){ return (s || '').split('\n').map(l => l.trim()).filter(Boolean).slice(0, max); }
@@ -3996,8 +4030,8 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; clearFlowTimers(); render(); return; }
-          if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; clearFlowTimers(); render(); return; }
+          if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
           if (action === 'toggle-solution-view') {
             const view = act.getAttribute('data-view');
             if (view === 'user') STATE.solutionViewUser = !STATE.solutionViewUser;
@@ -4020,7 +4054,20 @@
           if (action === 'reset-ob') { resetOb(); return; }
           if (action === 'pause-ob') { if (STATE.obPaused) { STATE.obPaused = false; render(); runObQueue(); } else { STATE.obPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
-          if (action === 'close-why-modal') { STATE.openWhyModal = null; render(); return; }
+          if (action === 'close-why-modal') {
+            STATE.openWhyModal = null;
+            // Restore chart state from before the modal was opened
+            if (STATE._savedDriverStates) {
+              STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; });
+              STATE.showTippingPoint = STATE._savedTippingPoint;
+              STATE.recastMode = STATE._savedRecastMode;
+              STATE.targetDemandExponent = STATE._savedDemandExp;
+              STATE.targetCapacitySlope = STATE._savedCapSlope;
+              STATE._savedDriverStates = null;
+              updateCurves(); requestAnimationFrame(animateCurves);
+            }
+            render(); return;
+          }
           if (action === 'open-analyst-modal') { STATE.showAnalystModal = true; render(); return; }
           if (action === 'close-analyst-modal') { STATE.showAnalystModal = false; render(); return; }
           if (action === 'open-ai-agent') { STATE.showAIAgent = true; render(); return; }
@@ -4030,6 +4077,12 @@
 
           if (action === 'open-why-modal') {
             const id = act.getAttribute('data-why');
+            // Save current chart state before temporarily changing it for the modal
+            STATE._savedDriverStates = STATE.drivers.map(d => d.state);
+            STATE._savedTippingPoint = STATE.showTippingPoint;
+            STATE._savedRecastMode = STATE.recastMode;
+            STATE._savedDemandExp = STATE.targetDemandExponent;
+            STATE._savedCapSlope = STATE.targetCapacitySlope;
             STATE.recastMode = false; STATE.drivers.forEach(d => d.state = 'off'); STATE.showTippingPoint = false;
             if (id === 'change') { STATE.drivers.forEach(d => { if (['more_apps','constant_updates','too_many_tools','manual_rework'].includes(d.id)) d.state = 'normal'; }); }
             else if (id === 'now') { STATE.drivers.forEach(d => { if (['more_apps','constant_updates','too_many_tools','manual_rework','security_compliance'].includes(d.id)) d.state = 'accelerating'; }); STATE.showTippingPoint = true; }
@@ -4095,25 +4148,21 @@
 
           if (action === 'save-currentstate') {
             const fallback = STATE.defaultsCurrentState(); const formData = readFields();
-            STATE.currentState = {
-              change: { intro: (formData.change.intro || '').trim() || fallback.change.intro, bullets: parseLines(formData.change.bullets) || fallback.change.bullets, analyst: (formData.change.analyst || '').trim() || fallback.change.analyst },
-              now: { intro: (formData.now.intro || '').trim() || fallback.now.intro, bullets: parseLines(formData.now.bullets) || fallback.now.bullets, analyst: (formData.now.analyst || '').trim() || fallback.now.analyst },
-              recast: { intro: (formData.recast.intro || '').trim() || fallback.recast.intro, bullets: parseLines(formData.recast.bullets) || fallback.recast.bullets, analyst: (formData.recast.analyst || '').trim() || fallback.recast.analyst }
-            };
-            const pick = (v, keep) => (typeof v === 'string' && v.trim()) ? v.trim() : keep;
-            // Only apply chart/driver changes if the user actually edited the chart tab
-            if (STATE.editChartBuffer) {
-              const cfg = STATE.editChartBuffer.chartConfig || {};
-              const fallbackChart = STATE.defaultsChartConfig();
-              STATE.chartConfig = { yAxis: pick(cfg.yAxis, STATE.chartConfig.yAxis || fallbackChart.yAxis), xAxis: pick(cfg.xAxis, STATE.chartConfig.xAxis || fallbackChart.xAxis), center: pick(cfg.center, STATE.chartConfig.center || fallbackChart.center), footer: pick(cfg.footer, STATE.chartConfig.footer || fallbackChart.footer), tipping: pick(cfg.tipping, STATE.chartConfig.tipping || fallbackChart.tipping) };
-              const fallbackDrivers = STATE.defaultsDrivers(); const dRaw = STATE.editChartBuffer.drivers || [];
-              STATE.drivers.forEach((d, i) => { d.label = pick(dRaw[i]?.label, d.label || fallbackDrivers[i].label); const bulletsRaw = dRaw[i]?.bullets; if (typeof bulletsRaw === 'string') { const b = parseLines(bulletsRaw, 3); d.bullets = b.length === 3 ? b : (d.bullets || fallbackDrivers[i].bullets); } else { d.bullets = d.bullets || fallbackDrivers[i].bullets; } });
+            const activeKey = STATE.editTab;
+            // Only update the section the user is currently editing — leave others untouched
+            if (activeKey === 'change' || activeKey === 'now') {
+              const fd = formData[activeKey]; const fb = fallback[activeKey];
+              STATE.currentState[activeKey] = {
+                intro: (fd.intro || '').trim() || fb.intro,
+                bullets: parseLines(fd.bullets) || fb.bullets,
+                analyst: (fd.analyst || '').trim() || fb.analyst
+              };
             }
-            saveDraft({ ...formData, chartConfig: { ...STATE.chartConfig }, drivers: STATE.drivers.map(d => ({ label: d.label, bullets: d.bullets.join('\n') })) });
+            saveDraft({ change: { intro: '', bullets: STATE.currentState.change.bullets.join('\n'), analyst: STATE.currentState.change.analyst }, now: { intro: '', bullets: STATE.currentState.now.bullets.join('\n'), analyst: STATE.currentState.now.analyst }, recast: { intro: STATE.currentState.recast.intro, bullets: STATE.currentState.recast.bullets.join('\n'), analyst: STATE.currentState.recast.analyst }, chartConfig: { ...STATE.chartConfig }, drivers: STATE.drivers.map(d => ({ label: d.label, bullets: d.bullets.join('\n') })) });
             STATE.modalOpen = false; STATE.activeTab = 'problems'; render(); return;
           }
 
-          if (action === 'reset-currentstate-defaults') { clearDraft(); STATE.chartConfig = STATE.defaultsChartConfig(); STATE.drivers = STATE.defaultsDrivers(); STATE.currentState = STATE.defaultsCurrentState(); STATE.editChartBuffer = null; render(); return; }
+          if (action === 'reset-currentstate-defaults') { clearDraft(); const defaults = STATE.defaultsCurrentState(); STATE.currentState.change = defaults.change; STATE.currentState.now = defaults.now; STATE.editBuffers = { change: { intro: '', bullets: '', analyst: '' }, now: { intro: '', bullets: '', analyst: '' }, recast: { intro: '', bullets: '', analyst: '' } }; render(); return; }
           if (action === 'reset-sliders') { resetSliders(); return; }
         });
 
@@ -4164,7 +4213,7 @@
       deriveFromEmployees(STATE.calcInputs.users);
       calculateImpact();
       document.addEventListener('DOMContentLoaded', render);
-      document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent || STATE.showAnalystModal || STATE.showAIAgent)){ STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; STATE.showAnalystModal=false; STATE.showAIAgent=false; render(); } });
+      document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && (STATE.modalOpen || STATE.openWhyModal || STATE.insightContent || STATE.showAnalystModal || STATE.showAIAgent)){ if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); requestAnimationFrame(animateCurves); } STATE.modalOpen=false; STATE.openWhyModal=null; STATE.insightContent=null; STATE.highlightDriverId=null; STATE.showAnalystModal=false; STATE.showAIAgent=false; render(); } });
     </script>
   </body>
 </html>
