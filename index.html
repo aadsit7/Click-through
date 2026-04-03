@@ -485,6 +485,17 @@
       .logo-name { font-size: 13px; font-weight: 700; color: #334155; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.02em; opacity: 0.7; }
       .logo-name:hover { opacity: 1; }
       .logo-divider { width: 1px; height: 16px; background: #e2e8f0; flex-shrink: 0; }
+
+      /* ── Current-State Side-Scroller Animation ── */
+      #cs-animation-container { position: relative; width: 100%; aspect-ratio: 16/6; max-height: 320px; border-radius: 1rem; overflow: hidden; background: #e0f2fe; }
+      #cs-animation-canvas { display: block; width: 100%; height: 100%; }
+      .cs-fade-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(transparent, rgba(255,255,255,0.85)); pointer-events: none; z-index: 2; }
+      .cs-skip-btn { position: absolute; top: 10px; right: 12px; z-index: 3; background: rgba(255,255,255,0.75); backdrop-filter: blur(4px); border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px 12px; font-size: 11px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s; }
+      .cs-skip-btn:hover { background: #fff; color: #0A1C60; }
+      .cs-replay-btn { position: absolute; bottom: 48px; right: 12px; z-index: 3; background: rgba(255,255,255,0.75); backdrop-filter: blur(4px); border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px 12px; font-size: 11px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+      .cs-replay-btn:hover { background: #fff; color: #0A1C60; }
+      @media (max-width: 640px) { #cs-animation-container { aspect-ratio: 16/8; max-height: 260px; } }
+      @media (prefers-reduced-motion: reduce) { #cs-animation-container { aspect-ratio: auto; max-height: none; } }
     </style>
   </head>
 
@@ -674,7 +685,12 @@
         showAdminView: false,
         showAutopilot: false,
         autopilotStep: -1,
-        autopilotAppCount: 0
+        autopilotAppCount: 0,
+        csAnimPhase: 'idle',
+        csAnimStartTime: null,
+        csAnimCameraX: 0,
+        csAnimHasPlayed: false,
+        csAnimRAF: null
       };
 
       STATE.recastMode = false;
@@ -707,6 +723,45 @@
       ];
 
       const onboardingMiniTimelineEnabled = true;
+
+      /* ── Side-Scroller Obstacle & Phase Data ── */
+      const CS_OBSTACLES = [
+        // Phase 1: small app requests (0-3s)
+        { t: 0.8, w: 26, h: 26, label: 'O365', color: '#D83B01' },
+        { t: 1.3, w: 26, h: 26, label: 'Teams', color: '#5B53D6' },
+        { t: 1.9, w: 26, h: 28, label: 'Slack', color: '#4A154B' },
+        { t: 2.4, w: 26, h: 26, label: 'Zoom', color: '#2D8CFF' },
+        { t: 2.8, w: 26, h: 26, label: 'Chrome', color: '#4285F4' },
+        // Phase 2: medium platform challenges (3-6s)
+        { t: 3.2, w: 30, h: 50, label: 'VDI', color: '#0A1C60' },
+        { t: 3.7, w: 30, h: 46, label: 'Patch', color: '#dc2626' },
+        { t: 4.1, w: 30, h: 54, label: 'macOS', color: '#333333' },
+        { t: 4.5, w: 28, h: 42, label: 'Intune', color: '#0078D4' },
+        { t: 4.9, w: 30, h: 50, label: 'SCCM', color: '#107C10' },
+        { t: 5.3, w: 28, h: 44, label: 'ARM', color: '#5B53D6' },
+        { t: 5.7, w: 30, h: 48, label: 'AVD', color: '#0A1C60' },
+        // Phase 3: large compliance/security walls (6-9s)
+        { t: 6.2, w: 34, h: 74, label: 'Audit', color: '#b91c1c' },
+        { t: 6.5, w: 34, h: 66, label: 'CVE', color: '#dc2626' },
+        { t: 6.9, w: 30, h: 58, label: 'Cloud', color: '#0070F3' },
+        { t: 7.2, w: 34, h: 70, label: 'SOC 2', color: '#92400e' },
+        { t: 7.5, w: 30, h: 62, label: 'Win11', color: '#0078D4' },
+        { t: 7.8, w: 34, h: 74, label: 'BYOD', color: '#7c3aed' },
+        { t: 8.1, w: 30, h: 66, label: 'AI Proj', color: '#059669' },
+        { t: 8.4, w: 34, h: 70, label: 'Citrix', color: '#0A1C60' },
+        // Phase 4: the wall (9s)
+        { t: 9.0, w: 140, h: 320, label: '', color: '#1e293b', isWall: true }
+      ];
+      const CS_PHASE_TEXT = [
+        { t: 0, text: 'Your team handles app delivery' },
+        { t: 3, text: 'Platforms multiply. Workload compounds.' },
+        { t: 6, text: 'Same team. 3\u00d7 the work.' },
+        { t: 9, text: 'Your roadmap hits a wall.' },
+        { t: 11, text: 'What if the model itself could change?' }
+      ];
+      const CS_WALL_LABELS = ['App Sprawl', 'Tool Fragmentation', 'Manual Rework', 'Update Velocity', 'Security Debt'];
+      const CS_TOTAL_DURATION = 12;
+      const CS_WORLD_SPEED = 240; // pixels per second base scroll speed
 
       function cx(...a){ return a.filter(Boolean).join(' '); }
       function round(n){ return Math.round(n*100)/100; }
@@ -1229,6 +1284,471 @@
         STATE.flowTimers.timeouts.forEach(id => clearTimeout(id));
         STATE.flowTimers.intervals = [];
         STATE.flowTimers.timeouts = [];
+        if (STATE.csAnimRAF) { cancelAnimationFrame(STATE.csAnimRAF); STATE.csAnimRAF = null; }
+      }
+
+      /* ══════════════════════════════════════════════════
+         Current-State Side-Scroller Animation
+         ══════════════════════════════════════════════════ */
+
+      // roundRect polyfill for older browsers
+      if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+          if (typeof r === 'number') r = [r];
+          const rad = r[0] || 0;
+          this.moveTo(x + rad, y);
+          this.lineTo(x + w - rad, y); this.quadraticCurveTo(x + w, y, x + w, y + rad);
+          this.lineTo(x + w, y + h - rad); this.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+          this.lineTo(x + rad, y + h); this.quadraticCurveTo(x, y + h, x, y + h - rad);
+          this.lineTo(x, y + rad); this.quadraticCurveTo(x, y, x + rad, y);
+          this.closePath(); return this;
+        };
+      }
+
+      function initCSAnimation(){
+        const container = document.getElementById('cs-animation-container');
+        const canvas = document.getElementById('cs-animation-canvas');
+        if (!canvas || !container) return;
+        // Respect reduced-motion
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          drawCSStaticFinal(canvas); return;
+        }
+        if (STATE.csAnimPhase === 'done') { drawCSStaticFinal(canvas); return; }
+        if (STATE.csAnimPhase === 'running') return; // already running
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = 960 * dpr;
+        canvas.height = 360 * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        STATE.csAnimPhase = 'running';
+        STATE.csAnimStartTime = null;
+        STATE.csAnimCameraX = 0;
+        // Show skip, hide replay
+        const skipBtn = container.querySelector('.cs-skip-btn');
+        const replayBtn = container.querySelector('.cs-replay-btn');
+        if (skipBtn) skipBtn.style.display = '';
+        if (replayBtn) replayBtn.style.display = 'none';
+        function loop(ts){
+          if (STATE.csAnimPhase !== 'running') return;
+          if (!STATE.csAnimStartTime) STATE.csAnimStartTime = ts;
+          const elapsed = (ts - STATE.csAnimStartTime) / 1000;
+          csGameLoop(ctx, elapsed, 960, 360);
+          if (elapsed >= CS_TOTAL_DURATION) {
+            STATE.csAnimPhase = 'done';
+            STATE.csAnimHasPlayed = true;
+            if (skipBtn) skipBtn.style.display = 'none';
+            if (replayBtn) replayBtn.style.display = '';
+            return;
+          }
+          STATE.csAnimRAF = requestAnimationFrame(loop);
+        }
+        STATE.csAnimRAF = requestAnimationFrame(loop);
+      }
+
+      function csGameLoop(ctx, elapsed, W, H){
+        const groundY = H - 60;
+        // Phase index (0-4)
+        const phase = elapsed < 3 ? 0 : elapsed < 6 ? 1 : elapsed < 9 ? 2 : elapsed < 11 ? 3 : 4;
+        // Camera position — accumulate distance across phases with different speeds
+        let camX = 0;
+        if (elapsed <= 3) {
+          camX = elapsed * CS_WORLD_SPEED;
+        } else if (elapsed <= 6) {
+          camX = 3 * CS_WORLD_SPEED + (elapsed - 3) * CS_WORLD_SPEED * 0.85;
+        } else if (elapsed <= 9) {
+          camX = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + (elapsed - 6) * CS_WORLD_SPEED * 0.55;
+        } else if (elapsed <= 9.8) {
+          camX = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + 3 * CS_WORLD_SPEED * 0.55 + (elapsed - 9) * CS_WORLD_SPEED * 0.15;
+        } else {
+          camX = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + 3 * CS_WORLD_SPEED * 0.55 + 0.8 * CS_WORLD_SPEED * 0.15;
+        }
+        STATE.csAnimCameraX = camX;
+
+        ctx.clearRect(0, 0, W, H);
+        drawCSBackground(ctx, camX, phase, elapsed, W, H, groundY);
+        drawCSGround(ctx, camX, W, H, groundY);
+
+        // Draw obstacles — world position is charX + camera at spawn time + small lead offset
+        CS_OBSTACLES.forEach(function(obs){
+          // Place obstacle so it appears at screen right edge (~960) at its spawn time
+          let obsCamAtSpawn = 0;
+          const ot = obs.t;
+          if (ot <= 3) obsCamAtSpawn = ot * CS_WORLD_SPEED;
+          else if (ot <= 6) obsCamAtSpawn = 3 * CS_WORLD_SPEED + (ot - 3) * CS_WORLD_SPEED * 0.85;
+          else if (ot <= 9) obsCamAtSpawn = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + (ot - 6) * CS_WORLD_SPEED * 0.55;
+          else obsCamAtSpawn = 3 * CS_WORLD_SPEED + 3 * CS_WORLD_SPEED * 0.85 + 3 * CS_WORLD_SPEED * 0.55 + (ot - 9) * CS_WORLD_SPEED * 0.15;
+          const obsWorldX = obsCamAtSpawn + (obs.isWall ? 240 : 700);
+          const screenX = obsWorldX - camX;
+          if (screenX < -150 || screenX > W + 50) return;
+          if (obs.isWall) {
+            drawCSWall(ctx, screenX, groundY, obs, elapsed);
+          } else {
+            drawCSObstacle(ctx, screenX, groundY, obs);
+          }
+        });
+
+        // Ticket rain particles in phase 3
+        if (phase === 2) { drawCSTicketRain(ctx, elapsed, W, groundY); }
+
+        // Character
+        const charX = 160;
+        const stressed = phase >= 2;
+        const stopped = elapsed >= 9.8;
+        const shake = (elapsed >= 9.8 && elapsed < 10.3) ? Math.sin((elapsed - 9.8) * 30) * 3 : 0;
+        drawCSCharacter(ctx, charX + shake, groundY, elapsed, stressed, stopped);
+
+        // HUD
+        const capPct = phase === 0 ? 80 : phase === 1 ? Math.max(55, 80 - (elapsed - 0) * 4) : phase === 2 ? Math.max(15, 55 - (elapsed - 3) * 13) : phase === 3 ? Math.max(0, 15 - (elapsed - 9) * 8) : 0;
+        drawCSCapacityMeter(ctx, capPct, phase, elapsed, W);
+
+        // Phase text
+        let phaseText = '';
+        let textAlpha = 1;
+        for (let i = CS_PHASE_TEXT.length - 1; i >= 0; i--) {
+          if (elapsed >= CS_PHASE_TEXT[i].t) { phaseText = CS_PHASE_TEXT[i].text; break; }
+        }
+        // Fade in during first 0.5s of each phase
+        for (let i = 0; i < CS_PHASE_TEXT.length; i++) {
+          if (elapsed >= CS_PHASE_TEXT[i].t && elapsed < CS_PHASE_TEXT[i].t + 0.5) {
+            textAlpha = (elapsed - CS_PHASE_TEXT[i].t) / 0.5;
+          }
+        }
+        drawCSPhaseText(ctx, phaseText, textAlpha, W);
+
+        // Down-arrow hint in phase 5
+        if (phase === 4) {
+          const arrowAlpha = Math.min(1, (elapsed - 11) / 0.5);
+          ctx.save();
+          ctx.globalAlpha = arrowAlpha * (0.5 + 0.5 * Math.sin(elapsed * 3));
+          ctx.fillStyle = '#0070F3';
+          ctx.beginPath();
+          const ax = W / 2, ay = H - 22;
+          ctx.moveTo(ax - 8, ay - 6); ctx.lineTo(ax + 8, ay - 6); ctx.lineTo(ax, ay + 4);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawCSBackground(ctx, camX, phase, elapsed, W, H, groundY){
+        // Sky gradient shifts warmer with phase
+        const grad = ctx.createLinearGradient(0, 0, 0, groundY);
+        if (phase <= 1) { grad.addColorStop(0, '#dbeafe'); grad.addColorStop(1, '#f0f9ff'); }
+        else if (phase === 2) { grad.addColorStop(0, '#fef3c7'); grad.addColorStop(1, '#fefce8'); }
+        else { grad.addColorStop(0, '#fee2e2'); grad.addColorStop(1, '#fef2f2'); }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, groundY);
+
+        // Clouds (parallax 0.2x)
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        const clouds = [{x:100,y:40,w:80,h:24},{x:350,y:60,w:60,h:18},{x:600,y:35,w:90,h:26},{x:900,y:55,w:70,h:20},{x:1200,y:45,w:85,h:22}];
+        clouds.forEach(function(c){
+          const sx = ((c.x - camX * 0.15) % (W + 200)) - 100;
+          ctx.beginPath();
+          ctx.ellipse(sx, c.y, c.w / 2, c.h / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Server silhouettes (parallax 0.4x) — density increases with phase
+        ctx.fillStyle = phase <= 1 ? '#cbd5e1' : phase === 2 ? '#94a3b8' : '#64748b';
+        const serverCount = phase <= 1 ? 5 : phase === 2 ? 9 : 12;
+        for (let i = 0; i < serverCount; i++) {
+          const baseX = i * 180 + 50;
+          const sx = ((baseX - camX * 0.4) % (W + 300)) - 150;
+          const sh = 40 + (i % 3) * 20;
+          ctx.fillRect(sx, groundY - sh, 18, sh);
+          // LED dots
+          ctx.fillStyle = phase >= 2 ? '#ef4444' : '#22c55e';
+          ctx.fillRect(sx + 3, groundY - sh + 6, 3, 3);
+          ctx.fillRect(sx + 3, groundY - sh + 14, 3, 3);
+          ctx.fillStyle = phase <= 1 ? '#cbd5e1' : phase === 2 ? '#94a3b8' : '#64748b';
+        }
+      }
+
+      function drawCSGround(ctx, camX, W, H, groundY){
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(0, groundY, W, H - groundY);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY); ctx.lineTo(W, groundY);
+        ctx.stroke();
+        // Grid lines on ground
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 0.5;
+        for (let x = -(camX % 60); x < W; x += 60) {
+          ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x, H); ctx.stroke();
+        }
+      }
+
+      function drawCSObstacle(ctx, screenX, groundY, obs){
+        const x = screenX;
+        const y = groundY - obs.h;
+        // Block body
+        ctx.fillStyle = obs.color;
+        const r = 4;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y); ctx.lineTo(x + obs.w - r, y); ctx.quadraticCurveTo(x + obs.w, y, x + obs.w, y + r);
+        ctx.lineTo(x + obs.w, y + obs.h); ctx.lineTo(x, y + obs.h);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.fill();
+        // Highlight edge
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(x + 1, y + 1, obs.w - 2, 3);
+        // Label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(obs.label, x + obs.w / 2, y + obs.h / 2);
+        ctx.textAlign = 'start';
+      }
+
+      function drawCSWall(ctx, screenX, groundY, obs, elapsed){
+        const x = screenX;
+        const y = groundY - obs.h;
+        // Main wall body with gradient
+        const wGrad = ctx.createLinearGradient(x, y, x + obs.w, y);
+        wGrad.addColorStop(0, '#1e293b'); wGrad.addColorStop(1, '#334155');
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(x, y, obs.w, obs.h);
+        // Brick pattern
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        const brickH = 24;
+        const brickW = obs.w / 2;
+        for (let row = 0; row < obs.h / brickH; row++) {
+          const by = y + row * brickH;
+          ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x + obs.w, by); ctx.stroke();
+          const offset = (row % 2) * (brickW / 2);
+          for (let col = 0; col < 3; col++) {
+            const bx = x + offset + col * brickW;
+            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + brickH); ctx.stroke();
+          }
+        }
+        // Red glow on left edge
+        const glowGrad = ctx.createLinearGradient(x - 20, 0, x + 10, 0);
+        glowGrad.addColorStop(0, 'rgba(239,68,68,0)'); glowGrad.addColorStop(1, 'rgba(239,68,68,0.15)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(x - 20, y, 30, obs.h);
+        // Title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('THE CAPACITY', x + obs.w / 2, groundY - obs.h / 2 - 10);
+        ctx.fillText('WALL', x + obs.w / 2, groundY - obs.h / 2 + 10);
+        // Sub-labels on bricks
+        ctx.font = '9px Inter, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        CS_WALL_LABELS.forEach(function(lbl, i){
+          ctx.fillText(lbl, x + obs.w / 2, groundY - 40 - i * 28);
+        });
+        ctx.textAlign = 'start';
+      }
+
+      function drawCSCharacter(ctx, charX, groundY, elapsed, stressed, stopped){
+        const frame = stopped ? 0 : Math.floor(elapsed * 6) % 4;
+        const y = groundY;
+        // Body
+        ctx.fillStyle = '#0A1C60';
+        ctx.beginPath();
+        ctx.moveTo(charX - 8, y - 28); ctx.lineTo(charX + 8, y - 28);
+        ctx.quadraticCurveTo(charX + 10, y - 28, charX + 10, y - 24);
+        ctx.lineTo(charX + 10, y - 10);
+        ctx.quadraticCurveTo(charX + 10, y - 8, charX + 8, y - 8);
+        ctx.lineTo(charX - 8, y - 8);
+        ctx.quadraticCurveTo(charX - 10, y - 8, charX - 10, y - 10);
+        ctx.lineTo(charX - 10, y - 24);
+        ctx.quadraticCurveTo(charX - 10, y - 28, charX - 8, y - 28);
+        ctx.fill();
+        // Head
+        ctx.fillStyle = '#f8b84e';
+        ctx.beginPath();
+        ctx.arc(charX, y - 34, 8, 0, Math.PI * 2);
+        ctx.fill();
+        // Hardhat
+        ctx.fillStyle = '#0070F3';
+        ctx.beginPath();
+        ctx.ellipse(charX, y - 38, 10, 4, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.fillRect(charX - 11, y - 38, 22, 2);
+        // Eyes
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(charX - 3, y - 36, 2, 2);
+        ctx.fillRect(charX + 2, y - 36, 2, 2);
+        // Legs (animated)
+        ctx.fillStyle = '#334155';
+        if (stopped) {
+          ctx.fillRect(charX - 6, y - 8, 4, 8);
+          ctx.fillRect(charX + 2, y - 8, 4, 8);
+        } else {
+          const legAngle = Math.sin(elapsed * 12) * 0.4;
+          ctx.save();
+          ctx.translate(charX - 4, y - 8);
+          ctx.rotate(legAngle);
+          ctx.fillRect(-2, 0, 4, 8);
+          ctx.restore();
+          ctx.save();
+          ctx.translate(charX + 4, y - 8);
+          ctx.rotate(-legAngle);
+          ctx.fillRect(-2, 0, 4, 8);
+          ctx.restore();
+        }
+        // Sweat drops when stressed
+        if (stressed && !stopped) {
+          ctx.fillStyle = 'rgba(59,130,246,0.6)';
+          const dropY = y - 30 + ((elapsed * 3) % 1) * 12;
+          ctx.beginPath();
+          ctx.ellipse(charX + 12, dropY, 2, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          const dropY2 = y - 26 + ((elapsed * 2.5 + 0.5) % 1) * 12;
+          ctx.beginPath();
+          ctx.ellipse(charX + 15, dropY2, 1.5, 2.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Exclamation mark when stopped at wall
+        if (stopped && elapsed < 11) {
+          ctx.fillStyle = '#ef4444';
+          ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('!', charX, y - 48);
+          ctx.textAlign = 'start';
+        }
+      }
+
+      function drawCSTicketRain(ctx, elapsed, W, groundY){
+        ctx.fillStyle = 'rgba(239,68,68,0.15)';
+        const seed = 42;
+        for (let i = 0; i < 20; i++) {
+          const px = ((i * 137 + seed) % W);
+          const py = ((elapsed * 40 + i * 73) % (groundY + 20)) - 10;
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(((i * 31) % 60 - 30) * Math.PI / 180);
+          ctx.fillRect(-4, -6, 8, 12);
+          ctx.strokeStyle = 'rgba(239,68,68,0.25)';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(-4, -6, 8, 12);
+          // Lines on ticket
+          ctx.fillStyle = 'rgba(239,68,68,0.3)';
+          ctx.fillRect(-2, -3, 4, 1);
+          ctx.fillRect(-2, -0.5, 3, 1);
+          ctx.fillStyle = 'rgba(239,68,68,0.15)';
+          ctx.restore();
+        }
+      }
+
+      function drawCSCapacityMeter(ctx, pct, phase, elapsed, W){
+        const mx = W - 140, my = 14, mw = 120, mh = 14;
+        // Label
+        ctx.fillStyle = '#475569';
+        ctx.font = '600 9px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('CAPACITY', mx + mw, my - 3);
+        ctx.textAlign = 'start';
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.08)';
+        ctx.beginPath();
+        ctx.roundRect(mx, my, mw, mh, 4);
+        ctx.fill();
+        // Fill bar
+        const fillW = (pct / 100) * mw;
+        const barColor = pct > 50 ? '#22c55e' : pct > 25 ? '#eab308' : '#ef4444';
+        // Blink when at 0
+        const show = pct > 0 || Math.floor(elapsed * 3) % 2 === 0;
+        if (fillW > 0 && show) {
+          ctx.fillStyle = barColor;
+          ctx.beginPath();
+          ctx.roundRect(mx, my, Math.max(fillW, 4), mh, 4);
+          ctx.fill();
+        }
+        // Blinking red outline at 0
+        if (pct <= 0 && Math.floor(elapsed * 3) % 2 === 0) {
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(mx, my, mw, mh, 4);
+          ctx.stroke();
+        }
+        // Percentage
+        ctx.fillStyle = '#334155';
+        ctx.font = 'bold 9px Inter, system-ui, sans-serif';
+        ctx.fillText(Math.round(pct) + '%', mx + mw + 6, my + 11);
+      }
+
+      function drawCSPhaseText(ctx, text, alpha, W){
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#0A1C60';
+        ctx.font = '600 14px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(text, 16, 24);
+        ctx.restore();
+      }
+
+      function drawCSStaticFinal(canvas){
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = 960 * dpr;
+        canvas.height = 360 * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        const W = 960, H = 360, groundY = H - 60;
+        // Draw final scene: character at wall
+        ctx.clearRect(0, 0, W, H);
+        // Red-tinted sky
+        const grad = ctx.createLinearGradient(0, 0, 0, groundY);
+        grad.addColorStop(0, '#fee2e2'); grad.addColorStop(1, '#fef2f2');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, groundY);
+        // Ground
+        drawCSGround(ctx, 0, W, H, groundY);
+        // Wall
+        const wallX = 260;
+        drawCSWall(ctx, wallX, groundY, { w: 140, h: 320, isWall: true }, 12);
+        // Character
+        drawCSCharacter(ctx, 200, groundY, 12, true, true);
+        // Text
+        ctx.fillStyle = '#0A1C60';
+        ctx.font = '600 14px Inter, system-ui, sans-serif';
+        ctx.fillText('What if the model itself could change?', 16, 24);
+        // Down arrow
+        ctx.fillStyle = '#0070F3';
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        const ax = W / 2, ay = H - 22;
+        ctx.moveTo(ax - 8, ay - 6); ctx.lineTo(ax + 8, ay - 6); ctx.lineTo(ax, ay + 4);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        // Show replay button
+        const container = document.getElementById('cs-animation-container');
+        if (container) {
+          const skipBtn = container.querySelector('.cs-skip-btn');
+          const replayBtn = container.querySelector('.cs-replay-btn');
+          if (skipBtn) skipBtn.style.display = 'none';
+          if (replayBtn) replayBtn.style.display = '';
+        }
+      }
+
+      function skipCSAnimation(){
+        if (STATE.csAnimRAF) { cancelAnimationFrame(STATE.csAnimRAF); STATE.csAnimRAF = null; }
+        STATE.csAnimPhase = 'done';
+        STATE.csAnimHasPlayed = true;
+        const canvas = document.getElementById('cs-animation-canvas');
+        if (canvas) drawCSStaticFinal(canvas);
+      }
+
+      function replayCSAnimation(){
+        if (STATE.csAnimRAF) { cancelAnimationFrame(STATE.csAnimRAF); STATE.csAnimRAF = null; }
+        STATE.csAnimPhase = 'idle';
+        STATE.csAnimStartTime = null;
+        STATE.csAnimCameraX = 0;
+        STATE.csAnimHasPlayed = false;
+        initCSAnimation();
       }
 
       function buildFlowQueue(){
@@ -1397,6 +1917,7 @@
         if (STATE.activeTab === 'roi') { updateROIOutputs(); }
         if (STATE.activeTab === 'problems') {
           renderCapacityGapChart();
+          initCSAnimation();
           if (Math.abs(STATE.currentDemandExponent - STATE.targetDemandExponent) > 0.001 || Math.abs(STATE.currentCapacitySlope - STATE.targetCapacitySlope) > 0.001) {
             requestAnimationFrame(animateCurves);
           }
@@ -1420,6 +1941,12 @@
           <section id="panel-problems" class="space-y-4">
             <div class="mb-1">
               <h2 class="text-lg font-semibold text-[#0A1C60]">The application layer is now the #1 primary constraint in modern <span class="analyst-trigger" data-action="open-analyst-modal">IT.</span></h2>
+            </div>
+            <div id="cs-animation-container" class="section-card relative overflow-hidden mb-3" style="padding:0">
+              <canvas id="cs-animation-canvas"></canvas>
+              <div class="cs-fade-overlay"></div>
+              <button type="button" data-action="skip-cs-anim" class="cs-skip-btn">Skip</button>
+              <button type="button" data-action="replay-cs-anim" class="cs-replay-btn" style="display:none"><i data-lucide="rotate-ccw" class="w-3 h-3"></i> Replay</button>
             </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               ${STAT_CARDS.map(card => {
@@ -3978,7 +4505,7 @@
           if (node) { const id = node.dataset.id; STATE.activePopover = STATE.activePopover === id ? null : id; render(); return; }
           if (!action) return;
 
-          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; clearFlowTimers(); render(); return; }
+          if (action === 'switch-tab') { STATE.activeTab = act.getAttribute('data-tab'); STATE.visitedCards = []; STATE.activePopover = null; if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; STATE.insightContent = null; STATE.flowStep = -1; STATE.flowRunning = false; STATE.flowPaused = false; STATE.flowScenarioIdx = -1; STATE.flowPhase = 'idle'; STATE.flowAppOpened = false; STATE._firstOpenDone = false; STATE.showAdminView = false; STATE.showAutopilot = false; STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; STATE.drPhase = 'idle'; STATE.drRunning = false; STATE.drPaused = false; STATE.drQueue = []; STATE.drQueueIdx = 0; STATE.obPhase = 'idle'; STATE.obRunning = false; STATE.obPaused = false; STATE.obQueue = []; STATE.obQueueIdx = 0; STATE.csAnimPhase = 'idle'; STATE.csAnimStartTime = null; STATE.csAnimCameraX = 0; STATE.csAnimHasPlayed = false; clearFlowTimers(); render(); return; }
           if (action === 'advance') { STATE.activeTab = act.getAttribute('data-next'); if (STATE.openWhyModal && STATE._savedDriverStates) { STATE.drivers.forEach((d, i) => { d.state = STATE._savedDriverStates[i]; }); STATE.showTippingPoint = STATE._savedTippingPoint; STATE.recastMode = STATE._savedRecastMode; STATE.targetDemandExponent = STATE._savedDemandExp; STATE.targetCapacitySlope = STATE._savedCapSlope; STATE._savedDriverStates = null; updateCurves(); } STATE.openWhyModal = null; if (STATE.activeTab === 'roi') { calculateImpact(); } render(); return; }
           if (action === 'toggle-solution-view') {
             const view = act.getAttribute('data-view');
@@ -4001,6 +4528,8 @@
           if (action === 'step-ob') { stepOb(); return; }
           if (action === 'reset-ob') { resetOb(); return; }
           if (action === 'pause-ob') { if (STATE.obPaused) { STATE.obPaused = false; render(); runObQueue(); } else { STATE.obPaused = true; STATE.flowTimers.timeouts.forEach(id => clearTimeout(id)); STATE.flowTimers.timeouts = []; render(); } return; }
+          if (action === 'skip-cs-anim') { skipCSAnimation(); return; }
+          if (action === 'replay-cs-anim') { replayCSAnimation(); return; }
           if (action === 'close-modal') { STATE.modalOpen = false; render(); return; }
           if (action === 'close-why-modal') {
             STATE.openWhyModal = null;
