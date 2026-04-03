@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://unpkg.com">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 
 
     <style>
@@ -297,6 +298,25 @@
       .ob-step.ob-fail .ob-dot { background: #ef4444; }
       @keyframes obPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
       .ob-pulse { animation: obPulse 1.5s ease-in-out infinite; }
+      .ob-laptop { opacity: 0; transform: perspective(800px) rotateY(-15deg) scale(0.92); transition: opacity 0.6s ease, transform 0.6s ease; }
+      .ob-laptop.ob-visible { opacity: 1; transform: perspective(800px) rotateY(0deg) scale(1); }
+      .ob-laptop-r { transition-delay: 0.15s; }
+      .ob-screen-content { min-height: 180px; position: relative; background: #f8fafc; overflow: hidden; }
+      .ob-taskbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); border-top: 1px solid rgba(203,213,225,0.5); font-size: 8px; color: #64748b; }
+      .ob-oobe { background: linear-gradient(135deg, #0078D4, #106EBE); min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+      .ob-desktop { background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 40%, #eff6ff 100%); min-height: 180px; display: flex; flex-direction: column; position: relative; }
+      .ob-desktop-icons { flex: 1; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-content: start; }
+      .ob-desktop-icon { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 40px; }
+      .ob-desktop-icon .ob-icon-sq { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+      .ob-desktop-icon .ob-icon-label { font-size: 7px; color: #334155; text-align: center; line-height: 1.1; }
+      .ob-placeholder-icon .ob-icon-sq { background: rgba(148,163,184,0.25); border: 1.5px dashed #94a3b8; color: #94a3b8; font-size: 10px; font-weight: 700; box-shadow: none; }
+      .ob-toast { position: absolute; bottom: 6px; right: 6px; left: 6px; padding: 5px 8px; border-radius: 6px; font-size: 8px; font-weight: 600; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); }
+      .ob-toast-warn { background: rgba(254,243,199,0.95); border: 1px solid #fbbf24; color: #92400e; }
+      .ob-toast-error { background: rgba(254,226,226,0.95); border: 1px solid #fca5a5; color: #991b1b; }
+      .ob-toast-info { background: rgba(219,234,254,0.95); border: 1px solid #93c5fd; color: #1e40af; }
+      .ob-toast-success { background: rgba(209,250,229,0.95); border: 1px solid #86efac; color: #065f46; }
+      .ob-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); }
+      .ob-overlay-card { background: white; border-radius: 10px; padding: 12px 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
       @keyframes finalGlow { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50% { box-shadow: 0 0 30px 10px rgba(16,185,129,0.15); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
       .final-glow { animation: finalGlow 2s ease-in-out; }
       .cfg-item { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; font-size: 10px; color: #475569; background: white; border: 1px solid #e2e8f0; transition: all 0.3s ease; opacity: 0; transform: translateX(-6px); }
@@ -638,6 +658,8 @@
         calcResult: null,
         showAssumptions: false,
         editingAssumptions: false,
+        pdfCompanyInput: false,
+        pdfCompanyName: '',
         qualified: false,
         flowStep: -1,
         flowRunning: false,
@@ -2340,12 +2362,13 @@
       ];
       const DR_ZONES_LIST = ['Zone A','Zone B','Zone C'];
 
-      const OB_APPS = [
-        {id:'security', label:'Security Agent', icon:'shield'},
-        {id:'vpn', label:'VPN Client', icon:'lock'},
-        {id:'m365', label:'Microsoft 365', icon:'file-text'},
-        {id:'teams', label:'Teams', icon:'message-circle'},
-        {id:'lob', label:'LOB App', icon:'briefcase'},
+      // Default Windows desktop icons (Intune side)
+      const OB_WIN_ICONS = [
+        {l:'E',c:'#0078D4',n:'Edge'},{l:'\ud83d\udcc1',c:'#F0C75E',n:'Files'},{l:'\u2699',c:'#555',n:'Settings'},{l:'\ud83d\uddd1',c:'#777',n:'Recycle'}
+      ];
+      // Intune managed apps that slowly trickle in
+      const OB_INTUNE_SLOW = [
+        {l:'S',c:'#0070F3',n:'Security'},{l:'V',c:'#6366f1',n:'VPN'}
       ];
 
       function renderMultiTenantView(){
@@ -2607,39 +2630,87 @@
           return order.indexOf(p) >= order.indexOf(target);
         };
 
-        // Left side (Intune only) app states per phase
-        function leftAppState(appIdx){
-          if (!past('deploying')) return 'ob-waiting';
-          if (past('result')) return appIdx < 3 ? 'ob-installed' : 'ob-failed';
-          // During deploying: first 2 installed, rest waiting
-          return appIdx < 2 ? 'ob-installed' : appIdx === 2 ? 'ob-active ob-pulse' : 'ob-waiting';
-        }
-        // Right side (AW) app states per phase
-        function rightAppState(appIdx){
-          if (!past('deploying')) return 'ob-waiting';
-          if (past('result')) return 'ob-installed';
-          // During deploying: sequential install
-          return appIdx < 4 ? 'ob-installed' : 'ob-active ob-pulse';
-        }
+        // Elapsed times
+        const leftElapsed = past('result') ? '60+ min' : past('deploying') ? '45 min' : past('diverge') ? '30 min' : past('autopilot') ? '15 min' : '2 min';
+        const rightElapsed = past('result') ? '18 min' : past('deploying') ? '12 min' : past('diverge') ? '10 min' : past('autopilot') ? '8 min' : '2 min';
 
-        function stepIcon(state){ return state === 'ob-done' ? 'check' : state === 'ob-active' ? 'loader' : state === 'ob-fail' ? 'x' : 'circle'; }
-
-        // Left timeline steps
+        // Timeline steps (3 per side)
         const leftSteps = [
           {label:'Autopilot enrollment', state: past('autopilot') ? 'ob-done' : past('setup') ? 'ob-active' : ''},
-          {label:'Desktop appears', state: past('diverge') ? 'ob-done' : past('autopilot') ? 'ob-active' : ''},
-          {label:'Waiting for apps... (60 min)', state: past('result') ? 'ob-fail' : past('diverge') ? 'ob-active' : ''},
-          {label:'Apps trickle in randomly', state: past('result') ? 'ob-fail' : past('deploying') ? 'ob-active' : ''},
+          {label:'Waiting for apps (60+ min)', state: past('result') ? 'ob-fail' : past('diverge') ? 'ob-active' : ''},
           {label:'User calls help desk', state: past('result') ? 'ob-fail' : ''},
         ];
-        // Right timeline steps
         const rightSteps = [
-          {label:'Autopilot + AW Agent installs', state: past('autopilot') ? 'ob-done' : past('setup') ? 'ob-active' : ''},
-          {label:'First sign-in triggers agent', state: past('diverge') ? 'ob-done' : past('autopilot') ? 'ob-active' : ''},
-          {label:'Security \u2192 VPN \u2192 Productivity', state: past('deploying') ? 'ob-done' : past('diverge') ? 'ob-active' : ''},
-          {label:'All apps sequenced & configured', state: past('result') ? 'ob-done' : past('deploying') ? 'ob-active' : ''},
+          {label:'Autopilot + AW Agent deploys', state: past('autopilot') ? 'ob-done' : past('setup') ? 'ob-active' : ''},
+          {label:'25 apps sequenced via agent', state: past('result') ? 'ob-done' : past('diverge') ? 'ob-active' : ''},
           {label:'User productive immediately', state: past('result') ? 'ob-done' : ''},
         ];
+
+        // ===== LEFT DEVICE SCREEN (Intune Only) =====
+        function leftScreen(){
+          if (!past('diverge')) {
+            // OOBE / Autopilot enrollment screen
+            const prog = past('autopilot') ? 70 : 20;
+            const label = past('autopilot') ? 'Enrolling with Intune...' : 'Setting up your device...';
+            return `<div class="ob-oobe">
+              <i data-lucide="cloud-cog" class="w-6 h-6 text-white mb-2" style="opacity:0.8"></i>
+              <div class="spinner mx-auto mb-2" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>
+              <div class="text-[10px] text-white font-semibold">${label}</div>
+              <div class="text-[8px] text-blue-200 mt-0.5">Windows Autopilot</div>
+              <div class="mt-3 w-full max-w-[140px] h-1.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,0.2)">
+                <div class="h-full rounded-full bg-white" style="width:${prog}%;transition:width 0.6s ease"></div>
+              </div>
+            </div>`;
+          }
+          // Windows Desktop — mostly empty
+          const showSlow = past('deploying') ? OB_INTUNE_SLOW : [];
+          const placeholders = past('deploying') ? [{n:'M365'},{n:'Teams'},{n:'LOB'}] : [];
+          return `<div class="ob-desktop">
+            <div class="ob-desktop-icons">
+              ${OB_WIN_ICONS.map(ic => `<div class="ob-desktop-icon"><div class="ob-icon-sq" style="background:${ic.c}">${ic.l}</div><div class="ob-icon-label">${ic.n}</div></div>`).join('')}
+              ${showSlow.map(ic => `<div class="ob-desktop-icon"><div class="ob-icon-sq" style="background:${ic.c}">${ic.l}</div><div class="ob-icon-label">${ic.n}</div></div>`).join('')}
+              ${placeholders.map(ic => `<div class="ob-desktop-icon ob-placeholder-icon"><div class="ob-icon-sq">?</div><div class="ob-icon-label" style="color:#94a3b8">${ic.n}</div></div>`).join('')}
+            </div>
+            ${past('deploying') && !past('result') ? `<div class="ob-toast ob-toast-warn"><i data-lucide="clock" class="w-3 h-3 flex-shrink-0"></i> Software Center: Installing... (45 min)</div>` : ''}
+            ${past('result') && !past('done') ? `<div class="ob-toast ob-toast-error"><i data-lucide="x-circle" class="w-3 h-3 flex-shrink-0"></i> 3 apps failed to install</div>` : ''}
+            ${past('done') ? `<div class="ob-overlay"><div class="ob-overlay-card"><i data-lucide="phone-call" class="w-5 h-5 text-red-500 mx-auto mb-1"></i><div class="text-[10px] font-bold text-red-600">Calling IT Help Desk...</div><div class="text-[8px] text-slate-400">"My apps aren't installed"</div></div></div>` : ''}
+          </div>`;
+        }
+
+        // ===== RIGHT DEVICE SCREEN (With AW) =====
+        function rightScreen(){
+          if (!past('diverge')) {
+            // OOBE / Autopilot + AW Agent enrollment
+            const prog = past('autopilot') ? 90 : 20;
+            const label = past('autopilot') ? 'Enrolling + installing AW Agent...' : 'Setting up your device...';
+            return `<div class="ob-oobe">
+              <i data-lucide="cloud-cog" class="w-6 h-6 text-white mb-2" style="opacity:0.8"></i>
+              <div class="spinner mx-auto mb-2" style="width:18px;height:18px;border-width:2px;border-color:rgba(255,255,255,0.3);border-top-color:white"></div>
+              <div class="text-[10px] text-white font-semibold">${label}</div>
+              <div class="text-[8px] text-blue-200 mt-0.5">Windows Autopilot + Application Workspace</div>
+              <div class="mt-3 w-full max-w-[140px] h-1.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,0.2)">
+                <div class="h-full rounded-full" style="width:${prog}%;transition:width 0.6s ease;background:linear-gradient(90deg,white,#86efac)"></div>
+              </div>
+            </div>`;
+          }
+          // Windows Desktop with cascading apps
+          const showApps = past('deploying');
+          const allDone = past('result');
+          return `<div class="ob-desktop">
+            <div class="ob-desktop-icons">
+              ${OB_WIN_ICONS.map(ic => `<div class="ob-desktop-icon"><div class="ob-icon-sq" style="background:${ic.c}">${ic.l}</div><div class="ob-icon-label">${ic.n}</div></div>`).join('')}
+              ${showApps ? `<div style="width:100%;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">
+                ${AP_APPS.map((app, i) => `<div class="ap-cascade-icon ${showApps ? 'visible' : ''}" style="--d:${allDone ? '0s' : (i * 0.05) + 's'}"><div class="ap-app-sq" style="background:${app.c};width:24px;height:24px;border-radius:5px;display:grid;place-items:center;font-size:8px;font-weight:800;color:white">${app.l}</div></div>`).join('')}
+              </div>` : ''}
+              ${!showApps ? `<div style="width:100%;margin-top:8px;text-align:center">
+                <div class="text-[9px] text-blue-600 font-semibold"><i data-lucide="zap" class="w-3 h-3 inline"></i> AW Agent: Sequencing 25 apps...</div>
+              </div>` : ''}
+            </div>
+            ${past('deploying') && !past('result') ? `<div class="ob-toast ob-toast-info"><i data-lucide="zap" class="w-3 h-3 flex-shrink-0"></i> AW Agent: Delivering ${AP_APPS.length} apps...</div>` : ''}
+            ${past('result') && !past('done') ? `<div class="ob-toast ob-toast-success"><i data-lucide="check-circle" class="w-3 h-3 flex-shrink-0"></i> All ${AP_APPS.length} apps installed!</div>` : ''}
+            ${past('done') ? `<div class="ob-overlay" style="background:rgba(16,185,129,0.1);backdrop-filter:none"><div class="ob-overlay-card" style="border:1.5px solid #10b981"><i data-lucide="user-check" class="w-5 h-5 text-emerald-500 mx-auto mb-1"></i><div class="text-[10px] font-bold text-emerald-700">Sarah is already productive</div><div class="text-[8px] text-slate-400">All apps ready in under 20 min</div></div></div>` : ''}
+          </div>`;
+        }
 
         return `
           <div class="section-card p-4">
@@ -2658,13 +2729,13 @@
 
             ${!past('setup') ? `
               <div class="text-center py-6 text-sm text-slate-400">
-                <i data-lucide="user-plus" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                <i data-lucide="laptop" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
                 <div>Press <strong>Auto</strong> or <strong>Step</strong> to compare onboarding approaches</div>
-                <div class="text-[10px] text-slate-300 mt-1">Intune-only vs. Application Workspace \u2014 same new hire, different experience</div>
+                <div class="text-[10px] text-slate-300 mt-1">Same new hire, same Autopilot \u2014 one gets 2 apps, the other gets 25</div>
               </div>
             ` : `
 
-              <!-- SIDE-BY-SIDE COMPARISON -->
+              <!-- SIDE-BY-SIDE LAPTOP COMPARISON -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 
                 <!-- LEFT: Intune Only -->
@@ -2680,27 +2751,32 @@
                     ${past('result') ? '<span class="text-[10px] font-bold text-red-500 px-2 py-0.5 rounded-full bg-red-50 border border-red-200">3+ hours</span>' : past('diverge') ? '<span class="text-[9px] text-red-400 ob-pulse font-semibold">Waiting...</span>' : ''}
                   </div>
 
-                  <!-- Timeline steps -->
-                  <div class="space-y-1 mb-3">
-                    ${leftSteps.map(s => s.state ? `<div class="ob-step ${s.state}"><div class="ob-dot"></div><span>${s.label}</span></div>` : `<div class="ob-step"><div class="ob-dot"></div><span>${s.label}</span></div>`).join('')}
-                  </div>
-
-                  <!-- Apps -->
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Applications</div>
-                  <div class="space-y-1">
-                    ${OB_APPS.map((a, i) => `
-                      <div class="ob-app ${leftAppState(i)}" style="transition-delay:${i * 0.08}s">
-                        <i data-lucide="${a.icon}" class="w-3 h-3 flex-shrink-0"></i>
-                        <span class="flex-1">${a.label}</span>
-                        ${leftAppState(i).includes('installed') ? '<i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>' : leftAppState(i).includes('failed') ? '<i data-lucide="x" class="w-3 h-3 text-red-500"></i>' : leftAppState(i).includes('active') ? '<i data-lucide="loader" class="w-3 h-3 text-blue-500 ob-pulse"></i>' : '<i data-lucide="clock" class="w-3 h-3"></i>'}
+                  <div class="device-frame ob-laptop ${past('setup') ? 'ob-visible' : ''}" style="margin-bottom:8px">
+                    <div class="device-screen">
+                      <div class="device-titlebar">
+                        <div class="device-dot device-dot-r"></div>
+                        <div class="device-dot device-dot-y"></div>
+                        <div class="device-dot device-dot-g"></div>
+                        <span class="device-titlebar-text">${past('diverge') ? 'Desktop \u2014 ' + leftElapsed : 'Windows Autopilot'}</span>
                       </div>
-                    `).join('')}
+                      <div class="ob-screen-content">
+                        ${leftScreen()}
+                      </div>
+                      ${past('diverge') ? `<div class="ob-taskbar">
+                        <span>\u23f1 ${leftElapsed}</span>
+                        <span style="font-size:7px;color:#94a3b8">${past('result') ? '2 of 5 apps' : past('deploying') ? 'Installing...' : 'Waiting...'}</span>
+                        ${past('result') ? '<span style="color:#ef4444;font-weight:700">\u26a0 FAILED</span>' : '<span style="color:#64748b"><i data-lucide="loader" class="w-3 h-3 inline ob-pulse"></i></span>'}
+                      </div>` : ''}
+                    </div>
                   </div>
 
+                  <div class="space-y-1">
+                    ${leftSteps.map(s => `<div class="ob-step ${s.state}"><div class="ob-dot"></div><span>${s.label}</span></div>`).join('')}
+                  </div>
                   ${past('result') ? `
                     <div class="mt-2 p-2 rounded-lg bg-red-50 border border-red-200 text-[9px] text-red-600 flex items-start gap-1.5">
                       <i data-lucide="alert-triangle" class="w-3.5 h-3.5 flex-shrink-0 mt-0.5"></i>
-                      <span>User waiting 60+ min. 2 apps failed silently. No install ordering. Help desk ticket opened.</span>
+                      <span>60+ min wait. 3 apps failed silently. No install sequencing. Help desk ticket opened.</span>
                     </div>
                   ` : ''}
                 </div>
@@ -2715,30 +2791,35 @@
                         <div class="text-[8px] text-slate-400">Autopilot + AW Agent</div>
                       </div>
                     </div>
-                    ${past('result') ? '<span class="text-[10px] font-bold text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">~20 min</span>' : past('diverge') ? '<span class="text-[9px] text-emerald-500 font-semibold">Deploying...</span>' : ''}
+                    ${past('result') ? '<span class="text-[10px] font-bold text-emerald-600 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200">\u223c20 min</span>' : past('diverge') ? '<span class="text-[9px] text-emerald-500 font-semibold">Deploying...</span>' : ''}
                   </div>
 
-                  <!-- Timeline steps -->
-                  <div class="space-y-1 mb-3">
-                    ${rightSteps.map(s => s.state ? `<div class="ob-step ${s.state}"><div class="ob-dot"></div><span>${s.label}</span></div>` : `<div class="ob-step"><div class="ob-dot"></div><span>${s.label}</span></div>`).join('')}
-                  </div>
-
-                  <!-- Apps -->
-                  <div class="text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-1">Applications <span class="text-emerald-500">(sequenced)</span></div>
-                  <div class="space-y-1">
-                    ${OB_APPS.map((a, i) => `
-                      <div class="ob-app ${rightAppState(i)}" style="transition-delay:${i * 0.08}s">
-                        <i data-lucide="${a.icon}" class="w-3 h-3 flex-shrink-0"></i>
-                        <span class="flex-1">${a.label}</span>
-                        ${rightAppState(i).includes('installed') ? '<i data-lucide="check" class="w-3 h-3 text-emerald-500"></i>' : rightAppState(i).includes('active') ? '<i data-lucide="loader" class="w-3 h-3 text-blue-500 ob-pulse"></i>' : '<i data-lucide="clock" class="w-3 h-3"></i>'}
+                  <div class="device-frame ob-laptop ob-laptop-r ${past('setup') ? 'ob-visible' : ''}" style="margin-bottom:8px">
+                    <div class="device-screen">
+                      <div class="device-titlebar">
+                        <div class="device-dot device-dot-r"></div>
+                        <div class="device-dot device-dot-y"></div>
+                        <div class="device-dot device-dot-g"></div>
+                        <span class="device-titlebar-text">${past('diverge') ? 'Desktop \u2014 ' + rightElapsed : 'Windows Autopilot + AW Agent'}</span>
                       </div>
-                    `).join('')}
+                      <div class="ob-screen-content">
+                        ${rightScreen()}
+                      </div>
+                      ${past('diverge') ? `<div class="ob-taskbar">
+                        <span>\u23f1 ${rightElapsed}</span>
+                        <span style="font-size:7px;color:#10b981;font-weight:600">${past('result') ? '25/25 apps' : past('deploying') ? 'Delivering 25 apps...' : 'AW Agent active'}</span>
+                        ${past('result') ? '<span style="color:#10b981;font-weight:700">\u2713 DONE</span>' : '<span style="color:#0070F3"><i data-lucide="zap" class="w-3 h-3 inline"></i></span>'}
+                      </div>` : ''}
+                    </div>
                   </div>
 
+                  <div class="space-y-1">
+                    ${rightSteps.map(s => `<div class="ob-step ${s.state}"><div class="ob-dot"></div><span>${s.label}</span></div>`).join('')}
+                  </div>
                   ${past('result') ? `
                     <div class="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[9px] text-emerald-700 flex items-start gap-1.5">
                       <i data-lucide="check-circle" class="w-3.5 h-3.5 flex-shrink-0 mt-0.5"></i>
-                      <span>All 5 apps installed in sequence. Identity-based persona applied. User productive in under 20 minutes.</span>
+                      <span>All 25 apps deployed in sequence. Identity-based persona applied. User productive in under 20 minutes.</span>
                     </div>
                   ` : ''}
                 </div>
@@ -2749,8 +2830,8 @@
               ${past('done') ? `
                 <div class="flex flex-wrap justify-center gap-3 mt-3">
                   <div class="ob-callout ob-show text-[#0A1C60] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200"><i data-lucide="timer" class="w-3.5 h-3.5"></i> 3+ hours \u2192 20 minutes</div>
-                  <div class="ob-callout ob-show text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200" style="transition-delay:0.15s"><i data-lucide="trending-down" class="w-3.5 h-3.5"></i> 30\u201360 IT hours/month saved</div>
-                  <div class="ob-callout ob-show text-[#0070F3] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200" style="transition-delay:0.3s"><i data-lucide="phone-off" class="w-3.5 h-3.5"></i> Zero \u201cwhere are my apps?\u201d calls</div>
+                  <div class="ob-callout ob-show text-emerald-700 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200" style="transition-delay:0.15s"><i data-lucide="layers" class="w-3.5 h-3.5"></i> 2 apps vs 25 apps \u2014 same Autopilot</div>
+                  <div class="ob-callout ob-show text-[#0070F3] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200" style="transition-delay:0.3s"><i data-lucide="phone-off" class="w-3.5 h-3.5"></i> Zero help desk calls</div>
                 </div>
               ` : ''}
 
@@ -2761,13 +2842,14 @@
 
       /* ========== OB ANIMATION ENGINE ========== */
       function buildObQueue(){
-        const phases = ['setup','autopilot','diverge','deploying','result','done'];
-        const delays = [800, 1500, 1200, 2000, 1500, 1500];
         const queue = [];
-        phases.forEach((phase, i) => {
-          queue.push({ delay: delays[i], fn(){ STATE.obPhase = phase; render(); } });
-        });
-        queue.push({ delay: 2000, fn(){ STATE.obRunning = false; STATE.obPaused = false; render(); } });
+        queue.push({ delay: 1000, fn(){ STATE.obPhase = 'setup'; render(); } });
+        queue.push({ delay: 2000, fn(){ STATE.obPhase = 'autopilot'; render(); } });
+        queue.push({ delay: 2000, fn(){ STATE.obPhase = 'diverge'; render(); } });
+        queue.push({ delay: 2500, fn(){ STATE.obPhase = 'deploying'; render(); } });
+        queue.push({ delay: 3500, fn(){ STATE.obPhase = 'result'; render(); } });
+        queue.push({ delay: 2500, fn(){ STATE.obPhase = 'done'; render(); } });
+        queue.push({ delay: 2500, fn(){ STATE.obRunning = false; STATE.obPaused = false; render(); } });
         return queue;
       }
 
@@ -3003,9 +3085,9 @@
                   <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">Select a view:</span>
                   <button type="button" data-action="toggle-solution-view" data-view="user" class="view-toggle ${STATE.solutionViewUser ? 'active' : ''}"><i data-lucide="monitor-smartphone" class="w-3.5 h-3.5"></i> User Experience</button>
                   <button type="button" data-action="toggle-solution-view" data-view="admin" class="view-toggle ${STATE.solutionViewAdmin ? 'active' : ''}"><i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Admin Console</button>
-                  <button type="button" data-action="toggle-solution-view" data-view="multitenant" class="view-toggle ${STATE.solutionViewMultiTenant ? 'active' : ''}"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Multi-Tenant</button>
-                  <button type="button" data-action="toggle-solution-view" data-view="dashboard" class="view-toggle ${STATE.solutionViewDashboard ? 'active' : ''}"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dashboard & Reporting</button>
                   <button type="button" data-action="toggle-solution-view" data-view="onboarding" class="view-toggle ${STATE.solutionViewOnboarding ? 'active' : ''}"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Onboarding</button>
+                  <button type="button" data-action="toggle-solution-view" data-view="dashboard" class="view-toggle ${STATE.solutionViewDashboard ? 'active' : ''}"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Dashboard & Reporting</button>
+                  <button type="button" data-action="toggle-solution-view" data-view="multitenant" class="view-toggle ${STATE.solutionViewMultiTenant ? 'active' : ''}"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Multi-Tenant</button>
                 </div>
                 ${(STATE.solutionViewUser || STATE.solutionViewAdmin || STATE.solutionViewMultiTenant || STATE.solutionViewDashboard || STATE.solutionViewOnboarding) ? `
                 <!-- Flow controls -->
@@ -3022,9 +3104,9 @@
             <div class="grid grid-cols-1 ${multiCol ? 'lg:grid-cols-2' : ''} gap-3">
               ${STATE.solutionViewUser ? renderUserView() : ''}
               ${STATE.solutionViewAdmin ? renderAdminConsole() : ''}
-              ${STATE.solutionViewMultiTenant ? renderMultiTenantView() : ''}
-              ${STATE.solutionViewDashboard ? renderDashboardView() : ''}
               ${STATE.solutionViewOnboarding ? renderOnboardingView() : ''}
+              ${STATE.solutionViewDashboard ? renderDashboardView() : ''}
+              ${STATE.solutionViewMultiTenant ? renderMultiTenantView() : ''}
             </div>
 
             <div class="flex flex-col items-end gap-2 mt-2">
@@ -3333,6 +3415,292 @@
         else { ci.endpoints = Math.round(n * 1.3); ci.envs = 6; ci.apps = 250; ci.customApps = 50; ci.monthlyTickets = Math.round(n * 0.12); ci.avgTicketMins = 20; ci.pkgHours = 160; ci.patchHours = 110; }
       }
 
+      function generatePDF(companyName){
+        if (!window.jspdf) { alert('PDF library not loaded. Please refresh and try again.'); return; }
+        try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+        const W = 612, H = 792, ML = 43, MR = 43, CW = W - ML - MR;
+        const r = STATE.calcResult, ci = STATE.calcInputs, sc = STATE.calcScenario, a = ROI_ASSUMPTIONS[sc];
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Brand colors
+        const PB = [0,0,204], AC = [0,191,255], DT = [26,26,46], MG = [74,74,90], LG = [240,240,246];
+        const GR = [15,122,63], RR = [204,34,34], CO = [224,112,80], MB = [170,187,238], DB = [34,34,221];
+
+        function setC(c){ doc.setTextColor(c[0],c[1],c[2]); }
+        function setF(c){ doc.setFillColor(c[0],c[1],c[2]); }
+        function setD(c){ doc.setDrawColor(c[0],c[1],c[2]); }
+
+        function drawHeader(pg){
+          setF(PB); doc.rect(0, 0, W, 52, 'F');
+          // Recast wordmark
+          doc.setFont('Helvetica','bold'); doc.setFontSize(16); setC([255,255,255]); doc.text('Recast', ML, 32);
+          const rw = doc.getTextWidth('Recast');
+          doc.setFont('Helvetica','normal'); doc.setFontSize(8); setC(AC); doc.text('Software', ML + rw + 3, 32);
+          // Decorative +
+          doc.setFont('Helvetica','normal'); doc.setFontSize(12); setC(DB); doc.text('+', 180, 14); doc.text('+', 420, 40);
+          // Right side
+          doc.setFont('Helvetica','bold'); doc.setFontSize(10); setC([255,255,255]); doc.text('Prepared for ' + companyName, W - MR, 18, { align: 'right' });
+          doc.setFont('Helvetica','normal'); doc.setFontSize(7.5); setC(MB); doc.text('Executive Impact Summary', W - MR, 28, { align: 'right' });
+          doc.setFontSize(7); doc.text(today, W - MR, 37, { align: 'right' });
+        }
+
+        function drawFooter(pg){
+          setF(PB); doc.rect(0, H - 18, W, 18, 'F');
+          doc.setFont('Helvetica','normal'); doc.setFontSize(6.5); setC(MB);
+          doc.text('Recast Software  |  Business Impact Summary  |  Confidential', ML, H - 6);
+          doc.text('Page ' + pg + ' of 2', W - MR, H - 6, { align: 'right' });
+        }
+
+        // Column helpers for page 1
+        const GAP = 14, COLW = (CW - GAP) / 2, LX = ML, RX = ML + COLW + GAP;
+        const FS = 6.5, BFS = 6.5, HH = 13;
+
+        function sectionBar(y, text){
+          setF(LG); doc.rect(ML, y, CW, 18, 'F');
+          doc.setFont('Helvetica','bold'); doc.setFontSize(9); setC(PB); doc.text(text, ML + 8, y + 12);
+          return y + 18;
+        }
+        function colBar(x, y, w, text){
+          setF(PB); doc.rect(x, y, w, HH, 'F');
+          doc.setFont('Helvetica','bold'); doc.setFontSize(7); setC([255,255,255]); doc.text(text, x + 5, y + 9);
+          return y + HH + 3;
+        }
+        function subHead(x, y, w, text){
+          setF([230,230,255]); doc.rect(x, y, w, 11, 'F');
+          doc.setFont('Helvetica','bold'); doc.setFontSize(BFS); setC(PB); doc.text(text, x + 5, y + 8);
+          return y + 13;
+        }
+        function blt(x, y, w, boldText, normalText){
+          setF([0,180,80]); doc.circle(x + 4, y + 3, 2, 'F');
+          const bx = x + 11, maxW = w - 14;
+          doc.setFontSize(BFS);
+          if (boldText) {
+            doc.setFont('Helvetica','bold'); setC(DT);
+            const bw = doc.getTextWidth(boldText + ' ');
+            doc.setFont('Helvetica','normal'); setC(MG);
+            const restLines = doc.splitTextToSize(normalText, maxW - bw);
+            if (restLines.length <= 1) {
+              doc.setFont('Helvetica','bold'); setC(DT); doc.text(boldText, bx, y + 5);
+              doc.setFont('Helvetica','normal'); setC(MG); doc.text(' ' + normalText, bx + bw - doc.getTextWidth(' '), y + 5);
+              return y + 10;
+            }
+            // Multi-line: bold on first line, rest wraps as normal
+            doc.setFont('Helvetica','bold'); setC(DT); doc.text(boldText, bx, y + 5);
+            doc.setFont('Helvetica','normal'); setC(MG);
+            const allLines = doc.splitTextToSize(normalText, maxW);
+            const firstFit = doc.splitTextToSize(normalText, maxW - bw);
+            doc.text(firstFit[0], bx + bw, y + 5);
+            const remaining = normalText.substring(firstFit[0].length).trim();
+            if (remaining) {
+              const wrapLines = doc.splitTextToSize(remaining, maxW);
+              for (let i = 0; i < wrapLines.length; i++) { doc.text(wrapLines[i], bx, y + 5 + (i + 1) * 8); }
+              return y + (wrapLines.length + 1) * 8 + 2;
+            }
+            return y + 10;
+          }
+          doc.setFont('Helvetica','normal'); setC(MG);
+          const lines = doc.splitTextToSize(normalText, maxW);
+          doc.text(lines, bx, y + 5);
+          return y + lines.length * 8 + 2;
+        }
+        function callout(x, y, w, text){
+          setF([240,245,255]); doc.rect(x, y, w, 14, 'F');
+          setD(PB); doc.setLineWidth(2); doc.line(x, y, x, y + 14); doc.setLineWidth(0.5);
+          doc.setFont('Helvetica','italic'); doc.setFontSize(BFS); setC(DT); doc.text(text, x + 8, y + 9);
+          return y + 18;
+        }
+
+        // ============ PAGE 1 ============
+        drawHeader(1);
+
+        // === LEFT COLUMN ===
+        let ly = 58;
+        ly = colBar(LX, ly, COLW, 'MARKET TRENDS DRIVING CHANGE');
+        ly = blt(LX, ly, COLW, '', 'Endpoint complexity is accelerating. Organizations manage Windows, macOS, VDI, AVD, and cloud workspaces simultaneously.');
+        ly = blt(LX, ly, COLW, '', 'AI and new tooling adoption is outpacing IT\u2019s delivery capacity. Business requests stack on top of existing backlogs.');
+        ly = blt(LX, ly, COLW, '', 'Security patching windows are shrinking. SOC 2, ISO 27001, and CIS benchmarks demand faster, documented cycles.');
+        ly = blt(LX, ly, COLW, '', 'Packaging talent is scarce and expensive. Specialist skills are hard to hire, harder to retain, and impossible to scale with headcount.');
+        ly = blt(LX, ly, COLW, '', 'Cloud and platform migrations are constant. Every migration multiplies app delivery work unless there is a platform-agnostic layer.');
+        ly += 4;
+
+        ly = colBar(LX, ly, COLW, 'WHY CLIENTS ARE CHANGING THEIR APPROACH');
+        doc.setFont('Helvetica','bold'); doc.setFontSize(BFS); setC(DT);
+        doc.text('IT teams face three compounding fronts that worsen as the organization grows:', LX + 5, ly + 6);
+        ly += 12;
+
+        ly = subHead(LX, ly, COLW, 'SPEED \u2014 The business experiences IT moving too slowly');
+        ly = blt(LX, ly, COLW, 'Multi-platform packaging:', 'Same app rebuilt from scratch for every platform \u2014 ConfigMgr, Intune, Citrix, AVD, macOS.');
+        ly = blt(LX, ly, COLW, 'Slow security patching:', 'Critical patches take 5\u201310 days to deploy across platforms. Each is its own job.');
+        ly = blt(LX, ly, COLW, 'New hire onboarding delays:', 'Employees wait days for the right apps. Manual tickets, wrong devices, lost productivity.');
+        ly = blt(LX, ly, COLW, 'AI/tooling rollout bottlenecks:', 'New tools get stuck behind packaging backlogs. Rollouts slip to next quarter.');
+        ly += 2;
+
+        ly = subHead(LX, ly, COLW, 'SCALE \u2014 Everything gets worse as the organization grows');
+        ly = blt(LX, ly, COLW, 'Platform sprawl:', 'Every new platform multiplies workload against every existing application.');
+        ly = blt(LX, ly, COLW, 'Engineer burnout:', 'Best engineers spend 30\u201340% of time on repetitive packaging. Strategic work never gets prioritized.');
+        ly = blt(LX, ly, COLW, 'Talent scarcity:', 'Packaging engineers are specialists \u2014 expensive, hard to find, hard to replace.');
+        ly = blt(LX, ly, COLW, 'Migration bottlenecks:', 'Every migration stalls because app delivery can\u2019t keep pace. IT becomes the bottleneck.');
+        ly += 2;
+
+        ly = subHead(LX, ly, COLW, 'RISK \u2014 What keeps the CIO and CISO up at night');
+        ly = blt(LX, ly, COLW, 'Compliance gaps:', 'Audit evidence built manually after the fact \u2014 spreadsheets and memory.');
+        ly = blt(LX, ly, COLW, 'Inconsistent user experience:', 'Same app behaves differently by delivery method \u2014 version conflicts, missing features.');
+        ly = blt(LX, ly, COLW, 'Single points of failure:', 'Delivery capability lives in specific people\u2019s heads. One departure creates a gap.');
+        ly = blt(LX, ly, COLW, 'IT capacity trapped:', '30\u201365% of packaging hours consumed by reactive work. No capacity for strategy.');
+
+        // === RIGHT COLUMN ===
+        let ry = 58;
+        ry = colBar(RX, ry, COLW, 'WHERE APPLICATION WORKSPACE FITS');
+        doc.setFont('Helvetica','bold'); doc.setFontSize(BFS); setC(DT);
+        doc.text('Designed for organizations managing apps across multiple delivery systems:', RX + 5, ry + 5);
+        ry += 10;
+        ry = blt(RX, ry, COLW, 'Microsoft Intune:', 'Cloud-native endpoint management for Windows and macOS.');
+        ry = blt(RX, ry, COLW, 'ConfigMgr / SCCM:', 'On-prem and co-managed device fleets.');
+        ry = blt(RX, ry, COLW, 'Azure Virtual Desktop / VDI:', 'Virtual desktop and app virtualization environments.');
+        ry = blt(RX, ry, COLW, 'Windows + macOS endpoints:', 'Physical devices across hybrid workforces.');
+        ry = blt(RX, ry, COLW, 'Cloud workspaces:', 'Citrix and cloud-hosted environments.');
+        ry += 2;
+
+        ry = colBar(RX, ry, COLW, 'BETTER TOGETHER: PARTNER ECOSYSTEM');
+        ry = blt(RX, ry, COLW, 'Microsoft Intune + SCCM:', 'One definition deploys to both. Co-management becomes seamless.');
+        ry = blt(RX, ry, COLW, 'Citrix / VMware Horizon:', 'Single application definition layer feeds all VDI platforms with consistent delivery.');
+        ry = blt(RX, ry, COLW, '8,000+ Pre-Tested Apps:', 'Eliminates custom packaging for the majority of third-party applications.');
+        ry += 2;
+
+        ry = colBar(RX, ry, COLW, 'FEATURES & OUTCOMES');
+        ry = blt(RX, ry, COLW, 'Unified Packaging:', 'Package once, deliver across Intune, SCCM, VDI, AVD, macOS from a single workflow.');
+        ry = blt(RX, ry, COLW, 'Automated Lifecycle:', 'Package, test, deploy, update, and retire apps from one place. Version sprawl eliminated.');
+        ry = blt(RX, ry, COLW, 'Ring-Based Deployment:', 'Automated rollout across test, pilot, and production rings with promotion workflows.');
+        ry = blt(RX, ry, COLW, 'Identity-Based Delivery:', 'Apps assigned by user identity, not device. Same experience regardless of endpoint.');
+        ry = blt(RX, ry, COLW, 'Automated Compliance:', 'Deployment evidence generated with every patch. Audit-ready by default.');
+        ry = blt(RX, ry, COLW, 'Governance and RBAC:', 'Role-based access, audit trails, and visibility across all environments.');
+        ry += 2;
+
+        ry = colBar(RX, ry, COLW, 'PROVEN AT SCALE');
+        ry = blt(RX, ry, COLW, '60M+ devices managed', 'across 130+ countries worldwide.');
+        ry = blt(RX, ry, COLW, 'Trusted by:', 'Costco, Citibank, McKinsey, Johns Hopkins, the U.S. Air Force, and the Government of Canada.');
+        ry = blt(RX, ry, COLW, '87 CSAT score', '\u2014 highest in the industry.');
+        ry = blt(RX, ry, COLW, 'SOC 2 Type II and ISO 27001', 'certified.');
+        ry = callout(RX, ry, COLW, 'Built for teams that can\u2019t afford downtime.');
+        ry += 2;
+
+        ry = colBar(RX, ry, COLW, 'UP AND RUNNING FAST');
+        ry = blt(RX, ry, COLW, 'Live in 4\u20136 weeks.', 'From kickoff to full rollout.');
+        ry = blt(RX, ry, COLW, 'No rip-and-replace.', 'Application Workspace connects to what you already have.');
+        ry = blt(RX, ry, COLW, 'Dedicated success manager', 'with you from day one to go-live.');
+        ry = blt(RX, ry, COLW, '1\u20132 engineers part-time.', 'No big project team needed.');
+        // Timeline dots
+        ry += 4;
+        const steps = ['Kickoff','Assessment','Pilot','Validation','Full Rollout'];
+        const dotSpacing = (COLW - 20) / (steps.length - 1);
+        steps.forEach((s, i) => {
+          const dx = RX + 10 + i * dotSpacing;
+          setF(i === steps.length - 1 ? [0,180,80] : AC); doc.circle(dx, ry, 3, 'F');
+          if (i < steps.length - 1) { setD([180,210,230]); doc.setLineWidth(1); doc.line(dx + 4, ry, dx + dotSpacing - 4, ry); }
+          doc.setFont('Helvetica','normal'); doc.setFontSize(5); setC(MG); doc.text(s, dx, ry + 9, { align: 'center' });
+        });
+        doc.setLineWidth(0.5);
+        ry += 18;
+        ry = callout(RX, ry, COLW, 'Faster than your next patch cycle.');
+
+        drawFooter(1);
+
+        // ============ PAGE 2 ============
+        doc.addPage('letter', 'portrait');
+        drawHeader(2);
+        let y = 62;
+
+        // Section 5: Estimated Impact
+        y = sectionBar(y, 'ESTIMATED IMPACT FOR ' + companyName.toUpperCase());
+        y += 4;
+        // Scenario badge
+        setF(AC); doc.roundedRect(ML, y, 80, 14, 3, 3, 'F');
+        doc.setFont('Helvetica','bold'); doc.setFontSize(7); setC([255,255,255]); doc.text(a.label + ' Scenario', ML + 40, y + 10, { align: 'center' });
+        y += 22;
+
+        // 3 hero metrics
+        const heroes = [
+          {v: num(r.totalHoursYear), l: 'hours / year recovered', c: PB},
+          {v: String(r.fteCapacity), l: 'FTE-equivalents recoverable', c: PB},
+          {v: num(r.strategicHours), l: 'strategic hours returned / year', c: GR}
+        ];
+        const hw = CW / 3;
+        heroes.forEach((h, i) => {
+          const cx = ML + hw * i + hw / 2;
+          doc.setFont('Helvetica','bold'); doc.setFontSize(22); setC(h.c); doc.text(h.v, cx, y + 16, { align: 'center' });
+          doc.setFont('Helvetica','normal'); doc.setFontSize(8); setC(MG); doc.text(h.l, cx, y + 28, { align: 'center' });
+        });
+        y += 42;
+
+        // Section 6: Where It Comes From
+        y = sectionBar(y, 'WHERE IT COMES FROM');
+        y += 10;
+
+        const bars = [
+          {label:'Support & tickets', hrs: r.ticketHoursReturned, pct: Math.round(a.ticketReduction*100), detail: num(r.ticketsAvoided)+' tickets avoided per month', color: GR},
+          {label:'Packaging', hrs: r.pkgHoursReturned, pct: Math.round(a.pkgReduction*100), detail: Math.round(a.pkgReduction*100)+'% reduction across '+ci.envs+' environments', color: PB},
+          {label:'Patching', hrs: r.patchHoursReturned, pct: Math.round(a.patchReduction*100), detail: 'Staged pipeline replaces per-platform rebuilds', color: AC}
+        ];
+        bars.forEach(b => {
+          doc.setFont('Helvetica','bold'); doc.setFontSize(8.5); setC(DT); doc.text(b.label, ML, y + 8);
+          // Bar background
+          const barX = ML + 120, barW = CW - 240, barH = 8;
+          setF([230,230,236]); doc.rect(barX, y + 2, barW, barH, 'F');
+          // Bar fill
+          setF(b.color); doc.rect(barX, y + 2, barW * (b.pct / 100), barH, 'F');
+          // Hours label
+          doc.setFont('Helvetica','bold'); doc.setFontSize(8.5); setC(b.color); doc.text(num(b.hrs)+' hrs/mo returned', W - MR, y + 8, { align: 'right' });
+          y += 14;
+          doc.setFont('Helvetica','normal'); doc.setFontSize(7); setC(MG); doc.text(b.detail, ML + 120, y + 2);
+          y += 14;
+        });
+        y += 8;
+
+        // Section 7: CLIMAX - Blue block
+        const blockH = 90;
+        setF(PB); doc.rect(ML, y, CW, blockH, 'F');
+        doc.setFont('Helvetica','normal'); doc.setFontSize(7); setC(MB);
+        doc.text('WHERE ' + companyName.toUpperCase() + "'S CAPACITY GOES", ML + CW/2, y + 16, { align: 'center' });
+        doc.setFont('Helvetica','bold'); doc.setFontSize(28); setC([255,255,255]);
+        doc.text(num(r.strategicHours), ML + CW/2, y + 46, { align: 'center' });
+        doc.setFont('Helvetica','normal'); doc.setFontSize(9); setC([180,200,255]);
+        doc.text('hours / year returned to strategic work', ML + CW/2, y + 60, { align: 'center' });
+        doc.setFont('Helvetica','bold'); doc.setFontSize(9); setC([255,255,255]);
+        doc.text(r.fteCapacity + ' FTE-equivalents \u2014 reallocated, not eliminated', ML + CW/2, y + 74, { align: 'center' });
+        y += blockH + 8;
+
+        // Strategic allocation tags
+        doc.setFont('Helvetica','normal'); doc.setFontSize(7.5); setC(MG);
+        doc.text('AI & Copilot rollouts  \u00b7  Cloud & endpoint migrations  \u00b7  Compliance & security  \u00b7  Automation & self-service  \u00b7  Pilot programs', ML + CW/2, y + 8, { align: 'center' });
+        y += 22;
+
+        // Section 8: Dollar equivalent
+        setD([230,230,236]); doc.setLineWidth(1); doc.rect(ML, y, CW, 24, 'S');
+        doc.setFont('Helvetica','bold'); doc.setFontSize(10); setC(GR);
+        doc.text('Annual capacity value: ' + fmtDollars(r.totalRecoveredAnnual), ML + 12, y + 15);
+        doc.setFont('Helvetica','normal'); doc.setFontSize(8); setC(RR);
+        doc.text('Monthly cost of waiting: ' + fmtDollars(r.monthlyCostOfWaiting), W - MR - 12, y + 15, { align: 'right' });
+        y += 36;
+
+        // Section 9: Assumptions
+        setD(CO); doc.setLineWidth(0.5); doc.line(ML, y, ML + CW * 0.4, y);
+        y += 10;
+        doc.setFont('Helvetica','normal'); doc.setFontSize(7); setC(MG);
+        doc.text('Prepared for ' + companyName + '  \u00b7  Based on ' + num(ci.users) + ' employees  \u00b7  ' + ci.envs + ' environments  \u00b7  ' + ci.apps + ' active apps  \u00b7  ' + a.label + ' scenario', ML, y + 4);
+        y += 12;
+        doc.setFontSize(6.5);
+        doc.text('Ticket reduction: ' + Math.round(a.ticketReduction*100) + '%  \u00b7  Packaging reduction: ' + Math.round(a.pkgReduction*100) + '%  \u00b7  Patching reduction: ' + Math.round(a.patchReduction*100) + '%  \u00b7  Strategic reallocation: ' + Math.round(a.strategicRealloc*100) + '%', ML, y + 4);
+        y += 10;
+        doc.text('Generated from Recast Software Business Impact Model  \u00b7  ' + today, ML, y + 4);
+
+        drawFooter(2);
+
+        doc.save('Recast-Impact-Summary-' + companyName.replace(/[^a-zA-Z0-9]/g, '-') + '.pdf');
+        } catch(err) { console.error('PDF generation error:', err); alert('PDF error: ' + err.message); }
+      }
+
       function renderROI(){
         const r = STATE.calcResult;
         const ci = STATE.calcInputs;
@@ -3414,9 +3782,21 @@
                 <button type="button" data-action="open-currentstate-editor" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition">
                   <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Current State
                 </button>
-                ${r ? `<button type="button" data-action="copy-results" class="inline-flex items-center gap-2 bg-transparent text-gray-500 border-2 border-gray-300 px-5 py-2.5 text-sm font-medium focus-ring rounded-full hover:text-[#0070F3] hover:border-[#0070F3] transition ${STATE.copied ? '!border-emerald-400 !text-emerald-600' : ''}">
-                  <i data-lucide="${STATE.copied ? 'check' : 'copy'}" class="w-4 h-4"></i> ${STATE.copied ? 'Copied!' : 'Copy Results'}
-                </button>` : ''}
+                ${r ? (STATE.pdfCompanyInput ? `
+                  <div class="flex items-center gap-3" style="animation:dashSlideUp 0.3s ease forwards">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0000CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+                    <input type="text" id="pdf-company-input" placeholder="Enter company name" value="${STATE.pdfCompanyName}" style="width:280px;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:15px;font-weight:600;color:#0A1C60;outline:none;transition:border-color 0.2s,box-shadow 0.2s" onfocus="this.style.borderColor='#0070F3';this.style.boxShadow='0 0 0 3px rgba(0,112,243,0.1)'" onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'">
+                    <button type="button" data-action="submit-pdf-company" style="width:38px;height:38px;border-radius:50%;background:#0000CC;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background 0.2s;flex-shrink:0" onmouseover="this.style.background='#0000AA'" onmouseout="this.style.background='#0000CC'">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                    <span data-action="cancel-pdf-input" style="color:#94a3b8;font-size:12px;cursor:pointer;margin-left:4px">\u2715</span>
+                  </div>
+                ` : `
+                  <button type="button" data-action="open-pdf-input" class="inline-flex items-center gap-2 text-white px-7 py-2.5 text-sm font-semibold rounded-full transition" style="background:#0000CC" onmouseover="this.style.background='#0000AA'" onmouseout="this.style.background='#0000CC'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+                    Download Executive Summary
+                  </button>
+                `) : ''}
               </div>
               <button type="button" data-action="open-ai-agent" class="inline-flex items-center gap-2 text-white px-4 py-2.5 text-sm font-semibold rounded-full shadow-lg hover:opacity-90 transition" style="background:linear-gradient(135deg,#0070F3,#0A1C60)">
                 <i data-lucide="message-circle-question" class="w-4 h-4"></i> Ask a Question
@@ -3699,42 +4079,9 @@
           }
           if (action === 'reset-autopilot') { clearFlowTimers(); STATE.autopilotStep = -1; STATE.autopilotAppCount = 0; render(); return; }
 
-          if (action === 'copy-results') {
-            const r = STATE.calcResult;
-            if (!r) return;
-            const a = ROI_ASSUMPTIONS[STATE.calcScenario];
-            const ci = STATE.calcInputs;
-
-            const plainText = `BUSINESS IMPACT SUMMARY (${ROI_ASSUMPTIONS[STATE.calcScenario].label} Scenario)\n\nCAPACITY LOCKED TODAY\n  Hours consumed / month:     ${num(r.totalHoursMonth)}\n  FTE-equivalents tied up:    ${r.fteCapacity}\n  Environments managed:       ${ci.envs}\n\nWHAT CHANGES\n  Support hours/mo:           ${num(r.currentSupportHours)} \u2192 ${num(Math.round(r.currentSupportHours - r.ticketHoursReturned))}  (-${Math.round(a.ticketReduction * 100)}%)\n  Tickets/mo:                 ${num(ci.monthlyTickets)} \u2192 ${num(ci.monthlyTickets - r.ticketsAvoided)}  (-${Math.round(a.ticketReduction * 100)}%)\n  Packaging hours/mo:         ${num(ci.pkgHours)} \u2192 ${num(Math.round(ci.pkgHours - r.pkgHoursReturned))}  (-${Math.round(a.pkgReduction * 100)}%)\n  Patching hours/mo:          ${num(ci.patchHours)} \u2192 ${num(Math.round(ci.patchHours - r.patchHoursReturned))}  (-${Math.round(a.patchReduction * 100)}%)\n\nCAPACITY RECOVERED\n  Hours returned / year:      ${num(r.totalHoursYear)}\n  FTE-equivalents:            ${r.fteCapacity}\n  Strategic hours unlocked:   ${num(r.strategicHours)} / year\n  Dollar equivalent:          ${fmtDollars(r.totalRecoveredAnnual)} / year\n\nTIME TO VALUE:                4-6 weeks\nPLATFORM RISK:                Zero disruption to existing systems\n\nEstimated impact. Generated by Recast Software Business Impact Model.`;
-
-            try {
-              navigator.clipboard.writeText(plainText).then(function() {
-                STATE.copied = true; render();
-                setTimeout(function() { STATE.copied = false; render(); }, 2500);
-              }).catch(function() {
-                const ta = document.createElement('textarea');
-                ta.value = plainText;
-                ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                STATE.copied = true; render();
-                setTimeout(function() { STATE.copied = false; render(); }, 2500);
-              });
-            } catch(e) {
-              const ta = document.createElement('textarea');
-              ta.value = plainText;
-              ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
-              document.body.appendChild(ta);
-              ta.select();
-              document.execCommand('copy');
-              document.body.removeChild(ta);
-              STATE.copied = true; render();
-              setTimeout(function() { STATE.copied = false; render(); }, 2500);
-            }
-            return;
-          }
+          if (action === 'open-pdf-input') { STATE.pdfCompanyInput = true; render(); setTimeout(() => { const el = document.getElementById('pdf-company-input'); if (el) el.focus(); }, 50); return; }
+          if (action === 'cancel-pdf-input') { STATE.pdfCompanyInput = false; render(); return; }
+          if (action === 'submit-pdf-company') { const input = document.getElementById('pdf-company-input'); const name = (input?.value || '').trim() || 'Your Organization'; STATE.pdfCompanyName = name; generatePDF(name); STATE.pdfCompanyInput = false; render(); return; }
 
           if (action === 'open-currentstate-editor') {
             STATE.modalOpen = true; STATE.editTab = 'change';
@@ -3787,6 +4134,8 @@
           if (buf) { const key = buf.getAttribute('data-key'); const sub = buf.getAttribute('data-subkey'); if (STATE.editBuffers?.[key]) STATE.editBuffers[key][sub] = e.target.value; }
           if (STATE.modalOpen && STATE.editTab === 'chart') { STATE.editChartBuffer = readChartFieldsRaw(); }
         });
+        const pdfInput = document.getElementById('pdf-company-input');
+        if (pdfInput) { pdfInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const name = (pdfInput.value || '').trim() || 'Your Organization'; STATE.pdfCompanyName = name; generatePDF(name); STATE.pdfCompanyInput = false; render(); } }); }
       }
 
       let accordionKeyboardBound = false;
