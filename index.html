@@ -584,10 +584,10 @@ function generatePDF(){
 
   F('bold',15,BLUE);doc.text('Recast',ML,42);const rw=doc.getTextWidth('Recast');
   F('normal',9,GRAY);doc.text('Software',ML+rw+5,42);
-  F('normal',8.5,LIGHT);R('Board Exhibit · Confidential',MR,38);R(dateStr,MR,50);
+  F('normal',8.5,LIGHT);R('Board Exhibit \u00b7 Confidential',MR,38);R(dateStr,MR,50);
   ln(60,INK);
   F('bold',16,INK);doc.text('Application delivery — operating model cost analysis',ML,82);
-  F('normal',9,GRAY);doc.text((client?client+'   ·   ':'')+m.customers+' customers  ·  '+m.seats.toLocaleString('en-US')+' seats  ·  '+Math.round(m.distinctApps)+' apps  ·  '+n1(m.pkgMo)+' req/mo (derived)  ·  '+m.env+' env/app  ·  $'+Math.round(m.rate)+'/hr ('+geoLbl+')  ·  $'+m.lic+'/user/mo',ML,97);
+  F('normal',9,GRAY);doc.text((client?client+'   \u00b7   ':'')+m.customers+' customers  \u00b7  '+m.seats.toLocaleString('en-US')+' seats  \u00b7  '+Math.round(m.distinctApps)+' apps  \u00b7  '+n1(m.pkgMo)+' req/mo (derived)  \u00b7  '+m.env+' env/app  \u00b7  $'+Math.round(m.rate)+'/hr ('+geoLbl+')  \u00b7  $'+m.lic+'/user/mo',ML,97);
 
   let y=122;F('bold',10,INK);doc.text('Summary',ML,y);y+=5;ln(y);y+=17;
   const bxR=300;const brow=(l,v,c)=>{F('normal',10,INK);doc.text(l,ML,y);F('normal',10,c||INK);R(v,bxR,y);y+=16;};
@@ -600,14 +600,14 @@ function generatePDF(){
   let ry=140,rx=340;const rat=(v,l,c)=>{F('bold',15,c||INK);doc.text(v,rx,ry);F('normal',8.5,LIGHT);const lines=doc.splitTextToSize(l,MR-rx);doc.text(lines,rx,ry+12);ry+=26+lines.length*10;};
   rat(Math.round(m.labHn-m.labHa).toLocaleString('en-US')+' hrs  ('+m.fteFreed.toFixed(1)+' FTE)','Workload removed — derived from the book, rate-independent',GREEN);
   rat((m.pct*100).toFixed(0)+'%','Reduction in cost to deliver');
-  rat((m.roi>=100?'100+':m.roi.toFixed(1))+'×','Return on license spend');
+  rat((m.roi>=100?'100+':m.roi.toFixed(1))+'\u00d7','Return on license spend');
 
   y=Math.max(y,ry)+14;F('bold',10,INK);doc.text('Cost and labor comparison',ML,y);y+=5;ln(y);
   const cHn=300,cHa=356,cCn=430,cCa=500,cD=558,cP=MR;
-  y+=14;F('bold',7.5,LIGHT);doc.text('ACTIVITY — ANNUAL',ML,y);R('HRS CUR',cHn,y);R('HRS AW',cHa,y);R('COST CUR',cCn,y);R('COST AW',cCa,y);R('Δ COST',cD,y);R('Δ %',cP,y);
+  y+=14;F('bold',7.5,LIGHT);doc.text('ACTIVITY — ANNUAL',ML,y);R('HRS CUR',cHn,y);R('HRS AW',cHa,y);R('COST CUR',cCn,y);R('COST AW',cCa,y);R('\u0394 COST',cD,y);R('\u0394 %',cP,y);
   y+=5;ln(y);
   const mrow=(l,hn,ha,cn,ca,o)=>{o=o||{};y+=o.tall?23:17;F(o.bold?'bold':'normal',9,INK);doc.text(l,ML,y-7);if(o.sub){F('normal',7,LIGHT);doc.text(o.sub,ML,y+2);}
-    F(o.bold?'bold':'normal',9,INK);if(hn!==null){R(hrsY(hn),cHn,y-7);R(hrsY(ha),cHa,y-7);}else{R('—',cHn,y-7);R('—',cHa,y-7);}
+    F(o.bold?'bold':'normal',9,INK);if(hn!==null){R(hrsY(hn),cHn,y-7);R(hrsY(ha),cHa,y-7);}else{R('\u2014',cHn,y-7);R('\u2014',cHa,y-7);}
     R(usd(cn),cCn,y-7);R(usd(ca),cCa,y-7);const d=cn-ca;F(o.bold?'bold':'normal',9,d>=0?GREEN:RED);R(dl(d),cD,y-7);
     if(o.pct===false){F('normal',9,LIGHT);R('n/m',cP,y-7);}else{const dp=cn>0?(cn-ca)/cn:0;F(o.bold?'bold':'normal',9,dp>=0?GREEN:RED);R((dp*100).toFixed(0)+'%',cP,y-7);}
     if(o.thick){doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.9);}else{doc.setDrawColor(HAIR[0],HAIR[1],HAIR[2]);doc.setLineWidth(0.6);}doc.line(ML,y+(o.sub?7:2),MR,y+(o.sub?7:2));};
@@ -637,7 +637,7 @@ function generatePDF(){
   uRow('Cost / seat / mo',money2(m.smoN),money2(m.smoA));
   uRow('Cost / customer / yr',usdC(m.custCostN),usdC(m.custCostA));
   uRow('Delivery FTE',m.fteN.toFixed(1),m.fteA.toFixed(1));
-  uRow('Multi-tenant leverage','',(m.lev>=100?'100+':m.lev.toFixed(1))+'×');
+  uRow('Multi-tenant leverage','',(m.lev>=100?'100+':m.lev.toFixed(1))+'\u00d7');
   yr2+=4;
   const con=calcModel({env:2,stdA:0.6,custA:5,tRed:0.20,pRed:0.30});
   const ups=calcModel({env:3.5,stdA:0.25,custA:3,tRed:0.70,pRed:0.60});
@@ -647,7 +647,7 @@ function generatePDF(){
 
   y=Math.max(yd,yr2)+12;ln(y);y+=11;
   F('normal',7.5,LIGHT);
-  const note='Workload derived from the book: distinct apps = apps/customer x (overlap + customers x (1-overlap)); packaging = distinct apps x '+Math.round(m.uRate*100)+'%/mo; patch ops = distinct apps x '+Math.round(num('patchMinApp'))+' min/mo; tickets = seats x '+num('tik100')+'/100. Hours and FTE are rate-independent ('+geoLbl+' $'+Math.round(m.rate)+'/hr; onshore $80–150, blended $30–60, offshore $20–45). Value-driver split uses Shapley values (sum exactly). Basis: Okta 2025 (avg 101 apps/org), Camwood (packaging = 30–40% of admin time), Recast field benchmarks, software = 1/3+ of desk volume (2026), self-service deflection 50–70%. Excludes one-time migration/enablement; license rate partner-tier dependent. Planning estimate, not a measured baseline. Confidential — Internal Use Only.';
+  const note='Workload derived from the book: distinct apps = apps/customer x (overlap + customers x (1-overlap)); packaging = distinct apps x '+Math.round(m.uRate*100)+'%/mo; patch ops = distinct apps x '+Math.round(num('patchMinApp'))+' min/mo; tickets = seats x '+num('tik100')+'/100. Hours and FTE are rate-independent ('+geoLbl+' $'+Math.round(m.rate)+'/hr; onshore $80\u2013150, blended $30\u201360, offshore $20\u201345). Value-driver split uses Shapley values (sum exactly). Basis: Okta 2025 (avg 101 apps/org), Camwood (packaging = 30\u201340% of admin time), Recast field benchmarks, software = 1/3+ of desk volume (2026), self-service deflection 50\u201370%. Excludes one-time migration/enablement; license rate partner-tier dependent. Planning estimate, not a measured baseline. Confidential \u2014 Internal Use Only.';
   doc.text(doc.splitTextToSize(note,MR-ML),ML,y);
 
   doc.save('Recast-AW-Operating-Model'+(client?'-'+client.replace(/[^a-z0-9]+/gi,'-'):'')+'.pdf');
