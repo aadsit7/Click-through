@@ -3,140 +3,139 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Application Delivery — Operating Model Cost Analysis</title>
+<title>Application Workspace — Partner Business Case</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --ink:#1A1A2E; --gray:#4A4A5A; --gray-light:#6E6E78; --hairline:#DDDDEE;
-    --card:#F0F0F6; --bg:#FFFFFF; --headrow:#EDEDF4; --track:#E4E4EE;
-    --blue:#0000CC; --cyan:#00BFFF; --green:#0F7A3F; --red:#B02318;
-    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
-    --max:1120px;
+    --ink:#1D1D1F; --gray:#6E6E73; --gray-light:#86868B;
+    --hairline:#D2D2D7; --card:#F5F5F7; --bg:#FFFFFF;
+    --blue:#007AFF; --green:#34C759; --red:#FF3B30;
+    --cyan:#007AFF; --track:#E8E8ED;
+    --radius-card:14px; --radius-pill:980px;
+    --space-1:8px; --space-2:16px; --space-3:24px; --space-4:40px; --space-5:64px; --space-6:96px;
+    --content-max:1024px;
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --max:var(--content-max);
   }
   *{box-sizing:border-box;}
-  html{-webkit-text-size-adjust:100%;}
-  body{margin:0; background:var(--bg); color:var(--gray); font-family:var(--font); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;}
-  .topbar{display:flex; align-items:center; justify-content:space-between; max-width:var(--max); margin:0 auto; padding:14px 24px; border-bottom:1px solid var(--hairline);}
-  .wordmark{font-size:17px; font-weight:700; color:var(--blue); letter-spacing:-.02em;}
-  .wordmark span{color:var(--gray); font-weight:400; font-size:12px; margin-left:5px;}
-  .topbar .meta{font-size:11px; color:var(--gray-light); text-align:right; line-height:1.4;}
-  .topbar .meta input{font-family:inherit; font-size:11px; color:var(--ink); border:none; border-bottom:1px solid var(--hairline); padding:1px 3px; width:130px; background:transparent;}
+  body{margin:0; background:var(--bg); color:var(--gray); font-family:var(--font); font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; max-width:var(--max); margin:0 auto; padding:var(--space-2) var(--space-3); border-bottom:1px solid var(--hairline);}
+  .wordmark{font-size:17px; font-weight:700; color:var(--blue); letter-spacing:-.01em;}
+  .wordmark span{color:var(--gray-light); font-weight:400; font-size:13px; margin-left:5px;}
+  .topbar .meta{font-size:12px; color:var(--gray-light); text-align:right; line-height:1.5;}
+  .topbar .meta input{font:inherit; font-size:12px; color:var(--ink); border:none; border-bottom:1px solid var(--hairline); padding:1px 3px; width:130px; background:transparent;}
   .topbar .meta input:focus{outline:none; border-bottom-color:var(--blue);}
-  .subbar{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:saturate(180%) blur(8px); border-bottom:1px solid var(--hairline);}
-  .subbar-in{max-width:var(--max); margin:0 auto; padding:10px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
-  .tabbar{display:inline-flex; gap:3px; background:var(--card); border-radius:8px; padding:3px;}
-  .tabbtn{font:inherit; font-size:13px; font-weight:600; color:var(--gray); background:transparent; border:none; padding:7px 15px; border-radius:6px; cursor:pointer;}
-  .tabbtn.active{background:#fff; color:var(--blue);}
+  .subbar{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--hairline);}
+  .subbar-in{max-width:var(--max); margin:0 auto; padding:10px var(--space-3); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .tabbar{display:inline-flex; gap:3px; background:var(--card); border-radius:var(--radius-pill); padding:3px;}
+  .tabbtn{font:inherit; font-size:14px; font-weight:500; color:var(--gray); background:transparent; border:none; padding:8px 18px; border-radius:var(--radius-pill); cursor:pointer;}
+  .tabbtn.active{background:#fff; color:var(--ink); font-weight:600;}
   .btns{display:flex; gap:8px;}
-  .btn{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border-radius:6px; padding:8px 15px; border:none;}
-  .btn-primary{background:var(--blue); color:#fff;} .btn-primary:hover{filter:brightness(1.15);}
-  .btn-secondary{background:#fff; color:var(--blue); border:1px solid var(--blue); padding:7px 14px;} .btn-secondary:hover{background:rgba(0,0,204,.05);}
-  main{max-width:var(--max); margin:0 auto; padding:22px 24px 60px;}
-  .doctitle{font-size:23px; font-weight:700; color:var(--ink); letter-spacing:-.015em; margin:0 0 4px;}
-  .docsub{font-size:13px; color:var(--gray-light); margin:0 0 20px;}
-  .layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:24px; align-items:start;}
-  .assump-col{position:sticky; top:64px; align-self:start;}
-  .apanel{background:var(--card); border-radius:12px; padding:14px 16px 12px;}
-  .apanel .intro{font-size:11.5px; color:var(--gray-light); line-height:1.45; margin:0 0 8px;}
-  .apanel h3{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--blue); margin:12px 0 2px;}
-  .fld{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; border-top:1px solid var(--hairline);}
-  .fld label{font-size:13px; color:var(--ink); flex:1 1 auto; min-width:0;}
-  .fld label i{display:block; font-style:normal; font-size:10.5px; color:var(--gray-light); margin-top:1px;}
-  .im{position:relative; flex:0 0 92px;}
-  .im input{width:100%; padding:7px 8px; font-size:13.5px; font-family:var(--font); color:var(--ink); border:1px solid var(--hairline); border-radius:6px; background:#fff; text-align:right;}
-  .im input:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 2px rgba(0,0,204,.14);}
-  .im .pre,.im .suf{position:absolute; top:50%; transform:translateY(-50%); font-size:12px; color:var(--gray-light); pointer-events:none;}
-  .im .pre{left:8px;} .im .suf{right:8px;}
-  .im input.haspre{padding-left:16px;} .im input.hassuf{padding-right:20px;}
-  .geo{padding:10px 0 4px; border-top:1px solid var(--hairline);}
-  .geo .glab{font-size:13px; color:var(--ink); margin-bottom:6px;}
-  .geo .glab i{font-style:normal; font-size:10.5px; color:var(--gray-light); display:block; margin-top:1px;}
-  .geochips{display:flex; gap:5px; margin-bottom:8px;}
-  .geochip{flex:1; font:inherit; font-size:12px; font-weight:700; padding:6px 3px; border:1px solid var(--hairline); border-radius:6px; background:#fff; color:var(--gray); cursor:pointer; text-align:center; line-height:1.2;}
-  .geochip small{display:block; font-size:9.5px; font-weight:500; color:var(--gray-light); margin-top:1px;}
+  .btn{font:inherit; font-size:15px; font-weight:600; cursor:pointer; border-radius:var(--radius-pill); padding:12px 24px; border:none;}
+  .btn-primary{background:var(--blue); color:#fff;}
+  .btn-primary:hover{filter:brightness(.92);}
+  .btn-secondary{background:transparent; color:var(--blue); border:1px solid var(--blue); padding:11px 23px;}
+  .btn-secondary:hover{background:rgba(0,122,255,.06);}
+  main{max-width:var(--max); margin:0 auto; padding:var(--space-4) var(--space-3) var(--space-6);}
+  .doctitle{font-size:40px; font-weight:700; color:var(--ink); letter-spacing:-.015em; line-height:1.1; margin:0 0 10px;}
+  .docsub{font-size:17px; color:var(--gray); margin:0 0 var(--space-4); max-width:760px;}
+  .layout{display:grid; grid-template-columns:300px minmax(0,1fr); gap:var(--space-3); align-items:start;}
+  .assump-col{position:sticky; top:64px; align-self:start; max-height:calc(100vh - 80px); overflow:auto;}
+  .apanel{background:var(--card); border-radius:var(--radius-card); padding:var(--space-3) var(--space-3) var(--space-2);}
+  .apanel .intro{font-size:13px; color:var(--gray-light); line-height:1.5; margin:0 0 var(--space-1);}
+  .apanel h3{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-light); margin:var(--space-2) 0 2px;}
+  .fld{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 0; border-top:1px solid var(--hairline);}
+  .fld label{font-size:14px; color:var(--ink); flex:1;}
+  .fld label i{display:block; font-style:normal; font-size:12px; color:var(--gray-light); margin-top:1px;}
+  .im{position:relative; flex:0 0 96px;}
+  .im input{width:100%; padding:8px 10px; font-size:16px; font-family:var(--font); color:var(--ink); border:1px solid var(--hairline); border-radius:12px; background:#fff; text-align:right;}
+  .im input:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,122,255,.18);}
+  .im .pre,.im .suf{position:absolute; top:50%; transform:translateY(-50%); font-size:13px; color:var(--gray-light); pointer-events:none;}
+  .im .pre{left:10px;} .im .suf{right:10px;}
+  .im input.haspre{padding-left:20px;} .im input.hassuf{padding-right:22px;}
+  .geo{padding:12px 0 6px; border-top:1px solid var(--hairline);}
+  .geo .glab{font-size:14px; color:var(--ink); margin-bottom:8px;}
+  .geo .glab i{font-style:normal; font-size:12px; color:var(--gray-light); display:block;}
+  .geochips{display:flex; gap:6px; margin-bottom:10px;}
+  .geochip{flex:1; font:inherit; font-size:13px; font-weight:600; padding:8px 4px; border:1px solid var(--hairline); border-radius:var(--radius-pill); background:#fff; color:var(--gray); cursor:pointer; text-align:center; line-height:1.25;}
+  .geochip small{display:block; font-size:10px; font-weight:500; color:var(--gray-light);}
   .geochip.active{background:var(--blue); color:#fff; border-color:var(--blue);}
-  .geochip.active small{color:#cfd3ff;}
+  .geochip.active small{color:rgba(255,255,255,.8);}
   .geo .raterow{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-  .geo .raterow span{font-size:12.5px; color:var(--ink);}
-  .derived{margin-top:12px; padding:10px 12px; background:#fff; border:1px solid var(--hairline); border-radius:8px;}
-  .derived .dh{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--blue); margin-bottom:6px;}
-  .derived .dr{display:flex; justify-content:space-between; font-size:11.5px; padding:2px 0; color:var(--gray);}
+  .geo .raterow span{font-size:14px; color:var(--ink);}
+  .derived{margin-top:var(--space-2); padding:14px 16px; background:#fff; border-radius:12px;}
+  .derived .dh{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-light); margin-bottom:8px;}
+  .derived .dr{display:flex; justify-content:space-between; font-size:13px; padding:3px 0; color:var(--gray);}
   .derived .dr b{color:var(--ink); font-variant-numeric:tabular-nums; font-weight:600;}
-  details.adv{margin-top:12px; border-top:1px solid var(--hairline); padding-top:2px;}
-  details.adv > summary{cursor:pointer; font-size:12.5px; font-weight:700; color:var(--blue); padding:10px 0 4px; list-style:none;}
-  details.adv > summary::-webkit-details-marker{display:none;}
-  details.adv > summary::before{content:"▸ "; color:var(--cyan);}
-  details.adv[open] > summary::before{content:"▾ ";}
-  section{margin-bottom:24px;}
-  h2{font-size:12px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.05em; margin:0 0 10px; padding-bottom:6px; border-bottom:1px solid var(--hairline);}
-  h2 .n{color:var(--blue); margin-right:7px;}
-  .lead{font-size:13.5px; color:var(--gray); margin:0 0 12px; max-width:760px;}
+  details.adv{margin-top:var(--space-2); border-top:1px solid var(--hairline); padding-top:2px;}
+  details.adv > summary, details.more > summary{cursor:pointer; font-size:14px; font-weight:600; color:var(--blue); padding:12px 0 6px; list-style:none;}
+  details.adv > summary::-webkit-details-marker, details.more > summary::-webkit-details-marker{display:none;}
+  details.adv > summary::before, details.more > summary::before{content:"\25B8\00a0 "; color:var(--blue);}
+  details.adv[open] > summary::before, details.more[open] > summary::before{content:"\25BE\00a0 ";}
+  section{margin-bottom:var(--space-5);}
+  h2{font-size:24px; font-weight:700; color:var(--ink); letter-spacing:-.01em; text-transform:none; margin:0 0 var(--space-2); padding-bottom:12px; border-bottom:1px solid var(--hairline);}
+  h2 .n{color:var(--blue); margin-right:8px;}
+  h2 .tag{font-weight:500; color:var(--gray-light); font-size:14px; letter-spacing:0; margin-left:10px; text-transform:none;}
+  .lead{font-size:16px; color:var(--gray); margin:0 0 var(--space-2); max-width:760px;}
   .lead b{color:var(--ink); font-weight:600;}
-  .callout{background:rgba(0,0,204,.05); border-left:2px solid var(--blue); padding:9px 12px; border-radius:0 6px 6px 0; font-size:12px; color:var(--gray); margin:0 0 16px; line-height:1.5;}
+  .callout{background:var(--card); border-left:3px solid var(--blue); padding:14px 18px; border-radius:0 var(--radius-card) var(--radius-card) 0; font-size:14px; color:var(--gray); margin:0 0 var(--space-2); line-height:1.5;}
   .callout b{color:var(--ink);}
   .tablewrap{overflow-x:auto;}
-  table{width:100%; border-collapse:collapse; font-size:13px;}
-  thead th{background:var(--headrow); color:var(--ink); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.02em; padding:8px 10px; border-bottom:1px solid var(--hairline); white-space:nowrap;}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  thead th{background:transparent; color:var(--gray-light); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.06em; padding:10px 12px; border-bottom:1px solid var(--hairline); white-space:nowrap;}
   th.lab{text-align:left;} th.num{text-align:right;}
-  tbody td{padding:8px 10px; border-bottom:1px solid var(--hairline); vertical-align:baseline;}
+  tbody td{padding:16px 12px; border-bottom:1px solid var(--hairline);}
   td.lab{text-align:left; color:var(--ink);}
-  td.lab .sub{display:block; font-size:10.5px; color:var(--gray-light); margin-top:1px;}
+  td.lab .sub{display:block; font-size:12px; color:var(--gray-light); margin-top:2px; font-weight:400;}
   td.num{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap;}
   .pos{color:var(--green);} .neg{color:var(--red);}
-  tr.group td{background:#F7F7FB; font-weight:700; color:var(--ink); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:6px 10px;}
-  tr.sub td{font-weight:700;}
-  tr.total td{border-top:2px solid var(--ink); border-bottom:none; font-weight:700; font-size:14px; padding-top:11px;}
-  .foot-row td{border-bottom:none; font-size:10.5px; color:var(--gray-light); padding-top:7px;}
-  .sumgrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,340px); gap:26px; align-items:center;}
-  .bridge{width:100%; font-size:13.5px; border-collapse:collapse;}
-  .bridge td{padding:8px 2px; border-bottom:1px solid var(--hairline);}
+  tr.group td{background:transparent; font-weight:600; color:var(--gray-light); font-size:11px; text-transform:uppercase; letter-spacing:.06em; padding:20px 12px 8px;}
+  tr.sub td{font-weight:600;}
+  tr.total td{border-top:1px solid var(--hairline); border-bottom:none; font-weight:700; font-size:16px; color:var(--ink); padding-top:16px;}
+  .foot-row td{border-bottom:none; font-size:12px; color:var(--gray-light); padding-top:10px; font-weight:400;}
+  .sumgrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,340px); gap:var(--space-3); align-items:center;}
+  .bridge{width:100%; font-size:15px; border-collapse:collapse;}
+  .bridge td{padding:12px 2px; border-bottom:1px solid var(--hairline);}
   .bridge td:last-child{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); font-weight:600;}
-  .bridge tr.net td{border-top:2px solid var(--ink); border-bottom:none; font-weight:700; font-size:15.5px; padding-top:11px;}
+  .bridge tr.net td{border-top:1px solid var(--hairline); border-bottom:none; font-weight:700; font-size:18px; color:var(--ink); padding-top:14px;}
   .bridge tr.net td:last-child{color:var(--green);}
-  .ratios{display:grid; gap:12px;}
-  .ratio{border-left:2px solid var(--blue); padding:1px 0 1px 12px;}
-  .ratio .v{font-size:21px; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.1;}
-  .ratio .l{font-size:11px; color:var(--gray-light); margin-top:2px;}
-  .ratio.rate-ind{border-left-color:var(--green);}
-  .ratio.rate-ind .v{color:var(--green);}
-  .drv{padding:13px 0; border-top:1px solid var(--hairline);}
+  .ratios{display:grid; gap:var(--space-2);}
+  .ratio{padding:0;}
+  .ratio .v{font-size:28px; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.15;}
+  .ratio .l{font-size:13px; color:var(--gray-light); margin-top:3px;}
+  .ratio.rate-ind .v{color:var(--ink);}
+  .drv{padding:var(--space-2) 0; border-top:1px solid var(--hairline);}
   .drv:first-of-type{border-top:none; padding-top:4px;}
   .drv .top{display:flex; align-items:baseline; justify-content:space-between; gap:12px;}
-  .drv .nm{font-size:14.5px; font-weight:700; color:var(--ink);}
-  .drv .amt{font-size:14.5px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap;}
-  .drv .amt small{color:var(--gray-light); font-weight:600; font-size:11.5px; margin-left:6px;}
-  .drv .mech{font-size:12.5px; color:var(--gray); margin:4px 0 8px; max-width:640px; line-height:1.45;}
-  .drv .mech b{color:var(--ink);}
-  .drvtrack{height:9px; background:var(--track); border-radius:5px; overflow:hidden;}
-  .drvfill{height:9px; border-radius:5px; background:var(--blue); transition:width .3s ease;}
-  .drvsum{margin-top:16px; border-top:2px solid var(--ink); padding-top:12px; display:flex; flex-direction:column; gap:6px;}
-  .drvsum .r{display:flex; justify-content:space-between; font-size:13.5px;}
-  .drvsum .r.big{font-size:16px; font-weight:700; color:var(--ink);}
+  .drv .nm{font-size:16px; font-weight:600; color:var(--ink);}
+  .drv .amt{font-size:16px; font-weight:600; color:var(--ink); white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .drv .amt small{color:var(--gray-light); font-weight:500; font-size:12px; margin-left:6px;}
+  .drv .mech{font-size:14px; color:var(--gray); margin:5px 0 10px; max-width:640px; line-height:1.5;}
+  .drv .mech b{color:var(--ink); font-weight:600;}
+  .drvtrack{height:8px; background:var(--track); border-radius:var(--radius-pill); overflow:hidden;}
+  .drvfill{height:8px; border-radius:var(--radius-pill); background:var(--blue); transition:width .3s;}
+  .drvsum{margin-top:var(--space-2); border-top:1px solid var(--hairline); padding-top:14px; display:flex; flex-direction:column; gap:8px;}
+  .drvsum .r{display:flex; justify-content:space-between; font-size:15px;}
+  .drvsum .r.big{font-size:17px; font-weight:700; color:var(--ink);}
   .drvsum .r.big .g{color:var(--green);}
-  .drvsum .r .k{color:var(--gray);} .drvsum .r .v{font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink);}
+  .drvsum .r .k{color:var(--gray);} .drvsum .r .v{font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums;}
   .drvsum .r .neg{color:var(--red);}
-  .bizcard{background:var(--card); border-radius:12px; padding:20px; margin-top:20px; display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:center;}
-  .bizcard .lev{font-size:38px; font-weight:800; color:var(--blue); letter-spacing:-.02em; line-height:1;}
-  .bizcard .levl{font-size:11.5px; color:var(--gray-light); margin-top:4px; max-width:150px;}
-  .bizcard .txt{font-size:13.5px; color:var(--gray); line-height:1.5;}
-  .bizcard .txt b{color:var(--ink);}
-  details.more{background:var(--card); border-radius:12px; padding:2px 18px 8px; margin-top:6px;}
-  details.more > summary{cursor:pointer; font-size:13px; font-weight:600; color:var(--blue); padding:13px 0; list-style:none;}
-  details.more > summary::-webkit-details-marker{display:none;}
-  details.more > summary::before{content:"▸ "; color:var(--cyan);}
-  details.more[open] > summary::before{content:"▾ ";}
-  .basis{font-size:11.5px; color:var(--gray); line-height:1.55;}
-  .basis b{color:var(--ink);}
-  ol.src{margin:8px 0 0; padding-left:16px; font-size:11px; color:var(--gray-light); line-height:1.6;}
-  ol.src b{color:var(--gray);}
-  ul.risks{margin:8px 0 0; padding-left:16px; font-size:12px; color:var(--gray); line-height:1.5;}
-  .note{font-size:11px; color:var(--gray-light); margin-top:10px; line-height:1.5;}
+  .bizcard{background:var(--card); border-radius:var(--radius-card); padding:var(--space-3); margin-top:var(--space-2); display:grid; grid-template-columns:auto 1fr; gap:var(--space-3); align-items:center;}
+  .bizcard .lev{font-size:44px; font-weight:700; color:var(--ink); letter-spacing:-.015em; line-height:1;}
+  .bizcard .levl{font-size:13px; color:var(--gray-light); margin-top:5px; max-width:160px;}
+  .bizcard .txt{font-size:15px; color:var(--gray); line-height:1.5;}
+  .bizcard .txt b{color:var(--ink); font-weight:600;}
+  details.more{background:var(--card); border-radius:var(--radius-card); padding:4px var(--space-3) var(--space-2); margin-top:var(--space-1);}
+  details.more > summary{font-size:14px; padding:14px 0;}
+  .basis{font-size:13px; color:var(--gray); line-height:1.55;}
+  .basis b{color:var(--ink); font-weight:600;}
+  ol.src{margin:10px 0 0; padding-left:18px; font-size:12px; color:var(--gray-light); line-height:1.6;}
+  ol.src b{color:var(--gray); font-weight:600;}
+  ul.risks{margin:10px 0 0; padding-left:18px; font-size:13px; color:var(--gray); line-height:1.55;}
+  .note{font-size:12px; color:var(--gray-light); margin-top:12px; line-height:1.5;}
   #tab-why{display:none;}
-  footer{max-width:var(--max); margin:0 auto; padding:16px 24px 36px; border-top:1px solid var(--hairline); font-size:11px; color:var(--gray-light); text-align:center;}
-  @media (max-width:860px){
-    .layout{grid-template-columns:1fr;} .assump-col{position:static;}
-    .sumgrid{grid-template-columns:1fr;} .bizcard{grid-template-columns:1fr;}
-  }
+  footer{max-width:var(--max); margin:0 auto; padding:var(--space-2) var(--space-3) var(--space-4); border-top:1px solid var(--hairline); font-size:12px; color:var(--gray-light); text-align:center;}
+  @media (max-width:860px){ .layout{grid-template-columns:1fr;} .assump-col{position:static; max-height:none;} .sumgrid{grid-template-columns:1fr;} .bizcard{grid-template-columns:1fr;} .doctitle{font-size:32px;} }
   @media print{ .subbar,.btns{display:none;} }
 </style>
 </head>
@@ -149,24 +148,24 @@
 
 <div class="subbar"><div class="subbar-in">
   <div class="tabbar">
-    <button class="tabbtn active" data-tab="analysis">Analysis</button>
-    <button class="tabbtn" data-tab="why">Value drivers · why</button>
+    <button class="tabbtn active" data-tab="analysis">Business case</button>
+    <button class="tabbtn" data-tab="why">Value Drivers</button>
   </div>
   <div class="btns">
-    <button class="btn btn-primary" id="makePdf">Export PDF exhibit</button>
+    <button class="btn btn-primary" id="makePdf" title="Download PDF" aria-label="Download PDF" style="display:flex; align-items:center; padding:8px 11px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><polyline points="9 14 12 17 15 14"/></svg></button>
     <button class="btn btn-secondary" id="reset">Reset</button>
   </div>
 </div></div>
 
 <main>
-  <h1 class="doctitle">Application delivery — operating model cost analysis</h1>
-  <p class="docsub">Fully-loaded cost of packaging, delivering, patching and supporting end-user applications — current manual model vs. Recast Application Workspace. All workload is derived from the book you describe; nothing is asserted.</p>
+  <h1 class="doctitle">Application Workspace — partner business case.</h1>
+  <p class="docsub">Current state vs. future state across the three commercial motions in the Recast MSP &amp; SI Partner Guide: margin recovery, a Managed Application Delivery service line, and SI project acceleration. All workload is derived from the book you describe — nothing is asserted.</p>
 
   <div class="layout">
     <!-- ============ ASSUMPTIONS ============ -->
     <div class="assump-col">
       <div class="apanel">
-        <p class="intro">Describe the book; the model derives the workload from it. Every figure updates live on both tabs.</p>
+        <p class="intro">Describe the book; the model derives the workload. Every figure updates live on both tabs.</p>
 
         <h3>The book</h3>
         <div class="fld"><label>Managed seats<i>total across all customers</i></label><div class="im"><input id="seats" type="number" step="500" value="10000"></div></div>
@@ -187,7 +186,18 @@
           <div class="raterow"><span>Loaded cost / hr</span><div class="im"><span class="pre">$</span><input class="haspre" id="rate" type="number" step="5" value="65"></div></div>
         </div>
 
-        <div class="fld"><label>Recast license / user / mo<i>confirm your partner tier</i></label><div class="im"><span class="pre">$</span><input class="haspre" id="lic" type="number" step="0.25" value="1"></div></div>
+        <div class="fld"><label>Recast license / user / mo<i>confirm SKU &amp; partner tier</i></label><div class="im"><span class="pre">$</span><input class="haspre" id="lic" type="number" step="0.25" value="1"></div></div>
+
+        <h3>Service line · MSP motion 2</h3>
+        <div class="fld"><label>Attach rate<i>share of seats buying Managed App Delivery</i></label><div class="im"><input class="hassuf" id="attachPct" type="number" step="5" value="50"><span class="suf">%</span></div></div>
+        <div class="fld"><label>Service price / seat / mo<i>you set scope &amp; price (guide)</i></label><div class="im"><span class="pre">$</span><input class="haspre" id="svcPrice" type="number" step="0.5" value="5"></div></div>
+
+        <h3>SI projects · motion 3</h3>
+        <div class="fld"><label>Migration projects / yr<i>Intune · Citrix→AVD/W365 · Win11 · M&amp;A</i></label><div class="im"><input id="projYr" type="number" step="1" value="6"></div></div>
+        <div class="fld"><label>Apps in scope / project</label><div class="im"><input id="projApps" type="number" step="10" value="120"></div></div>
+        <div class="fld"><label>Share needing (re)packaging</label><div class="im"><input class="hassuf" id="projRepack" type="number" step="5" value="60"><span class="suf">%</span></div></div>
+        <div class="fld"><label>Weeks pulled in / project<i>only when app readiness is critical-path</i></label><div class="im"><input id="projWeeks" type="number" step="0.5" value="2"></div></div>
+        <div class="fld"><label>Project cost / week<i>fully-loaded delivery team run-rate</i></label><div class="im"><span class="pre">$</span><input class="haspre" id="projWkCost" type="number" step="5000" value="30000"></div></div>
 
         <div class="derived">
           <div class="dh">Derived workload — live</div>
@@ -203,15 +213,20 @@
           <h3>Per-app hours</h3>
           <div class="fld"><label>Manual · standard</label><div class="im"><input id="stdT" type="number" step="0.1" value="4.33"></div></div>
           <div class="fld"><label>Manual · custom</label><div class="im"><input id="custT" type="number" step="0.5" value="14"></div></div>
-          <div class="fld"><label>AW · standard</label><div class="im"><input id="stdA" type="number" step="0.05" value="0.4"></div></div>
+          <div class="fld"><label>AW · standard<i>test-approve-release retained</i></label><div class="im"><input id="stdA" type="number" step="0.05" value="0.4"></div></div>
           <div class="fld"><label>AW · custom</label><div class="im"><input id="custA" type="number" step="0.5" value="3.5"></div></div>
           <h3>Support &amp; patch rates</h3>
-          <div class="fld"><label>App tickets / 100 seats / mo<i>conservative — software issues run 30%+ of desk volume</i></label><div class="im"><input id="tik100" type="number" step="1" value="6"></div></div>
+          <div class="fld"><label>App tickets / 100 seats / mo<i>conservative — software is 30%+ of desk volume</i></label><div class="im"><input id="tik100" type="number" step="1" value="6"></div></div>
           <div class="fld"><label>Min / ticket</label><div class="im"><input class="hassuf" id="ticketMin" type="number" step="1" value="18"><span class="suf">m</span></div></div>
-          <div class="fld"><label>Patch ops min / app / mo<i>validation, rings, monitoring beyond packaging</i></label><div class="im"><input class="hassuf" id="patchMinApp" type="number" step="1" value="15"><span class="suf">m</span></div></div>
+          <div class="fld"><label>Patch ops min / app / mo</label><div class="im"><input class="hassuf" id="patchMinApp" type="number" step="1" value="15"><span class="suf">m</span></div></div>
           <h3>Reductions with AW</h3>
-          <div class="fld"><label>Ticket reduction<i>app requests deflect 50–70%</i></label><div class="im"><input class="hassuf" id="tRed" type="number" step="5" value="45"><span class="suf">%</span></div></div>
+          <div class="fld"><label>Ticket reduction<i>Catalog self-service deflects 50–70%</i></label><div class="im"><input class="hassuf" id="tRed" type="number" step="5" value="45"><span class="suf">%</span></div></div>
           <div class="fld"><label>Patching reduction</label><div class="im"><input class="hassuf" id="pRed" type="number" step="5" value="45"><span class="suf">%</span></div></div>
+          <h3>Experience metrics (evidence)</h3>
+          <div class="fld"><label>Request-to-access · current</label><div class="im"><input class="hassuf" id="rtaCur" type="number" step="0.5" value="5"><span class="suf">d</span></div></div>
+          <div class="fld"><label>Request-to-access · with AW</label><div class="im"><input class="hassuf" id="rtaAW" type="number" step="0.5" value="0.5"><span class="suf">d</span></div></div>
+          <div class="fld"><label>Install/launch success · current</label><div class="im"><input class="hassuf" id="succCur" type="number" step="1" value="65"><span class="suf">%</span></div></div>
+          <div class="fld"><label>Install/launch success · with AW</label><div class="im"><input class="hassuf" id="succAW" type="number" step="1" value="95"><span class="suf">%</span></div></div>
           <h3>Optional</h3>
           <div class="fld"><label>Client fee / user / mo<i>0 = skip margin view</i></label><div class="im"><span class="pre">$</span><input class="haspre" id="bill" type="number" step="1" value="0"></div></div>
         </details>
@@ -220,30 +235,39 @@
 
     <!-- ============ TABS ============ -->
     <div>
-      <!-- ANALYSIS -->
+      <!-- BUSINESS CASE -->
       <div id="tab-analysis">
         <section>
-          <h2><span class="n">1</span>Summary</h2>
-          <div class="callout"><b>How this model works:</b> workload is derived, not asserted — distinct apps come from your customers and overlap; packaging, patch and ticket volumes come from that estate and your seats. Shrink the book and every figure shrinks with it. Switching the delivery model moves the <b>dollars</b>; the hours are workload and stay put.</div>
+          <h2><span class="n">1</span>Total annual impact<span class="tag">all three motions</span></h2>
+          <div class="callout"><b>How this model works:</b> workload is derived, not asserted — distinct apps come from your customers and overlap; packaging, patch and ticket volumes come from that estate and your seats. Switching the delivery model moves the <b>dollars</b>; hours are workload and stay put. The three motions follow the Recast MSP &amp; SI Partner Guide and are additive but separately evidenced.</div>
           <p class="lead" id="sumProse">—</p>
           <div class="sumgrid">
             <table class="bridge">
-              <tr><td>Current annual application-delivery cost</td><td id="s_cur">—</td></tr>
-              <tr><td>Gross annual labor reduction</td><td id="s_gross" class="pos">—</td></tr>
-              <tr><td>Less: Recast Application Workspace license</td><td id="s_lic" class="neg">—</td></tr>
-              <tr class="net"><td>Net annual benefit</td><td id="s_net">—</td></tr>
+              <tr><td>① Margin recovery — same contracts, lower cost to deliver</td><td id="s_m1" class="pos">—</td></tr>
+              <tr><td>② Managed Application Delivery — new service gross margin</td><td id="s_m2" class="pos">—</td></tr>
+              <tr><td>③ SI project acceleration — readiness labor + schedule</td><td id="s_m3" class="pos">—</td></tr>
+              <tr class="net"><td>Total annual business impact</td><td id="s_tot">—</td></tr>
             </table>
             <div class="ratios">
               <div class="ratio rate-ind"><div class="v" id="r_fte">—</div><div class="l" id="r_fte_l">—</div></div>
               <div class="ratio"><div class="v" id="r_pct">—</div><div class="l" id="r_pct_l">—</div></div>
-              <div class="ratio"><div class="v" id="r_roi">—</div><div class="l">Labor saved for every $1 of license spend</div></div>
+              <div class="ratio"><div class="v" id="r_roi">—</div><div class="l">Labor saved for every $1 of license spend (motion ①)</div></div>
             </div>
           </div>
           <div class="callout" id="beCallout" style="margin:16px 0 0; border-left-color:var(--green);">—</div>
         </section>
 
         <section>
-          <h2><span class="n">2</span>Cost and labor comparison</h2>
+          <h2><span class="n">2</span>Motion ① — margin recovery<span class="tag">MSP · current vs. with AW</span></h2>
+          <div class="sumgrid" style="margin-bottom:14px;">
+            <table class="bridge">
+              <tr><td>Current annual application-delivery cost</td><td id="s_cur">—</td></tr>
+              <tr><td>Gross annual labor reduction</td><td id="s_gross" class="pos">—</td></tr>
+              <tr><td>Less: Application Workspace license</td><td id="s_lic" class="neg">—</td></tr>
+              <tr class="net"><td>Net annual benefit (motion ①)</td><td id="s_net">—</td></tr>
+            </table>
+            <div class="note" style="margin:0;">Measured against the baseline the model derives — per the guide, margin-recovery claims must be baselined. Labor lines below are that baseline.</div>
+          </div>
           <div class="tablewrap">
             <table>
               <thead><tr>
@@ -254,15 +278,15 @@
               </tr></thead>
               <tbody>
                 <tr class="group"><td colspan="7">Delivery labor (hours × fully-loaded cost)</td></tr>
-                <tr><td class="lab">Off-the-shelf packaging<span class="sub">catalog-eligible; rebuilt per environment</span></td><td class="num" id="h_off_n">—</td><td class="num" id="h_off_a">—</td><td class="num" id="c_off_n">—</td><td class="num" id="c_off_a">—</td><td class="num" id="d_off">—</td><td class="num" id="dp_off">—</td></tr>
-                <tr><td class="lab">Custom packaging<span class="sub">in-house / bespoke apps</span></td><td class="num" id="h_cpk_n">—</td><td class="num" id="h_cpk_a">—</td><td class="num" id="c_cpk_n">—</td><td class="num" id="c_cpk_a">—</td><td class="num" id="d_cpk">—</td><td class="num" id="dp_cpk">—</td></tr>
+                <tr><td class="lab">Off-the-shelf packaging<span class="sub">Setup Store–eligible; today rebuilt per environment</span></td><td class="num" id="h_off_n">—</td><td class="num" id="h_off_a">—</td><td class="num" id="c_off_n">—</td><td class="num" id="c_off_a">—</td><td class="num" id="d_off">—</td><td class="num" id="dp_off">—</td></tr>
+                <tr><td class="lab">Custom / unmanaged packaging<span class="sub">internal, legacy, heavily customized</span></td><td class="num" id="h_cpk_n">—</td><td class="num" id="h_cpk_a">—</td><td class="num" id="c_cpk_n">—</td><td class="num" id="c_cpk_a">—</td><td class="num" id="d_cpk">—</td><td class="num" id="dp_cpk">—</td></tr>
                 <tr><td class="lab">Patching &amp; updates<span class="sub">validate + deploy</span></td><td class="num" id="h_pat_n">—</td><td class="num" id="h_pat_a">—</td><td class="num" id="c_pat_n">—</td><td class="num" id="c_pat_a">—</td><td class="num" id="d_pat">—</td><td class="num" id="dp_pat">—</td></tr>
                 <tr><td class="lab">Application support<span class="sub">requests + install/issue tickets</span></td><td class="num" id="h_tik_n">—</td><td class="num" id="h_tik_a">—</td><td class="num" id="c_tik_n">—</td><td class="num" id="c_tik_a">—</td><td class="num" id="d_tik">—</td><td class="num" id="dp_tik">—</td></tr>
                 <tr class="sub"><td class="lab">Delivery labor subtotal</td><td class="num" id="h_lab_n">—</td><td class="num" id="h_lab_a">—</td><td class="num" id="c_lab_n">—</td><td class="num" id="c_lab_a">—</td><td class="num" id="d_lab">—</td><td class="num" id="dp_lab">—</td></tr>
                 <tr class="group"><td colspan="7">Platform</td></tr>
-                <tr><td class="lab">Recast Application Workspace license<span class="sub">seats × contracted per-user rate</span></td><td class="num">—</td><td class="num">—</td><td class="num" id="c_lic_n">—</td><td class="num" id="c_lic_a">—</td><td class="num" id="d_lic">—</td><td class="num" id="dp_lic">—</td></tr>
+                <tr><td class="lab">Application Workspace license<span class="sub">seats × contracted per-user rate</span></td><td class="num">—</td><td class="num">—</td><td class="num" id="c_lic_n">—</td><td class="num" id="c_lic_a">—</td><td class="num" id="d_lic">—</td><td class="num" id="dp_lic">—</td></tr>
                 <tr class="total"><td class="lab">Total application-delivery cost</td><td class="num">—</td><td class="num">—</td><td class="num" id="c_tot_n">—</td><td class="num" id="c_tot_a">—</td><td class="num" id="d_tot">—</td><td class="num" id="dp_tot">—</td></tr>
-                <tr class="foot-row"><td colspan="7">Δ cost = annual reduction (current − with AW); favorable in green, added cost in parentheses. Platform and total rows carry no labor hours.</td></tr>
+                <tr class="foot-row"><td colspan="7">Δ cost = annual reduction (current − with AW); favorable in green, added cost in parentheses.</td></tr>
               </tbody>
             </table>
           </div>
@@ -276,18 +300,60 @@
               <tbody>
                 <tr><td class="lab">Cost per seat / year</td><td class="num" id="u_syr_n">—</td><td class="num" id="u_syr_a">—</td><td class="num" id="u_syr_d">—</td></tr>
                 <tr><td class="lab">Cost per seat / month</td><td class="num" id="u_smo_n">—</td><td class="num" id="u_smo_a">—</td><td class="num" id="u_smo_d">—</td></tr>
-                <tr><td class="lab">Delivery FTE consumed<span class="sub">labor ÷ 1,920 productive hrs/yr · rate-independent</span></td><td class="num" id="u_fte_n">—</td><td class="num" id="u_fte_a">—</td><td class="num" id="u_fte_d">—</td></tr>
-                <tr><td class="lab">Build effort per app<span class="sub">hrs to package one app, pre-environment · rate-independent</span></td><td class="num" id="u_bld_n">—</td><td class="num" id="u_bld_a">—</td><td class="num" id="u_bld_d">—</td></tr>
+                <tr><td class="lab">Delivery FTE consumed<span class="sub">labor ÷ 1,920 hrs/yr · rate-independent</span></td><td class="num" id="u_fte_n">—</td><td class="num" id="u_fte_a">—</td><td class="num" id="u_fte_d">—</td></tr>
+                <tr><td class="lab">Build effort per app<span class="sub">hrs, pre-environment · rate-independent</span></td><td class="num" id="u_bld_n">—</td><td class="num" id="u_bld_a">—</td><td class="num" id="u_bld_d">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="svcSec">
+          <h2><span class="n">4</span>Motion ② — Managed Application Delivery<span class="tag">MSP · new recurring service line</span></h2>
+          <p class="lead">Per the guide: productize a recurring SKU — curated Catalog, self-service requests, supported third-party updates, staged release rings, entitlement administration, audit evidence. <b>You set scope and price.</b> Cost to serve below is the with-AW delivery cost from motion ①, so nothing is double-counted.</p>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th class="lab" id="svc_hdr">Service P&amp;L — illustrative</th><th class="num">Annual</th></tr></thead>
+              <tbody>
+                <tr><td class="lab">Recurring service revenue<span class="sub" id="svc_rev_sub">—</span></td><td class="num" id="svc_rev">—</td></tr>
+                <tr><td class="lab">Cost to serve attached seats<span class="sub">with-AW delivery cost incl. license</span></td><td class="num" id="svc_cos">—</td></tr>
+                <tr class="total"><td class="lab">Service gross margin</td><td class="num" id="svc_gm">—</td></tr>
+                <tr class="foot-row"><td colspan="2" id="svc_note">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tablewrap" style="margin-top:14px;">
+            <table>
+              <thead><tr><th class="lab">Customer-experience proof metrics<span class="tag" style="margin-left:6px;">renewal &amp; QBR evidence — not monetized</span></th><th class="num">Current</th><th class="num">With AW</th></tr></thead>
+              <tbody>
+                <tr><td class="lab">Request-to-access time</td><td class="num" id="xp_rta_n">—</td><td class="num" id="xp_rta_a">—</td></tr>
+                <tr><td class="lab">Install / launch success</td><td class="num" id="xp_suc_n">—</td><td class="num" id="xp_suc_a">—</td></tr>
+                <tr class="foot-row"><td colspan="3">The guide's proof set: request-to-access, version count, install/launch success, SLA, adoption, renewal. Ticket savings are already monetized in motion ① — these are the service-quality evidence for retention and expansion.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="projSec">
+          <h2><span class="n">5</span>Motion ③ — SI project acceleration<span class="tag">application readiness as a named workstream</span></h2>
+          <p class="lead">For Intune, Citrix→AVD/W365, Windows 11 and M&amp;A programs, application readiness is often the critical-path constraint. Stage and test apps early through Application Workspace; readiness labor is computed with the same per-app engine as motion ①.</p>
+          <div class="tablewrap">
+            <table>
+              <thead><tr><th class="lab" id="pj_hdr">SI portfolio — annual</th><th class="num">Current</th><th class="num">With AW</th><th class="num">Impact</th></tr></thead>
+              <tbody>
+                <tr><td class="lab">App-readiness effort<span class="sub" id="pj_sub">—</span></td><td class="num" id="pj_hrs_n">—</td><td class="num" id="pj_hrs_a">—</td><td class="num" id="pj_lab_d">—</td></tr>
+                <tr><td class="lab">Schedule pulled in<span class="sub">value only when readiness is on the critical path (guide)</span></td><td class="num">—</td><td class="num" id="pj_wk">—</td><td class="num" id="pj_sched">—</td></tr>
+                <tr class="total"><td class="lab">Motion ③ annual value</td><td class="num">—</td><td class="num">—</td><td class="num" id="pj_tot">—</td></tr>
+                <tr class="foot-row"><td colspan="4">Per the guide's commercial truth: acceleration cannot remove unrelated security, infrastructure, licensing, or business delays — set weeks to what app readiness alone controls.</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
         <section>
-          <h2><span class="n">4</span>Sensitivity</h2>
+          <h2><span class="n">6</span>Sensitivity<span class="tag">motion ① engine</span></h2>
           <div class="tablewrap">
             <table>
-              <thead><tr><th class="lab">Scenario</th><th class="num">Net annual benefit</th><th class="num">Cost reduction</th><th class="num">Return on license</th></tr></thead>
+              <thead><tr><th class="lab">Scenario</th><th class="num">Motion ① net benefit</th><th class="num">Cost reduction</th><th class="num">Return on license</th></tr></thead>
               <tbody>
                 <tr><td class="lab">Conservative</td><td class="num" id="z_con_net">—</td><td class="num" id="z_con_pct">—</td><td class="num" id="z_con_roi">—</td></tr>
                 <tr class="sub"><td class="lab">Base — as entered</td><td class="num" id="z_bas_net">—</td><td class="num" id="z_bas_pct">—</td><td class="num" id="z_bas_roi">—</td></tr>
@@ -295,11 +361,11 @@
               </tbody>
             </table>
           </div>
-          <p class="note">Conservative and Upside flex only the efficiency drivers — environments/app, platform per-app hours, patch and ticket reduction — to the low and high ends of the cited ranges; your book (seats, customers, apps) and the labor rate are held constant.</p>
+          <p class="note">Conservative and Upside flex only the efficiency drivers — environments/app, platform per-app hours, patch and ticket reduction — to the ends of the cited ranges; your book and labor rate are held constant.</p>
         </section>
 
         <section id="marginSec" style="display:none;">
-          <h2><span class="n">5</span>Delivery cost as a share of client fee</h2>
+          <h2><span class="n">7</span>Delivery cost as a share of client fee</h2>
           <div class="tablewrap">
             <table>
               <thead><tr><th class="lab">Per seat / month</th><th class="num">Current</th><th class="num">With AW</th><th class="num">Change</th></tr></thead>
@@ -315,22 +381,22 @@
 
         <details class="more">
           <summary>Methodology, basis, sources &amp; risks</summary>
-          <p class="basis"><b>Derivation (workload from the book).</b> Distinct apps = apps/customer × (overlap + customers × (1 − overlap)) — the shared core is counted once, each customer adds only their unique line-of-business apps. Packaging requests/mo = distinct apps × monthly repackage rate. Patch &amp; update ops = distinct apps × per-app minutes/mo. App tickets = seats × tickets per 100 seats. Staffing follows workload, not user population (MetricNet) — which is why FTE scales with the book, not the rate.</p>
-          <p class="basis" style="margin-top:8px;"><b>Cost method.</b> Packaging labor = requests × per-app hours (standard/custom mix) × environments per app; the platform sets the environment factor to 1 (one definition serves all targets) at lower per-app hours. Patching and ticket labor are reduced by the stated percentages. Each labor line = hours × fully-loaded cost; the platform column adds the license. Hours and FTE are rate-independent; only dollars scale with the labor rate. Value-driver attribution uses Shapley values — each capability credited with its average marginal contribution, summing exactly to the total.</p>
+          <p class="basis"><b>Derivation (workload from the book).</b> Distinct apps = apps/customer × (overlap + customers × (1 − overlap)) — the shared core counted once; each customer adds only unique line-of-business apps. Packaging requests/mo = distinct apps × repackage rate. Patch ops = distinct apps × per-app minutes. App tickets = seats × per-100-seat rate. Staffing follows workload, not user population (MetricNet).</p>
+          <p class="basis" style="margin-top:8px;"><b>Motions.</b> ① Cost lines = hours × loaded rate; platform column adds license; net = gross labor reduction − license. ② Service revenue = attached seats × price; cost to serve = attached seats × with-AW cost/seat — the partner sets scope and price (guide). ③ Readiness labor uses the same per-app hours × environments engine on project scope; schedule value = weeks × weekly project cost, applicable only when readiness is critical-path. Value-driver attribution is Shapley — parts sum exactly to motion-① gross.</p>
           <ol class="src">
-            <li><b>App portfolios.</b> Okta Businesses at Work 2025: average 101 apps per organization; large companies (≥2,000 employees) ~211; newest/smallest ~22 — basis for the apps-per-customer segment hints.</li>
-            <li><b>Packaging effort.</b> Camwood: packaging consumes 30–40% of IT-admin time at 60–70% first-pass success. Recast research: 4+ hrs per app; even small orgs repackage 5–10 apps/mo (≈10% of portfolio); mid-to-large estates 100–300+/mo. Community benchmarks: complex apps 8–40 hrs. Estates commonly maintain 2–4 package formats.</li>
-            <li><b>Ticket volume.</b> Software &amp; applications is the largest help-desk category — over a third of all volume (Fixify 2026 benchmark); desk volume typically ~0.5–1+ tickets/user/mo (MetricNet). Default of 6 app install/request tickets per 100 seats is deliberately conservative. Self-service deflects 50–70% of software-request tickets (Giva); enterprise tier-1 median ≈41%.</li>
-            <li><b>Labor cost.</b> 2026 rate guides: US fully-loaded $80–150/hr; India offshore $20–45/hr; blended teams $30–60/hr — selector uses $95/$65/$40 mid-points.</li>
+            <li><b>Recast MSP &amp; SI Partner Guide (Jul 2026).</b> Three commercial motions; proof metrics (cost to serve, labor hours, request-to-access, install/launch success, SLA, renewal); managed packages still require partner testing, approval and rollout policy; Setup Store full breadth requires Release &amp; Patch Management (base license limited); confirm SKU and licensing before commitments.</li>
+            <li><b>App portfolios.</b> Okta Businesses at Work 2025: average 101 apps/org; large (≥2,000 employees) ~211; smallest ~22.</li>
+            <li><b>Packaging effort.</b> Camwood: packaging = 30–40% of IT-admin time at 60–70% first-pass success. Recast: 4+ hrs/app; small orgs repackage 5–10/mo; complex apps 8–40 hrs (community benchmarks). Estates carry 2–4 package formats.</li>
+            <li><b>Tickets.</b> Software &amp; applications = over a third of desk volume (2026 benchmark); ~0.5–1+ tickets/user/mo (MetricNet); default 6 app tickets/100 seats is conservative. Catalog self-service deflects 50–70% of software requests.</li>
+            <li><b>Labor cost.</b> 2026 rate guides: US loaded $80–150/hr; India offshore $20–45; blended $30–60 — selector mid-points $95/$65/$40.</li>
             <li><b>MSP economics.</b> Recurring-services gross margin 50–60%; labor 90%+ of service COGS (Service Leadership / ConnectWise).</li>
-            <li><b>Platform.</b> Application Workspace complements Intune, ConfigMgr, Citrix, AVD, Windows 365 — no rip-and-replace; managed, tested catalog (8,000+ packages) updated daily; self-service; agent install during Autopilot (Recast).</li>
           </ol>
           <ul class="risks">
-            <li>Excludes one-time onboarding, migration and enablement; benefit ramps as adoption completes.</li>
-            <li>License rate is partner-tier dependent and must be confirmed before finalizing.</li>
-            <li>Largest sensitivities: apps per customer, overlap, environments/app, and residual custom-packaging effort — all editable, all shown live in Derived workload.</li>
-            <li>Dollar figures depend on the loaded labor rate; hours and FTE do not.</li>
-            <li>Planning model, not a substitute for a measured baseline or proof-of-value.</li>
+            <li>Margin recovery must be measured against a baseline (guide) — the derived labor lines are that baseline; validate in a proof-of-value.</li>
+            <li>Managed-service inclusions depend on licensed capabilities; Setup Store breadth varies by edition — confirm SKU, edition and partner-tier license before commitments.</li>
+            <li>Project acceleration applies only where application readiness is on the critical path; it cannot remove unrelated security, infrastructure, licensing or business delays (guide).</li>
+            <li>Managed packages still require partner testing, approval and rollout — reflected in non-zero AW per-app hours.</li>
+            <li>Excludes one-time onboarding/migration/enablement; dollar figures scale with the labor rate, hours and FTE do not; planning model, not a measured baseline.</li>
           </ul>
         </details>
       </div>
@@ -338,39 +404,39 @@
       <!-- WHY -->
       <div id="tab-why">
         <section>
-          <h2><span class="n">A</span>Where the savings come from</h2>
-          <p class="lead">These are the ways Application Workspace lifts partner profitability. Each removes a specific block of labor your team performs today; the catalog runs 8,000+ apps for you, one agent deploys to every device, and multi-tenancy (Section B) serves every customer from a single build. Contributions are Shapley-credited and <b>sum exactly to the total labor reduction</b> — adjust any assumption at left to see the mix change.</p>
+          <h2><span class="n">A</span>Where motion ① savings come from</h2>
+          <p class="lead">"Applications stop being the part of every migration and support operation that must be rebuilt by hand" (Partner Guide). Application Workspace is the control and access layer above Intune, Configuration Manager, Citrix, AVD, Windows 365 and Omnissa — traffic control for the roads the customer already owns, not a rip-and-replace. Contributions below are Shapley-credited and <b>sum exactly to the motion-① labor reduction</b>.</p>
           <div id="drivers">
             <div class="drv">
-              <div class="top"><div class="nm">① Recast runs 8,000+ apps end-to-end</div><div class="amt" id="dv_catalog">—<small id="dp_catalog"></small></div></div>
-              <div class="mech">Recast <b>packages, tests, deploys, updates, patches and CVE-scans 8,000+ standard applications</b> and maintains them daily. Your engineers never touch this estate — the entire off-the-shelf lifecycle leaves your plate, not just the initial build. Value = standard-app build and maintenance effort avoided.</div>
+              <div class="top"><div class="nm">① Setup Store runs the standard estate</div><div class="amt" id="dv_catalog">—<small id="dp_catalog"></small></div></div>
+              <div class="mech">Recast prepares, maintains and updates <b>8,000+ application resources</b> in the Setup Store; managed packages synchronize new versions through the connector. Your team keeps only a light <b>test → approve → release</b> loop — the heavy build-and-maintain work leaves your plate. Breadth varies by edition (full Setup Store requires Release &amp; Patch Management — confirm SKU). Value = standard-app build and maintenance effort avoided.</div>
               <div class="drvtrack"><div class="drvfill" id="db_catalog"></div></div>
             </div>
             <div class="drv">
-              <div class="top"><div class="nm">② One agent auto-deploys to every device</div><div class="amt" id="dv_define">—<small id="dp_define"></small></div></div>
-              <div class="mech">A single agent delivers every app to <b>Windows, macOS, VDI, Cloud PC and BYOD</b> across Intune, Configuration Manager, Citrix, AVD and Jamf — from <b>one definition, with no per-format rebuild</b>. Value = the per-environment rebuild and manual deployment effort eliminated.</div>
+              <div class="top"><div class="nm">② One definition, every platform</div><div class="amt" id="dv_define">—<small id="dp_define"></small></div></div>
+              <div class="mech">Central package definitions with reusable actions and entitlements deliver the same app across <b>Intune, Configuration Manager, Citrix, AVD, Windows 365 and Omnissa</b> — physical, virtual and cloud — with <b>no per-console duplicate packages</b>. Value = per-environment rebuild and duplicate-console effort eliminated.</div>
               <div class="drvtrack"><div class="drvfill" id="db_define"></div></div>
             </div>
             <div class="drv">
-              <div class="top"><div class="nm">③ Your custom apps, automated</div><div class="amt" id="dv_custom">—<small id="dp_custom"></small></div></div>
-              <div class="mech">For the applications that are genuinely your own, platform automation cuts build effort per app; the team keeps only what is truly bespoke. Value = reduced hours on custom builds.</div>
+              <div class="top"><div class="nm">③ Your custom apps, standardized</div><div class="amt" id="dv_custom">—<small id="dp_custom"></small></div></div>
+              <div class="mech">Custom/unmanaged packages for internal, legacy and heavily customized apps get defined actions — distribute, install, launch, repair, uninstall — instead of one-off scripts. Skilled packaging is retained where genuinely needed. Value = reduced hours on custom builds.</div>
               <div class="drvtrack"><div class="drvfill" id="db_custom"></div></div>
             </div>
             <div class="drv">
-              <div class="top"><div class="nm">④ Self-service &amp; identity-based access</div><div class="amt" id="dv_self">—<small id="dp_self"></small></div></div>
-              <div class="mech">Users pull approved applications from a role-based catalog, so fewer install and request tickets reach the service desk. Value = support hours deflected.</div>
+              <div class="top"><div class="nm">④ Catalog self-service &amp; entitlements</div><div class="amt" id="dv_self">—<small id="dp_self"></small></div></div>
+              <div class="mech">Users obtain entitled apps from the governed Catalog with approvals; entitlement by user, group, device, collection or context replaces manual per-user assignment and standard-app tickets. Value = support hours deflected.</div>
               <div class="drvtrack"><div class="drvfill" id="db_self"></div></div>
             </div>
             <div class="drv">
-              <div class="top"><div class="nm">⑤ Staged patch pipeline</div><div class="amt" id="dv_patch">—<small id="dp_patch"></small></div></div>
-              <div class="mech">Updates roll to every environment through one staged pipeline with rollback — no per-platform rebuilds. Value = patch validation and deployment hours reduced.</div>
+              <div class="top"><div class="nm">⑤ Staged release &amp; update workflow</div><div class="amt" id="dv_patch">—<small id="dp_patch"></small></div></div>
+              <div class="mech">Managed versions synchronize from the source and roll out through staged rings with central release, event and audit information — replacing spreadsheet version tracking and manual monitoring. Value = patch validation and deployment hours reduced.</div>
               <div class="drvtrack"><div class="drvfill" id="db_patch"></div></div>
             </div>
           </div>
           <div class="drvsum">
-            <div class="r big"><span class="k">Gross annual labor reduction</span><span class="g" id="g_gross">—</span></div>
-            <div class="r"><span class="k">Less: Recast Application Workspace license</span><span class="v neg" id="g_lic">—</span></div>
-            <div class="r big"><span class="k">Net annual benefit</span><span class="g" id="g_net">—</span></div>
+            <div class="r big"><span class="k">Gross annual labor reduction (motion ①)</span><span class="g" id="g_gross">—</span></div>
+            <div class="r"><span class="k">Less: Application Workspace license</span><span class="v neg" id="g_lic">—</span></div>
+            <div class="r big"><span class="k">Net annual benefit (motion ①)</span><span class="g" id="g_net">—</span></div>
           </div>
         </section>
 
@@ -388,7 +454,7 @@
               <thead><tr><th class="lab" id="mt_hdr">Per customer / tenant</th><th class="num">Current</th><th class="num">With AW</th><th class="num">Change</th></tr></thead>
               <tbody>
                 <tr><td class="lab">Delivery cost per customer / year</td><td class="num" id="mt_cust_n">—</td><td class="num" id="mt_cust_a">—</td><td class="num" id="mt_cust_d">—</td></tr>
-                <tr><td class="lab">Off-the-shelf packaging borne per customer<span class="sub">the catalog absorbs this for every tenant</span></td><td class="num" id="mt_off_n">—</td><td class="num" id="mt_off_a">—</td><td class="num" id="mt_off_d">—</td></tr>
+                <tr><td class="lab">Off-the-shelf packaging borne per customer<span class="sub">the Setup Store absorbs this for every tenant</span></td><td class="num" id="mt_off_n">—</td><td class="num" id="mt_off_a">—</td><td class="num" id="mt_off_d">—</td></tr>
               </tbody>
             </table>
           </div>
@@ -399,10 +465,10 @@
   </div>
 </main>
 
-<footer>Recast Software · Application Delivery Operating Model Cost Analysis · Confidential — Internal Use Only</footer>
+<footer>Recast Software · Application Workspace Partner Business Case · Confidential — Internal Use Only · Confirm SKU and licensing before customer commitments</footer>
 
 <script>
-const DEFAULTS={seats:10000,customers:10,appsPerCust:75,overlap:60,updateRate:15,pctCustom:25,envMult:2.5,rate:65,lic:1,stdT:4.33,custT:14,stdA:0.4,custA:3.5,tik100:6,ticketMin:18,patchMinApp:15,tRed:45,pRed:45,bill:0};
+const DEFAULTS={seats:10000,customers:10,appsPerCust:75,overlap:60,updateRate:15,pctCustom:25,envMult:2.5,rate:65,lic:1,attachPct:50,svcPrice:5,projYr:6,projApps:120,projRepack:60,projWeeks:2,projWkCost:30000,stdT:4.33,custT:14,stdA:0.4,custA:3.5,tik100:6,ticketMin:18,patchMinApp:15,tRed:45,pRed:45,rtaCur:5,rtaAW:0.5,succCur:65,succAW:95,bill:0};
 const FTE_HOURS=1920;
 const ids=Object.keys(DEFAULTS);
 const $=id=>document.getElementById(id);
@@ -430,7 +496,7 @@ function calcModel(ov){
   const tRed=(ov.tRed!==undefined?ov.tRed:num('tRed')/100);
   const pRed=(ov.pRed!==undefined?ov.pRed:num('pRed')/100);
 
-  // ---- DERIVED WORKLOAD (the book drives everything) ----
+  // derived workload
   const distinctApps=appsPC*(olap+customers*(1-olap));
   const pkgMo=distinctApps*uRate;
   const patchMoH=distinctApps*num('patchMinApp')/60;
@@ -453,9 +519,29 @@ function calcModel(ov){
   const lev=labCa>0?labCn/labCa:0;
   const custCostN=totCn/customers,custCostA=totCa/customers;
   const offPerCustN=offCn/customers,offPerCustA=offCa/customers;
-  const nextCustPkgMo=appsPC*(1-olap)*uRate; // marginal packaging from one more customer
+  const nextCustPkgMo=appsPC*(1-olap)*uRate;
 
-  // Shapley split of packaging savings
+  // Motion 2 — service line
+  const attach=Math.min(1,Math.max(0,num('attachPct')/100)), svcPrice=Math.max(0,num('svcPrice'));
+  const attSeats=seats*attach;
+  const svcRev=attSeats*svcPrice*12;
+  const svcCoS=attSeats*syrA;
+  const svcGM=svcRev-svcCoS;
+  const svcGMp=svcRev>0?svcGM/svcRev:0;
+
+  // Motion 3 — SI acceleration (same per-app engine)
+  const pj=Math.max(0,num('projYr')), pjApps=Math.max(0,num('projApps')), pjRep=Math.min(1,Math.max(0,num('projRepack')/100));
+  const pjWk=Math.max(0,num('projWeeks')), pjWkC=Math.max(0,num('projWkCost'));
+  const perAppN=buildN*env, perAppA=buildA;
+  const pjAppsY=pj*pjApps*pjRep;
+  const pjHrsN=pjAppsY*perAppN, pjHrsA=pjAppsY*perAppA;
+  const pjLab=(pjHrsN-pjHrsA)*R;
+  const pjSched=pj*pjWk*pjWkC;
+  const m3=pjLab+pjSched;
+
+  const totalImpact=net+svcGM+m3;
+
+  // Shapley split (motion 1)
   const envStd=0.5*(env-1)*(stdT+stdA)*stdReqY*R;
   const catStd=0.5*(stdT-stdA)*(env+1)*stdReqY*R;
   const envCust=0.5*(env-1)*(custT+custA)*custReqY*R;
@@ -467,6 +553,8 @@ function calcModel(ov){
     offHn,offHa,cpkHn,cpkHa,patHn,patHa,tikHn,tikHa,labHn,labHa,
     offCn,offCa,cpkCn,cpkCa,patCn,patCa,tikCn,tikCa,labCn,labCa,licC,totCn,totCa,
     gross,net,pct,roi,beLic,fteFreed,fteN,fteA,syrN,syrA,smoN,smoA,buildN,buildA,lev,custCostN,custCostA,offPerCustN,offPerCustA,
+    attach,svcPrice,attSeats,svcRev,svcCoS,svcGM,svcGMp,
+    pj,pjApps:pjApps,pjRep,pjWk,pjWkC,pjAppsY,pjHrsN,pjHrsA,pjLab,pjSched,m3,totalImpact,
     dDefine,dCatalog,dCustom,dPatch,dSelf};
 }
 
@@ -475,12 +563,17 @@ function setPct(id,cur,aw){const el=$(id);if(cur<=0){el.textContent='n/m';el.cla
 function fillRow(k,hn,ha,cn,ca){if(hn!==null){$('h_'+k+'_n').textContent=hrsY(hn);$('h_'+k+'_a').textContent=hrsY(ha);}$('c_'+k+'_n').textContent=usd(cn);$('c_'+k+'_a').textContent=usd(ca);setDelta('d_'+k,cn-ca);setPct('dp_'+k,cn,ca);}
 
 function render(m){
-  // derived workload strip
   $('dw_spc').textContent=m.customers>0?Math.round(m.seats/m.customers).toLocaleString('en-US'):'—';
   $('dw_apps').textContent=Math.round(m.distinctApps).toLocaleString('en-US');
   $('dw_pkg').textContent=n1(m.pkgMo)+' req';
   $('dw_patch').textContent=n1(m.patchMoH)+' h';
   $('dw_tik').textContent=Math.round(m.ticketsMo).toLocaleString('en-US');
+
+  // total impact bridge
+  $('s_m1').textContent=usd(m.net);
+  $('s_m2').textContent=usd(m.svcGM);$('s_m2').className=m.svcGM>=0?'pos':'neg';
+  $('s_m3').textContent=usd(m.m3);
+  $('s_tot').textContent=usd(m.totalImpact);
 
   fillRow('off',m.offHn,m.offHa,m.offCn,m.offCa);
   fillRow('cpk',m.cpkHn,m.cpkHa,m.cpkCn,m.cpkCa);
@@ -493,9 +586,9 @@ function render(m){
   $('s_cur').textContent=usd(m.totCn);$('s_gross').textContent=usd(m.gross);$('s_lic').textContent='('+usd(m.licC)+')';$('s_net').textContent=usd(m.net);
   const freedHrs=Math.round(m.labHn-m.labHa);
   $('r_fte').textContent=freedHrs.toLocaleString('en-US')+' hrs';
-  $('r_fte_l').textContent='Manual engineering work AW removes each year — about '+m.fteFreed.toFixed(1)+' full-time engineers. Derived from your book ('+Math.round(m.distinctApps)+' apps, '+m.seats.toLocaleString('en-US')+' seats), so it scales with it; it does not change with the labor rate.';
+  $('r_fte_l').textContent='Manual ops work AW removes each year — about '+m.fteFreed.toFixed(1)+' FTE. Derived from your book ('+Math.round(m.distinctApps)+' apps, '+m.seats.toLocaleString('en-US')+' seats); scales with it, not with the labor rate. SI readiness hours are additional (motion ③).';
   $('r_pct').textContent=(m.pct*100).toFixed(0)+'%';
-  $('r_pct_l').textContent='Lower cost to deliver, at your $'+Math.round(m.rate)+'/hr rate';
+  $('r_pct_l').textContent='Lower cost to deliver (motion ①), at your $'+Math.round(m.rate)+'/hr rate';
   $('r_roi').textContent=(m.roi>=100?'100+':m.roi.toFixed(1))+'×';
   const be=m.beLic, rt=Math.round(m.rate), bec=$('beCallout');
   if(be<=0){bec.style.display='none';}
@@ -503,13 +596,13 @@ function render(m){
     bec.style.display='block';
     if(m.lic<=be){
       bec.style.borderLeftColor='var(--green)';
-      bec.innerHTML='<b>Breakeven license:</b> at your $'+rt+'/hr delivery rate, Application Workspace is cost-neutral on labor alone up to <b>$'+be.toFixed(2)+'/user/mo</b>. Your entered $'+m.lic.toFixed(2)+' sits inside that, so the labor reduction more than covers the license — before counting the freed capacity, self-service and security value.';
+      bec.innerHTML='<b>Breakeven license:</b> at your $'+rt+'/hr delivery rate, Application Workspace is cost-neutral on motion-① labor alone up to <b>$'+be.toFixed(2)+'/user/mo</b>. Your entered $'+m.lic.toFixed(2)+' sits inside that — before counting the service line, SI acceleration, self-service and security value. Confirm SKU, edition and partner tier.';
     } else {
       bec.style.borderLeftColor='var(--red)';
-      bec.innerHTML='<b>Breakeven license:</b> at your $'+rt+'/hr delivery rate the labor reduction covers a license up to <b>$'+be.toFixed(2)+'/user/mo</b>; your entered $'+m.lic.toFixed(2)+' is above that, so on labor cost alone the case is thin here. It then rests on the value of the '+m.fteFreed.toFixed(1)+' FTE freed, self-service and security — price the license at partner tier to keep the labor case net-positive.';
+      bec.innerHTML='<b>Breakeven license:</b> at your $'+rt+'/hr delivery rate the motion-① labor reduction covers a license up to <b>$'+be.toFixed(2)+'/user/mo</b>; your entered $'+m.lic.toFixed(2)+' is above that, so the case rests on the service line, SI acceleration and the '+m.fteFreed.toFixed(1)+' FTE freed — price at partner tier to keep motion ① net-positive.';
     }
   }
-  $('sumProse').innerHTML='For a book of <b>'+m.customers+' customers</b>, <b>'+m.seats.toLocaleString('en-US')+' seats</b> and <b>'+Math.round(m.distinctApps)+' distinct managed apps</b>, the platform model reclaims <b>'+m.fteFreed.toFixed(1)+' FTE</b> of engineering capacity ('+freedHrs.toLocaleString('en-US')+' hrs/yr) and reduces the fully-loaded cost of application delivery by <b>'+usdC(m.net)+' per year ('+(m.pct*100).toFixed(0)+'%)</b>, from <b>'+usd(m.totCn)+'</b> to <b>'+usd(m.totCa)+'</b> at $'+Math.round(m.rate)+'/hr. The license is recovered <b>'+(m.roi>=100?'100+':m.roi.toFixed(1))+'×</b> by the labor reduction. Driver mix is on the Value drivers tab.';
+  $('sumProse').innerHTML='For a book of <b>'+m.customers+' customers</b>, <b>'+m.seats.toLocaleString('en-US')+' seats</b> and <b>'+Math.round(m.distinctApps)+' distinct managed apps</b>: motion ① recovers <b>'+usdC(m.net)+'</b> of margin on business already signed, motion ② adds <b>'+usdC(m.svcGM)+'</b> of service gross margin at your $'+m.svcPrice.toFixed(2)+'/seat price ('+(m.svcGMp*100).toFixed(0)+'% GM), and motion ③ contributes <b>'+usdC(m.m3)+'</b> across '+m.pj+' projects — <b>'+usdC(m.totalImpact)+' total annual impact</b>, with '+m.fteFreed.toFixed(1)+' ops FTE freed to redeploy.';
 
   $('u_syr_n').textContent=usd(m.syrN);$('u_syr_a').textContent=usd(m.syrA);setDelta('u_syr_d',m.syrN-m.syrA);
   $('u_smo_n').textContent=money2(m.smoN);$('u_smo_a').textContent=money2(m.smoA);
@@ -518,6 +611,28 @@ function render(m){
   {const d=m.fteN-m.fteA,el=$('u_fte_d');el.textContent=d.toFixed(1);el.className='num '+(d>=0?'pos':'neg');}
   $('u_bld_n').textContent=m.buildN.toFixed(1)+' h';$('u_bld_a').textContent=m.buildA.toFixed(1)+' h';
   {const d=m.buildN-m.buildA,el=$('u_bld_d');el.textContent=d.toFixed(1)+' h';el.className='num '+(d>=0?'pos':'neg');}
+
+  // Motion 2
+  $('svc_hdr').textContent='Service P&L — illustrative, '+Math.round(m.attach*100)+'% attach at '+money2(m.svcPrice)+'/seat/mo';
+  $('svc_rev_sub').textContent=Math.round(m.attSeats).toLocaleString('en-US')+' attached seats × '+money2(m.svcPrice)+' × 12';
+  $('svc_rev').textContent=usd(m.svcRev);
+  $('svc_cos').textContent=usd(m.svcCoS);
+  {const el=$('svc_gm');el.textContent=usd(m.svcGM)+'  ('+(m.svcGMp*100).toFixed(0)+'%)';el.className='num '+(m.svcGM>=0?'pos':'neg');}
+  $('svc_note').textContent=m.svcGMp>=0.5?'At this price the SKU clears the 50–60% recurring-services gross-margin benchmark.':'Below the 50–60% recurring-services GM benchmark — raise price, scope, or attach to clear it.';
+  $('xp_rta_n').textContent=num('rtaCur')+' days';$('xp_rta_a').textContent=num('rtaAW')+' days';
+  $('xp_suc_n').textContent=num('succCur')+'%';$('xp_suc_a').textContent=num('succAW')+'%';
+
+  // Motion 3
+  const pjs=$('projSec'); pjs.style.display=m.pj>0?'block':'none';
+  if(m.pj>0){
+    $('pj_hdr').textContent='SI portfolio — '+m.pj+' projects / yr';
+    $('pj_sub').textContent=Math.round(m.pjAppsY).toLocaleString('en-US')+' apps needing (re)packaging across the portfolio';
+    $('pj_hrs_n').textContent=hrsY(m.pjHrsN)+' h';$('pj_hrs_a').textContent=hrsY(m.pjHrsA)+' h';
+    setDelta('pj_lab_d',m.pjLab);
+    $('pj_wk').textContent=m.pjWk+' wks/project';
+    setDelta('pj_sched',m.pjSched);
+    {const el=$('pj_tot');el.textContent=usd(m.m3);el.className='num '+(m.m3>=0?'pos':'neg');}
+  }
 
   const con=calcModel({env:2,stdA:0.6,custA:5,tRed:0.20,pRed:0.30});
   const ups=calcModel({env:3.5,stdA:0.25,custA:3,tRed:0.70,pRed:0.60});
@@ -530,11 +645,11 @@ function render(m){
   $('g_gross').textContent=usd(m.gross);$('g_lic').textContent='('+usd(m.licC)+')';$('g_net').textContent=usd(m.net);
 
   $('bm_lev').textContent=(m.lev>=100?'100+':m.lev.toFixed(1))+'×';
-  $('bm_txt').innerHTML='Build and manage once, then serve every customer from one multi-tenant console — <b>no package is rebuilt for a new tenant</b>. Every customer taps the same 8,000-app catalog and your custom library, so the same team carries roughly <b>'+(m.lev>=100?'100+':m.lev.toFixed(1))+'×</b> the application-delivery volume of the current model.';
+  $('bm_txt').innerHTML='Central package definitions replace duplicate packages across consoles — <b>no package is rebuilt for a new tenant</b>. Every customer taps the same Setup Store resources and your custom library, so the same team carries roughly <b>'+(m.lev>=100?'100+':m.lev.toFixed(1))+'×</b> the application-delivery volume of the current model.';
   $('mt_hdr').textContent='Per customer / tenant ('+Math.round(m.customers)+' in book)';
   $('mt_cust_n').textContent=usd(m.custCostN);$('mt_cust_a').textContent=usd(m.custCostA);setDelta('mt_cust_d',m.custCostN-m.custCostA);
   $('mt_off_n').textContent=usd(m.offPerCustN);$('mt_off_a').textContent=usd(m.offPerCustA);setDelta('mt_off_d',m.offPerCustN-m.offPerCustA);
-  $('mt_note').innerHTML='The overlap math is the multi-tenant story: your next customer adds only their unique apps — about <b>'+n1(m.nextCustPkgMo)+' packaging requests/mo</b> (vs '+n1(m.appsPC*m.uRate)+' if nothing were shared) — because the common core is already built and served to every tenant. That is why cost per customer falls as the book grows, and why the marginal cost of onboarding keeps dropping with Application Workspace absorbing the standard estate entirely.';
+  $('mt_note').innerHTML='The overlap math is the multi-tenant story: your next customer adds only their unique apps — about <b>'+n1(m.nextCustPkgMo)+' packaging requests/mo</b> (vs '+n1(m.appsPC*m.uRate)+' if nothing were shared) — because the common core is already built and served to every tenant. Cost per customer falls as the book grows, and Application Workspace absorbs the standard estate entirely.';
 
   const ms=$('marginSec');
   if(m.bill>0&&m.seats>0){
@@ -545,7 +660,7 @@ function render(m){
     {const d=m.smoN-m.smoA,el=$('mg_cost_d');el.textContent=(d<0?'('+money2(Math.abs(d))+')':money2(d));el.className='num '+(d>=0?'pos':'neg');}
     $('mg_pct_n').textContent=(dcN*100).toFixed(0)+'%';$('mg_pct_a').textContent=(dcA*100).toFixed(0)+'%';
     {const d=(dcN-dcA)*100,el=$('mg_pct_d');el.textContent=d.toFixed(0)+' pts';el.className='num '+(d>=0?'pos':'neg');}
-    $('mg_note').textContent='At '+money2(m.bill)+'/seat/mo billed, application delivery consumes '+(dcN*100).toFixed(0)+'% of the fee under the current model versus '+(dcA*100).toFixed(0)+'% with Application Workspace — '+((dcN-dcA)*100).toFixed(0)+' points of gross-margin headroom on this scope.';
+    $('mg_note').textContent='At '+money2(m.bill)+'/seat/mo billed, application delivery consumes '+(dcN*100).toFixed(0)+'% of the fee today versus '+(dcA*100).toFixed(0)+'% with Application Workspace — '+((dcN-dcA)*100).toFixed(0)+' points of gross-margin headroom.';
   } else { ms.style.display='none'; }
 
   syncGeo();
@@ -560,7 +675,6 @@ $('today').textContent=new Date().toLocaleDateString('en-US',{year:'numeric',mon
 ids.forEach(id=>$(id).addEventListener('input',compute));
 document.querySelectorAll('.geochip').forEach(c=>c.addEventListener('click',()=>{$('rate').value=c.dataset.rate;compute();}));
 $('reset').addEventListener('click',()=>{ids.forEach(id=>$(id).value=DEFAULTS[id]);$('client').value='';compute();});
-
 document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.tabbtn').forEach(x=>x.classList.toggle('active',x===b));
   $('tab-analysis').style.display=b.dataset.tab==='analysis'?'block':'none';
@@ -582,75 +696,77 @@ function generatePDF(){
   const R=(t,x,y)=>doc.text(t,x,y,{align:'right'});
   const dl=v=>v>=0?usd(v):'('+usd(Math.abs(v))+')';
 
-  F('bold',15,BLUE);doc.text('Recast',ML,42);const rw=doc.getTextWidth('Recast');
-  F('normal',9,GRAY);doc.text('Software',ML+rw+5,42);
-  F('normal',8.5,LIGHT);R('Board Exhibit \u00b7 Confidential',MR,38);R(dateStr,MR,50);
-  ln(60,INK);
-  F('bold',16,INK);doc.text('Application delivery — operating model cost analysis',ML,82);
-  F('normal',9,GRAY);doc.text((client?client+'   \u00b7   ':'')+m.customers+' customers  \u00b7  '+m.seats.toLocaleString('en-US')+' seats  \u00b7  '+Math.round(m.distinctApps)+' apps  \u00b7  '+n1(m.pkgMo)+' req/mo (derived)  \u00b7  '+m.env+' env/app  \u00b7  $'+Math.round(m.rate)+'/hr ('+geoLbl+')  \u00b7  $'+m.lic+'/user/mo',ML,97);
+  F('bold',15,BLUE);doc.text('Recast',ML,40);const rw=doc.getTextWidth('Recast');
+  F('normal',9,GRAY);doc.text('Software',ML+rw+5,40);
+  F('normal',8.5,LIGHT);R('Board Exhibit \u00b7 Confidential',MR,36);R(dateStr,MR,48);
+  ln(56,INK);
+  F('bold',15,INK);doc.text('Application Workspace — partner business case',ML,76);
+  F('normal',8.5,GRAY);doc.text((client?client+'  \u00b7  ':'')+m.customers+' customers \u00b7 '+m.seats.toLocaleString('en-US')+' seats \u00b7 '+Math.round(m.distinctApps)+' apps \u00b7 '+n1(m.pkgMo)+' req/mo (derived) \u00b7 '+m.env+' env/app \u00b7 $'+Math.round(m.rate)+'/hr ('+geoLbl+') \u00b7 $'+m.lic+'/user/mo',ML,90);
 
-  let y=122;F('bold',10,INK);doc.text('Summary',ML,y);y+=5;ln(y);y+=17;
-  const bxR=300;const brow=(l,v,c)=>{F('normal',10,INK);doc.text(l,ML,y);F('normal',10,c||INK);R(v,bxR,y);y+=16;};
-  brow('Current annual delivery cost',usd(m.totCn));
-  brow('Gross annual labor reduction',usd(m.gross),GREEN);
-  brow('Less: Application Workspace license','('+usd(m.licC)+')',RED);
-  doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.9);doc.line(ML,y-11,bxR,y-11);
-  F('bold',11.5,INK);doc.text('Net annual benefit',ML,y);F('bold',11.5,GREEN);R(usd(m.net),bxR,y);
-  y+=17;F('normal',8,LIGHT);doc.text('Breakeven license at $'+Math.round(m.rate)+'/hr: $'+m.beLic.toFixed(2)+'/user/mo (labor-neutral)',ML,y);
-  let ry=140,rx=340;const rat=(v,l,c)=>{F('bold',15,c||INK);doc.text(v,rx,ry);F('normal',8.5,LIGHT);const lines=doc.splitTextToSize(l,MR-rx);doc.text(lines,rx,ry+12);ry+=26+lines.length*10;};
-  rat(Math.round(m.labHn-m.labHa).toLocaleString('en-US')+' hrs  ('+m.fteFreed.toFixed(1)+' FTE)','Workload removed — derived from the book, rate-independent',GREEN);
-  rat((m.pct*100).toFixed(0)+'%','Reduction in cost to deliver');
-  rat((m.roi>=100?'100+':m.roi.toFixed(1))+'\u00d7','Return on license spend');
+  let y=112;F('bold',10,INK);doc.text('Total annual impact — three commercial motions',ML,y);y+=5;ln(y);y+=15;
+  const bxR=300;const brow=(l,v,c,b)=>{F(b?'bold':'normal',b?10.5:9.5,INK);doc.text(l,ML,y);F(b?'bold':'normal',b?10.5:9.5,c||INK);R(v,bxR,y);y+=15;};
+  brow('\u2460 Margin recovery (net of license)',usd(m.net),GREEN);
+  brow('\u2461 Managed App Delivery gross margin',usd(m.svcGM),m.svcGM>=0?GREEN:RED);
+  brow('\u2462 SI acceleration (readiness + schedule)',usd(m.m3),GREEN);
+  doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.9);doc.line(ML,y-10,bxR,y-10);y+=1;
+  brow('Total annual business impact',usd(m.totalImpact),GREEN,true);
+  F('normal',7.5,LIGHT);doc.text('Motion-\u2460 breakeven license at $'+Math.round(m.rate)+'/hr: $'+m.beLic.toFixed(2)+'/user/mo \u00b7 service GM '+(m.svcGMp*100).toFixed(0)+'% at '+money2(m.svcPrice)+'/seat',ML,y+2);
+  let ry=128,rx=340;const rat=(v,l,c)=>{F('bold',13.5,c||INK);doc.text(v,rx,ry);F('normal',8,LIGHT);const L=doc.splitTextToSize(l,MR-rx);doc.text(L,rx,ry+11);ry+=22+L.length*9;};
+  rat(Math.round(m.labHn-m.labHa).toLocaleString('en-US')+' hrs ('+m.fteFreed.toFixed(1)+' FTE)','Ops workload removed — derived from the book, rate-independent',GREEN);
+  rat((m.pct*100).toFixed(0)+'%','Reduction in cost to deliver (motion \u2460)');
+  rat((m.roi>=100?'100+':m.roi.toFixed(1))+'\u00d7','Labor saved per $1 of license');
 
-  y=Math.max(y,ry)+14;F('bold',10,INK);doc.text('Cost and labor comparison',ML,y);y+=5;ln(y);
+  y=Math.max(y+12,ry)+8;F('bold',10,INK);doc.text('Motion \u2460 — cost and labor comparison',ML,y);y+=5;ln(y);
   const cHn=300,cHa=356,cCn=430,cCa=500,cD=558,cP=MR;
-  y+=14;F('bold',7.5,LIGHT);doc.text('ACTIVITY — ANNUAL',ML,y);R('HRS CUR',cHn,y);R('HRS AW',cHa,y);R('COST CUR',cCn,y);R('COST AW',cCa,y);R('\u0394 COST',cD,y);R('\u0394 %',cP,y);
-  y+=5;ln(y);
-  const mrow=(l,hn,ha,cn,ca,o)=>{o=o||{};y+=o.tall?23:17;F(o.bold?'bold':'normal',9,INK);doc.text(l,ML,y-7);if(o.sub){F('normal',7,LIGHT);doc.text(o.sub,ML,y+2);}
-    F(o.bold?'bold':'normal',9,INK);if(hn!==null){R(hrsY(hn),cHn,y-7);R(hrsY(ha),cHa,y-7);}else{R('\u2014',cHn,y-7);R('\u2014',cHa,y-7);}
-    R(usd(cn),cCn,y-7);R(usd(ca),cCa,y-7);const d=cn-ca;F(o.bold?'bold':'normal',9,d>=0?GREEN:RED);R(dl(d),cD,y-7);
-    if(o.pct===false){F('normal',9,LIGHT);R('n/m',cP,y-7);}else{const dp=cn>0?(cn-ca)/cn:0;F(o.bold?'bold':'normal',9,dp>=0?GREEN:RED);R((dp*100).toFixed(0)+'%',cP,y-7);}
-    if(o.thick){doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.9);}else{doc.setDrawColor(HAIR[0],HAIR[1],HAIR[2]);doc.setLineWidth(0.6);}doc.line(ML,y+(o.sub?7:2),MR,y+(o.sub?7:2));};
-  mrow('Off-the-shelf packaging',m.offHn,m.offHa,m.offCn,m.offCa,{sub:'catalog-eligible; rebuilt per environment',tall:true});
-  mrow('Custom packaging',m.cpkHn,m.cpkHa,m.cpkCn,m.cpkCa,{});
+  y+=13;F('bold',7.5,LIGHT);doc.text('ACTIVITY — ANNUAL',ML,y);R('HRS CUR',cHn,y);R('HRS AW',cHa,y);R('COST CUR',cCn,y);R('COST AW',cCa,y);R('\u0394 COST',cD,y);R('\u0394 %',cP,y);
+  y+=4;ln(y);
+  const mrow=(l,hn,ha,cn,ca,o)=>{o=o||{};y+=16;F(o.bold?'bold':'normal',8.5,INK);doc.text(l,ML,y-6);
+    F(o.bold?'bold':'normal',8.5,INK);if(hn!==null){R(hrsY(hn),cHn,y-6);R(hrsY(ha),cHa,y-6);}else{R('\u2014',cHn,y-6);R('\u2014',cHa,y-6);}
+    R(usd(cn),cCn,y-6);R(usd(ca),cCa,y-6);const d=cn-ca;F(o.bold?'bold':'normal',8.5,d>=0?GREEN:RED);R(dl(d),cD,y-6);
+    if(o.pct===false){F('normal',8.5,LIGHT);R('n/m',cP,y-6);}else{const dp=cn>0?(cn-ca)/cn:0;F(o.bold?'bold':'normal',8.5,dp>=0?GREEN:RED);R((dp*100).toFixed(0)+'%',cP,y-6);}
+    if(o.thick){doc.setDrawColor(INK[0],INK[1],INK[2]);doc.setLineWidth(0.9);}else{doc.setDrawColor(HAIR[0],HAIR[1],HAIR[2]);doc.setLineWidth(0.6);}doc.line(ML,y+1,MR,y+1);};
+  mrow('Off-the-shelf packaging',m.offHn,m.offHa,m.offCn,m.offCa,{});
+  mrow('Custom / unmanaged packaging',m.cpkHn,m.cpkHa,m.cpkCn,m.cpkCa,{});
   mrow('Patching & updates',m.patHn,m.patHa,m.patCn,m.patCa,{});
   mrow('Application support (tickets)',m.tikHn,m.tikHa,m.tikCn,m.tikCa,{});
   mrow('Delivery labor subtotal',m.labHn,m.labHa,m.labCn,m.labCa,{bold:true});
   mrow('Application Workspace license',null,null,0,m.licC,{pct:false});
   mrow('Total application-delivery cost',null,null,m.totCn,m.totCa,{bold:true,thick:true});
 
-  y+=20;const midX=312;
-  F('bold',9.5,INK);doc.text('Where the savings come from',ML,y);F('bold',9.5,INK);doc.text('Unit economics & sensitivity',midX,y);
-  y+=5;doc.setDrawColor(HAIR[0],HAIR[1],HAIR[2]);doc.setLineWidth(0.6);doc.line(ML,y,midX-16,y);doc.line(midX,y,MR,y);
-  let yd=y+15;const barX=ML,barW=midX-16-ML-96;
-  const drv=(l,v)=>{const share=m.gross>0?v/m.gross:0;F('normal',8.5,INK);doc.text(l,barX,yd);F('bold',8.5,INK);R(usd(v),midX-16,yd-9);
+  y+=18;const midX=312;
+  F('bold',9.5,INK);doc.text('Where motion-\u2460 savings come from',ML,y);doc.text('Motions \u2461 + \u2462 & unit economics',midX,y);
+  y+=4;doc.setDrawColor(HAIR[0],HAIR[1],HAIR[2]);doc.setLineWidth(0.6);doc.line(ML,y,midX-16,y);doc.line(midX,y,MR,y);
+  let yd=y+14;const barX=ML,barW=midX-16-ML-96;
+  const drv=(l,v)=>{const share=m.gross>0?v/m.gross:0;F('normal',8,INK);doc.text(l,barX,yd);F('bold',8,INK);R(usd(v),midX-16,yd-8);
     doc.setFillColor(TRK[0],TRK[1],TRK[2]);doc.roundedRect(barX,yd+2,barW,4,2,2,'F');doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]);doc.roundedRect(barX,yd+2,Math.max(2,barW*Math.max(0,share)),4,2,2,'F');
-    F('normal',7,LIGHT);R((share*100).toFixed(0)+'%',midX-16,yd+6);yd+=20;};
-  drv('Recast runs 8,000+ apps end-to-end',m.dCatalog);
-  drv('Auto-deploy to every device',m.dDefine);
-  drv('Custom packaging automation',m.dCustom);
-  drv('Self-service & identity',m.dSelf);
-  drv('Staged patch pipeline',m.dPatch);
-  let yr2=y+14;
-  F('bold',7,LIGHT);R('CUR',MR-64,yr2);R('AW',MR,yr2);yr2+=13;
-  const uRow=(l,cn,ca)=>{F('normal',8.5,INK);doc.text(l,midX,yr2);F('normal',8.5,GRAY);R(cn,MR-64,yr2);F('bold',8.5,INK);R(ca,MR,yr2);yr2+=14;};
-  uRow('Cost / seat / mo',money2(m.smoN),money2(m.smoA));
-  uRow('Cost / customer / yr',usdC(m.custCostN),usdC(m.custCostA));
-  uRow('Delivery FTE',m.fteN.toFixed(1),m.fteA.toFixed(1));
-  uRow('Multi-tenant leverage','',(m.lev>=100?'100+':m.lev.toFixed(1))+'\u00d7');
-  yr2+=4;
+    F('normal',7,LIGHT);R((share*100).toFixed(0)+'%',midX-16,yd+6);yd+=19;};
+  drv('Setup Store runs the standard estate',m.dCatalog);
+  drv('One definition, every platform',m.dDefine);
+  drv('Custom apps standardized',m.dCustom);
+  drv('Catalog self-service',m.dSelf);
+  drv('Staged release & updates',m.dPatch);
+  let yr2=y+13;
+  const uRow=(l,v)=>{F('normal',8,INK);doc.text(l,midX,yr2);F('bold',8,INK);R(v,MR,yr2);yr2+=13;};
+  uRow('Service revenue ('+Math.round(m.attach*100)+'% @ '+money2(m.svcPrice)+')',usdC(m.svcRev));
+  uRow('Service gross margin',usdC(m.svcGM)+' ('+(m.svcGMp*100).toFixed(0)+'%)');
+  uRow('SI readiness labor saved',usdC(m.pjLab));
+  uRow('SI schedule value ('+m.pj+' proj \u00d7 '+m.pjWk+' wk)',usdC(m.pjSched));
+  uRow('Cost / seat / mo',money2(m.smoN)+' \u2192 '+money2(m.smoA));
+  uRow('Cost / customer / yr',usdC(m.custCostN)+' \u2192 '+usdC(m.custCostA));
+  uRow('Multi-tenant leverage',(m.lev>=100?'100+':m.lev.toFixed(1))+'\u00d7');
+  yr2+=2;
   const con=calcModel({env:2,stdA:0.6,custA:5,tRed:0.20,pRed:0.30});
   const ups=calcModel({env:3.5,stdA:0.25,custA:3,tRed:0.70,pRed:0.60});
-  F('bold',7,LIGHT);doc.text('SENSITIVITY — NET BENEFIT',midX,yr2);yr2+=13;
-  const sRow=(l,x)=>{F('normal',8.5,INK);doc.text(l,midX,yr2);F('bold',8.5,GREEN);R(usdC(x.net),MR-52,yr2);F('normal',8.5,GRAY);R((x.pct*100).toFixed(0)+'%',MR,yr2);yr2+=14;};
-  sRow('Conservative',con);sRow('Base — as entered',m);sRow('Upside',ups);
+  F('bold',7,LIGHT);doc.text('SENSITIVITY — MOTION \u2460 NET',midX,yr2);yr2+=12;
+  const sRow=(l,x)=>{F('normal',8,INK);doc.text(l,midX,yr2);F('bold',8,GREEN);R(usdC(x.net),MR-52,yr2);F('normal',8,GRAY);R((x.pct*100).toFixed(0)+'%',MR,yr2);yr2+=13;};
+  sRow('Conservative',con);sRow('Base',m);sRow('Upside',ups);
 
-  y=Math.max(yd,yr2)+12;ln(y);y+=11;
-  F('normal',7.5,LIGHT);
-  const note='Workload derived from the book: distinct apps = apps/customer x (overlap + customers x (1-overlap)); packaging = distinct apps x '+Math.round(m.uRate*100)+'%/mo; patch ops = distinct apps x '+Math.round(num('patchMinApp'))+' min/mo; tickets = seats x '+num('tik100')+'/100. Hours and FTE are rate-independent ('+geoLbl+' $'+Math.round(m.rate)+'/hr; onshore $80\u2013150, blended $30\u201360, offshore $20\u201345). Value-driver split uses Shapley values (sum exactly). Basis: Okta 2025 (avg 101 apps/org), Camwood (packaging = 30\u201340% of admin time), Recast field benchmarks, software = 1/3+ of desk volume (2026), self-service deflection 50\u201370%. Excludes one-time migration/enablement; license rate partner-tier dependent. Planning estimate, not a measured baseline. Confidential \u2014 Internal Use Only.';
+  y=Math.max(yd,yr2)+10;ln(y);y+=10;
+  F('normal',7,LIGHT);
+  const note='Three motions per the Recast MSP & SI Partner Guide (Jul 2026). Workload derived: distinct apps = apps/cust x (overlap + customers x (1-overlap)); packaging = apps x '+Math.round(m.uRate*100)+'%/mo; tickets = seats x '+num('tik100')+'/100. Hours/FTE rate-independent. Shapley drivers sum exactly. Guardrails: margin claims are baselined; managed packages still need partner test/approve/rollout; Setup Store breadth varies by edition (full requires Release & Patch Management); SI acceleration only where app readiness is critical-path; confirm SKU and licensing before commitments. Sources: Okta 2025 (avg 101 apps/org); Camwood (packaging 30-40% of admin time); software = 1/3+ of desk volume (2026); self-service deflection 50-70%; rate guides onshore $80-150 / blended $30-60 / offshore $20-45. Planning estimate, not a measured baseline. Confidential.';
   doc.text(doc.splitTextToSize(note,MR-ML),ML,y);
 
-  doc.save('Recast-AW-Operating-Model'+(client?'-'+client.replace(/[^a-z0-9]+/gi,'-'):'')+'.pdf');
+  doc.save('Recast-AW-Partner-Business-Case'+(client?'-'+client.replace(/[^a-z0-9]+/gi,'-'):'')+'.pdf');
 }
 $('makePdf').addEventListener('click',generatePDF);
 
